@@ -8,10 +8,19 @@
 	
 ****************************************
 =======================================*/
+#tools:hover .tools-menu {
+	display:block;
+	}
+
 ul.tools-menu{
-    display:none;
+	display:none;
+    position: absolute;
+    min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
 }
 ul.tools-menu>li>a {
+	 display: block;
    color: #fff;
     font-size: 16px;
     font-weight: 600;
