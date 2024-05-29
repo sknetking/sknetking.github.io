@@ -7,8 +7,20 @@
 	Version: 1.0
 	
 ****************************************
-=======================================/
-
+=======================================*/
+ul.tools-menu{
+    display:none;
+}
+ul.tools-menu>li>a {
+   color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 0;
+    margin-top: 10px;
+    margin-left: 30px;
+    text-transform: capitalize;
+    transition: all 0.3s ease;
+}
 /* ----------------------------------------------------------------
     [ 01 Start Basics ]
 -----------------------------------------------------------------*/
