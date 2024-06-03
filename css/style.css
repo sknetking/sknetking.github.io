@@ -11,10 +11,6 @@
 #tools:hover .tools-menu {
 	display:block;
 	}
-.row.text-center .col-md-4 {
-    min-height: 300px;
-}
-
 ul.tools-menu{
 	display:none;
     position: absolute;
