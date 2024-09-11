@@ -26,7 +26,10 @@
 				}
 			});
 		/* END MENU JS */
-		
+		  $('#tools > a.submenu').on('click', function(e) {
+		        e.preventDefault(); // Prevent the default behavior of the link
+		        $(this).next('.tools-menu').slideToggle(); // Toggle the submenu
+		    });
 		/* START ISOTOP JS */
 			var $grid = $('.work_content_area').isotope({
 			  // options
