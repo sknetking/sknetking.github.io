@@ -26,6 +26,7 @@
 				}
 			});
 		/* END MENU JS */
+		 $('.tools-menu').hide();
 		  $('#tools > a.submenu').on('click', function(e) {
 		        e.preventDefault(); // Prevent the default behavior of the link
 		        $(this).next('.tools-menu').slideToggle(); // Toggle the submenu
