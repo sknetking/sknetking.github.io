@@ -8,9 +8,21 @@
 	
 ****************************************
 =======================================*/
-#tools:hover .tools-menu {
-	display:block;
-	}
+li#tools:hover .tools-menu {
+    display: block !important;!i;!;
+}
+@media only screen and (max-width: 600px) {
+      .nav{
+        display: block !important;!i;!;
+        margin-left:0%;
+          }
+    
+     li#tools .tools-menu {
+        display: block !important;!i;!;
+        margin-left:20%;
+     }
+}
+
 ul.tools-menu{
 	display:none;
     position: absolute;
