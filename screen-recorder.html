@@ -275,188 +275,132 @@ video {
   </div>
 
   <script>
+let mediaRecorder;
+let recordedChunks = [];
+let liveStream;
 
-    let mediaRecorder;
+document.getElementById('startRecording').addEventListener('click', async () => {
+    const includeAudio = document.getElementById('audioToggle').checked;
 
-    let recordedChunks = [];
-
-    let liveStream;
-
-    document.getElementById('startRecording').addEventListener('click', async () => {
-
-      const includeAudio = document.getElementById('audioToggle').checked;
-
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
         alert('Screen recording is not supported in this browser.');
-
         return;
+    }
 
-      }
-
-      try {
-
+    try {
+        // Request screen sharing with HD resolution and 30fps
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
-
-          video: true,
-
+            video: {
+                width: { ideal: 1920 },
+                height: { ideal: 1080 },
+                frameRate: { ideal: 35 }
+            },
+            audio: includeAudio ? { systemAudio: "include" } : false
         });
 
-        if (includeAudio) {
+        if (includeAudio && !screenStream.getAudioTracks().length) {
+            // Fallback: Get microphone audio if system audio is not available
+            const audioStream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    sampleRate: 44100
+                }
+            });
 
-          const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-          liveStream = new MediaStream([
-
-            ...screenStream.getVideoTracks(),
-
-            ...audioStream.getAudioTracks(),
-
-          ]);
-
+            liveStream = new MediaStream([
+                ...screenStream.getVideoTracks(),
+                ...audioStream.getAudioTracks()
+            ]);
         } else {
-
-          liveStream = screenStream;
-
+            liveStream = screenStream;
         }
 
         // Show live preview
-
         const livePreview = document.getElementById('livePreview');
-
         livePreview.srcObject = liveStream;
-
         livePreview.style.display = 'block';
 
         setupRecorder(liveStream);
-
-      } catch (err) {
-
+    } catch (err) {
         console.error('Error accessing screen or audio:', err);
-
         alert('Could not start recording. Please allow permissions and try again.');
-
         document.getElementById('startRecording').disabled = false;
+    }
+});
 
-      }
+function setupRecorder(stream) {
+    recordedChunks = [];
 
-    });
-
-    function setupRecorder(stream) {
-
-      recordedChunks = [];
-
-      const mimeType = MediaRecorder.isTypeSupported('video/webm; codecs=vp9')
-
+    const mimeType = MediaRecorder.isTypeSupported('video/webm; codecs=vp9')
         ? 'video/webm; codecs=vp9'
-
         : 'video/webm; codecs=vp8';
 
-      mediaRecorder = new MediaRecorder(stream, { mimeType });
+    mediaRecorder = new MediaRecorder(stream, { mimeType });
 
-      mediaRecorder.ondataavailable = (event) => {
-
+    mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
-
-          recordedChunks.push(event.data);
-
+            recordedChunks.push(event.data);
         }
+    };
 
-      };
-
-      mediaRecorder.onstop = () => {
-
+    mediaRecorder.onstop = () => {
         const blob = new Blob(recordedChunks, { type: 'video/webm' });
-
         const url = URL.createObjectURL(blob);
 
         // Hide live preview
-
         const livePreview = document.getElementById('livePreview');
-
         livePreview.style.display = 'none';
 
         // Show video preview
-
         const videoPreview = document.getElementById('videoPreview');
-
         videoPreview.src = url;
-
         videoPreview.style.display = 'block';
 
         // Enable download link
-
         const downloadLink = document.getElementById('downloadLink');
-
         downloadLink.href = url;
-
         downloadLink.style.display = 'inline-block';
 
         // Stop all tracks to release resources
-
         stream.getTracks().forEach((track) => track.stop());
+    };
 
-      };
+    mediaRecorder.start();
 
-      mediaRecorder.start();
+    // Update button states
+    document.getElementById('startRecording').disabled = true;
+    document.getElementById('pauseRecording').disabled = false;
+    document.getElementById('stopRecording').disabled = false;
+}
 
-      // Update button states
+document.getElementById('pauseRecording').addEventListener('click', () => {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.pause();
+        document.getElementById('pauseRecording').disabled = true;
+        document.getElementById('resumeRecording').disabled = false;
+    }
+});
 
-      document.getElementById('startRecording').disabled = true;
+document.getElementById('resumeRecording').addEventListener('click', () => {
+    if (mediaRecorder && mediaRecorder.state === 'paused') {
+        mediaRecorder.resume();
+        document.getElementById('pauseRecording').disabled = false;
+        document.getElementById('resumeRecording').disabled = true;
+    }
+});
 
-      document.getElementById('pauseRecording').disabled = false;
-
-      document.getElementById('stopRecording').disabled = false;
-
+document.getElementById('stopRecording').addEventListener('click', () => {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
     }
 
-    document.getElementById('pauseRecording').addEventListener('click', () => {
-
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-
-        mediaRecorder.pause();
-
-        document.getElementById('pauseRecording').disabled = true;
-
-        document.getElementById('resumeRecording').disabled = false;
-
-      }
-
-    });
-
-    document.getElementById('resumeRecording').addEventListener('click', () => {
-
-      if (mediaRecorder && mediaRecorder.state === 'paused') {
-
-        mediaRecorder.resume();
-
-        document.getElementById('pauseRecording').disabled = false;
-
-        document.getElementById('resumeRecording').disabled = true;
-
-      }
-
-    });
-
-    document.getElementById('stopRecording').addEventListener('click', () => {
-
-      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-
-        mediaRecorder.stop();
-
-      }
-
-      // Update button states
-
-      document.getElementById('startRecording').disabled = false;
-
-      document.getElementById('pauseRecording').disabled = true;
-
-      document.getElementById('resumeRecording').disabled = true;
-
-      document.getElementById('stopRecording').disabled = true;
-
-    });
+    // Update button states
+    document.getElementById('startRecording').disabled = false;
+    document.getElementById('pauseRecording').disabled = true;
+    document.getElementById('resumeRecording').disabled = true;
+    document.getElementById('stopRecording').disabled = true;
+});
 
   </script>
 
