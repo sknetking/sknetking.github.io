@@ -1,17 +1,7 @@
-/***************************************
-========================================
-
-	Author Name   : Themeplaza
-	This is HTML5 template
-	Template Name : Razu Personal Portfolio HTML5 Template
-	Version: 1.0
-	
-****************************************
-=======================================*/
 li#tools:hover .tools-menu {
     display: block !important;!i;!;
 }
-@media only screen and (max-width: 600px) {
+@media only screen and (max-width:900px) {
       .nav{
         display: block !important;!i;!;
         margin-left:0%;
