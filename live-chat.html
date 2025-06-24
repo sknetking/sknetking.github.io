@@ -146,6 +146,7 @@ Your browser does not support the audio element.
     </div>
 
     <script>
+    // DOM elements
 const yourIdEl = document.getElementById('yourId');
 const peerNameEl = document.getElementById('peerName');
 const peerIdInput = document.getElementById('peerIdInput');
@@ -162,6 +163,7 @@ const answerCallBtn = document.getElementById('answerCallBtn');
 const rejectCallBtn = document.getElementById('rejectCallBtn');
 const callerNameEl = document.getElementById('callerName');
 const remoteAudio = document.getElementById('remoteAudio');
+const audio = document.getElementById("myAudio");
 
 let peer;
 let conn;
@@ -173,7 +175,14 @@ const NAME_STORAGE_KEY = 'peerjs_custom_name';
 let currentPeerName = '';
 let remotePeerName = '';
 
-// Initialize on page load
+function playAudio() {
+    audio.play();
+}
+function stopAudio() {
+    audio.pause();
+    audio.currentTime = 0;
+}
+
 function initialize() {
     const storedId = localStorage.getItem(STORAGE_KEY);
     const storedName = localStorage.getItem(NAME_STORAGE_KEY);
@@ -184,7 +193,6 @@ function initialize() {
     createPeerConnection(storedId || undefined);
 }
 
-// Create peer connection
 function createPeerConnection(peerId) {
     if (peer && !peer.destroyed) peer.destroy();
 
@@ -192,11 +200,18 @@ function createPeerConnection(peerId) {
         host: '0.peerjs.com',
         port: 443,
         path: '/',
+        secure: true,
         debug: 2,
         config: {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' }
+                { urls: 'stun:stun1.l.google.com:19302' },
+                {
+                    urls: 'turn:numb.viagenie.ca',
+                    credential: 'webrtc',
+                    username: 'webrtc@live.com'
+                }
+                // Replace above with your own TURN server in production
             ]
         }
     });
@@ -222,6 +237,7 @@ function createPeerConnection(peerId) {
         incomingCall = incoming;
         callerNameEl.textContent = remotePeerName || incoming.peer;
         callNotification.style.display = 'block';
+        playAudio();
         logMessage("📞 Incoming call...");
     });
 
@@ -236,7 +252,6 @@ function createPeerConnection(peerId) {
     });
 }
 
-// Set custom ID and ask for display name
 function setCustomId() {
     const customId = customIdInput.value.trim();
 
@@ -259,16 +274,22 @@ function setCustomId() {
     createPeerConnection(customId);
 }
 
-// Connect to peer
 connectBtn.onclick = () => {
     const peerId = peerIdInput.value.trim();
     if (!peerId) return;
 
-    conn = peer.connect(peerId);
-    setupConnection();
+    if (!peer.open) {
+        logMessage("⏳ Waiting for peer to be ready...");
+        peer.once('open', () => {
+            conn = peer.connect(peerId);
+            setupConnection();
+        });
+    } else {
+        conn = peer.connect(peerId);
+        setupConnection();
+    }
 };
 
-// Setup data connection
 function setupConnection() {
     conn.on('open', () => {
         logMessage("🔌 Connected to peer!");
@@ -299,7 +320,6 @@ function setupConnection() {
                 }
             }
         } catch {
-            // Text message received
             const displayName = remotePeerName ? `${remotePeerName} (${conn.peer})` : conn.peer;
             logMessage(data, displayName);
         }
@@ -321,11 +341,10 @@ function setupConnection() {
     });
 }
 
-// Answer call
 answerCallBtn.onclick = () => {
     if (!incomingCall) return;
 
-    navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(stream => {
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
         currentStream = stream;
         call = incomingCall;
         call.answer(stream);
@@ -338,7 +357,6 @@ answerCallBtn.onclick = () => {
     });
 };
 
-// Reject call
 rejectCallBtn.onclick = () => {
     if (incomingCall) {
         incomingCall.close();
@@ -346,9 +364,9 @@ rejectCallBtn.onclick = () => {
     }
     callNotification.style.display = 'none';
     logMessage("📞 Call rejected");
+    stopAudio();
 };
 
-// Setup audio call
 function setupCall() {
     call.on('stream', remoteStream => {
         remoteAudio.srcObject = remoteStream;
@@ -356,11 +374,13 @@ function setupCall() {
         callBtn.disabled = true;
         endCallBtn.disabled = false;
         logMessage("🎧 Connected to call");
+        stopAudio();
     });
 
     call.on('close', () => {
         endCall();
         logMessage("📞 Call ended");
+        stopAudio();
     });
 
     call.on('error', err => {
@@ -369,14 +389,13 @@ function setupCall() {
     });
 }
 
-// Start audio call
 callBtn.onclick = () => {
     if (!conn || !conn.open) {
         logMessage("❌ Not connected to any peer");
         return;
     }
 
-    navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(stream => {
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
         currentStream = stream;
         call = peer.call(conn.peer, stream);
         setupCall();
@@ -386,7 +405,6 @@ callBtn.onclick = () => {
     });
 };
 
-// End call
 function endCall() {
     if (call) {
         call.close();
@@ -401,7 +419,6 @@ function endCall() {
     remoteAudio.srcObject = null;
 }
 
-// Send chat message
 sendBtn.onclick = () => {
     const msg = messageInput.value.trim();
     if (msg && conn?.open) {
@@ -411,7 +428,6 @@ sendBtn.onclick = () => {
     }
 };
 
-// Display message
 function logMessage(msg, from = null) {
     const now = new Date().toLocaleTimeString();
     const div = document.createElement('div');
@@ -422,7 +438,7 @@ function logMessage(msg, from = null) {
     messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-// Events
+// UI events
 setCustomIdBtn.onclick = setCustomId;
 customIdInput.addEventListener('keypress', e => { if (e.key === 'Enter') setCustomId(); });
 messageInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
@@ -435,6 +451,7 @@ window.addEventListener('beforeunload', () => {
 });
 
 initialize();
+
     </script>
 </body>
 </html>
