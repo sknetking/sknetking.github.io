@@ -5,42 +5,48 @@
     <title>P2P Chat with Audio Calling</title>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <style>
-      
-       .main-chatbox {
+      body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
             background: white;
             border-radius: 8px;
             padding: 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-       .main-chatbox h1 {
+        h1 {
             color: #333;
             text-align: center;
         }
-       .main-chatbox .control-panel {
+        .control-panel {
             background: #f0f0f0;
             padding: 15px;
             border-radius: 5px;
             margin-bottom: 20px;
         }
-      .main-chatbox input, button {
+        input, button {
             padding: 8px 12px;
             margin: 5px 0;
             border-radius: 4px;
             border: 1px solid #ddd;
         }
-      .main-chatbox button {
+        button {
             background: #4285f4;
             color: white;
             border: none;
             cursor: pointer;
         }
-       .main-chatbox button:hover {
+        button:hover {
             background: #3367d6;
         }
-       .main-chatbox button:disabled {
+        button:disabled {
             background: #cccccc;
         }
-       .main-chatbox #messages {
+        #messages {
             height: 300px;
             overflow-y: auto;
             border: 1px solid #ddd;
