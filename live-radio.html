@@ -219,7 +219,8 @@
             border-radius: var(--border-radius);
             box-shadow: var(--box-shadow);
         }
-        
+       
+
         .now-playing {
             font-weight: bold;
             text-align: center;
@@ -300,15 +301,19 @@
         }
         
         /* Audio player custom styling */
-        audio::-webkit-media-controls-panel {
-            background-color: var(--card-color);
-            border-radius: var(--border-radius);
-        }
+        .hide-seekbar audio::-webkit-media-controls-timeline,
+.hide-seekbar audio::-webkit-media-controls-current-time-display,
+.hide-seekbar audio::-webkit-media-controls-time-remaining-display {
+  display: none !important;
+}
+
+/* Firefox (not perfect but helps) */
+.hide-seekbar audio::-moz-range-track {
+  display: none !important;
+}
         
-        audio::-webkit-media-controls-play-button,
-        audio::-webkit-media-controls-mute-button {
-            border-radius: 50%;
-        }
+        
+        
     </style>
 </head>
 <body>
@@ -673,7 +678,23 @@
             
             // Initial load
             fetchStations();
+            
+            const audio = document.getElementById("audio-player");
+
+audio.addEventListener('loadedmetadata', () => {
+  const isLive = !isFinite(audio.duration) || audio.duration === Infinity;
+
+  if (isLive) {
+    document.body.classList.add("hide-seekbar");
+  } else {
+    document.body.classList.remove("hide-seekbar");
+  }
+});
+            
         });
+        
+
+
     </script>
 </body>
 </html>
