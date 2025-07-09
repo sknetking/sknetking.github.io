@@ -517,11 +517,11 @@
                     // Station logo or placeholder
                     const logo = document.createElement('img');
                     logo.className = 'station-logo';
-                    logo.src = station.favicon || 'https://via.placeholder.com/200x120?text=No+Logo';
+                    logo.src = station.favicon || 'https://cdn.pixabay.com/photo/2019/08/10/23/04/casette-4397896_640.png';
                     logo.alt = station.name;
                     logo.loading = 'lazy';
                     logo.onerror = function() {
-                        this.src = 'https://via.placeholder.com/200x120?text=No+Logo';
+                        this.src = 'https://cdn.pixabay.com/photo/2019/08/10/23/04/casette-4397896_640.png';
                     };
                     
                     // Station info
