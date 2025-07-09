@@ -57,7 +57,13 @@
             padding-bottom: 10px;
             border-bottom: 1px solid #eee;
         }
-        
+	    
+.main-content {
+  margin-top: 100px;
+}
+.nav.navbar-nav li a {
+  color: black;
+}
         .controls {
             display: flex;
             justify-content: space-between;
@@ -354,7 +360,7 @@
 				</div> 
 			</header> 
 		<!-- END NAVBAR -->	
-	
+ <section class='main-content'>
     <h1>Indian FM Radio Stations</h1>
     
     <div class="controls">
@@ -396,7 +402,7 @@
         <button id="next-page" disabled>Next</button>
     </div>
     <div id="page-info" class="page-info"></div>
-    
+ </section> 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const audioPlayer = document.getElementById('audio-player');
