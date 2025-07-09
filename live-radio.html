@@ -1,0 +1,610 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian FM Radio Stations</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --background-color: #f8f9fa;
+            --card-color: #ffffff;
+            --text-color: #333333;
+            --light-text: #666666;
+            --error-color: #e74c3c;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        
+        h1 {
+            text-align: center;
+            color: var(--secondary-color);
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+            background-color: var(--card-color);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        label {
+            font-weight: 500;
+            color: var(--secondary-color);
+        }
+        
+        select, input {
+            padding: 8px 12px;
+            border-radius: var(--border-radius);
+            border: 1px solid #ddd;
+            font-size: 14px;
+            min-width: 150px;
+            transition: var(--transition);
+        }
+        
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        button {
+            padding: 8px 16px;
+            border-radius: var(--border-radius);
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        #search-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        #search-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        
+        .player-container {
+            background-color: var(--card-color);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--box-shadow);
+            margin-bottom: 30px;
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+        }
+        
+        audio {
+            width: 100%;
+            margin-top: 15px;
+            border-radius: var(--border-radius);
+        }
+        
+        audio:focus {
+            outline: none;
+        }
+        
+        .station-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .station-card {
+            background-color: var(--card-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+            cursor: pointer;
+            text-align: center;
+            position: relative;
+        }
+        
+        .station-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .station-card.playing {
+            border: 2px solid var(--primary-color);
+        }
+        
+        .station-logo {
+            width: 100%;
+            height: 120px;
+            object-fit: contain;
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .station-info {
+            padding: 15px;
+        }
+        
+        .station-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .station-details {
+            font-size: 0.8em;
+            color: var(--light-text);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            color: var(--light-text);
+        }
+        
+        .error {
+            color: var(--error-color);
+            text-align: center;
+            padding: 20px;
+            background-color: var(--card-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+        
+        .now-playing {
+            font-weight: bold;
+            text-align: center;
+            color: var(--primary-color);
+            padding: 8px;
+            background-color: rgba(52, 152, 219, 0.1);
+            border-radius: var(--border-radius);
+            margin-bottom: 10px;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            background-color: var(--card-color);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+        
+        .pagination button {
+            background-color: var(--secondary-color);
+            color: white;
+            min-width: 100px;
+        }
+        
+        .pagination button:hover {
+            background-color: #1a252f;
+        }
+        
+        .page-info {
+            text-align: center;
+            margin: 15px 0;
+            color: var(--light-text);
+            background-color: var(--card-color);
+            padding: 10px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+        
+        @media (max-width: 768px) {
+            .station-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            .filter-group {
+                width: 100%;
+            }
+            
+            select, input {
+                flex-grow: 1;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 15px;
+            }
+            
+            .station-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Animation for smooth loading */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .station-card {
+            animation: fadeIn 0.3s ease forwards;
+        }
+        
+        /* Audio player custom styling */
+        audio::-webkit-media-controls-panel {
+            background-color: var(--card-color);
+            border-radius: var(--border-radius);
+        }
+        
+        audio::-webkit-media-controls-play-button,
+        audio::-webkit-media-controls-mute-button {
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Indian FM Radio Stations</h1>
+    
+    <div class="controls">
+        <div class="filter-group">
+            <label for="language-filter">Language:</label>
+            <select id="language-filter">
+                <option value="">All Languages</option>
+                <option value="hindi">Hindi</option>
+                <option value="english">English</option>
+                <option value="punjabi">Punjabi</option>
+                <option value="bengali">Bengali</option>
+                <option value="tamil">Tamil</option>
+                <option value="telugu">Telugu</option>
+                <option value="marathi">Marathi</option>
+                <option value="gujarati">Gujarati</option>
+                <option value="kannada">Kannada</option>
+                <option value="malayalam">Malayalam</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label for="search">Search:</label>
+            <input type="text" id="search" placeholder="Station name...">
+            <button id="search-btn">Search</button>
+        </div>
+    </div>
+    
+    <div class="player-container">
+        <div id="now-playing" class="now-playing">Select a station to play</div>
+        <audio id="audio-player" controls></audio>
+    </div>
+    
+    <div id="station-container">
+        <div class="loading">Loading stations...</div>
+    </div>
+    
+    <div class="pagination">
+        <button id="prev-page" disabled>Previous</button>
+        <button id="next-page" disabled>Next</button>
+    </div>
+    <div id="page-info" class="page-info"></div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const audioPlayer = document.getElementById('audio-player');
+            const nowPlaying = document.getElementById('now-playing');
+            const stationContainer = document.getElementById('station-container');
+            const languageFilter = document.getElementById('language-filter');
+            const searchInput = document.getElementById('search');
+            const searchBtn = document.getElementById('search-btn');
+            const prevPageBtn = document.getElementById('prev-page');
+            const nextPageBtn = document.getElementById('next-page');
+            const pageInfo = document.getElementById('page-info');
+            
+            let currentPage = 1;
+            const stationsPerPage = 20;
+            let allStations = [];
+            let filteredStations = [];
+            let currentlyPlayingStation = null;
+            
+            // Initialize with smooth transitions
+            document.body.style.opacity = '0';
+            setTimeout(() => {
+                document.body.style.transition = 'opacity 0.5s ease';
+                document.body.style.opacity = '1';
+            }, 100);
+            
+            // Fetch stations from Radio Browser API
+           function fetchStations() {
+    stationContainer.innerHTML = '<div class="loading">Loading stations...</div>';
+    
+    fetch('https://de1.api.radio-browser.info/json/stations/search?countrycode=IN&hidebroken=true&order=clickcount')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(stations => {
+            allStations = stations.filter(station => 
+                station.url && (Array.isArray(station.url) ? station.url.length > 0 : true)
+            ).map(station => ({
+                ...station,
+                url: Array.isArray(station.url) ? station.url : [station.url]
+            }));
+            applyFilters();
+        })
+        .catch(error => {
+           
+            showError(`Error loading stations: ${error.message}`);
+        });
+}
+	
+            // Apply language filter and search
+            function applyFilters() {
+                const language = languageFilter.value.toLowerCase();
+                const searchTerm = searchInput.value.toLowerCase();
+                
+                filteredStations = allStations.filter(station => {
+                    // Filter by language
+                    const stationLanguage = station.language ? station.language.toLowerCase() : '';
+                    const languageMatch = !language || stationLanguage.includes(language);
+                    
+                    // Filter by search term
+                    const nameMatch = !searchTerm || 
+                        station.name.toLowerCase().includes(searchTerm) ||
+                        (station.tags && station.tags.toLowerCase().includes(searchTerm));
+                    
+                    return languageMatch && nameMatch;
+                });
+                
+                currentPage = 1;
+                renderStations();
+                updatePagination();
+            }
+            
+            // Render stations for current page
+            function renderStations() {
+                if (filteredStations.length === 0) {
+                    showError("No stations found matching your criteria");
+                    return;
+                }
+                
+                const startIdx = (currentPage - 1) * stationsPerPage;
+                const endIdx = startIdx + stationsPerPage;
+                const stationsToShow = filteredStations.slice(startIdx, endIdx);
+                
+                // Clear previous stations with fade out effect
+                if (stationContainer.children.length > 0) {
+                    stationContainer.style.opacity = '0';
+                    setTimeout(() => {
+                        stationContainer.innerHTML = '';
+                        stationContainer.style.opacity = '1';
+                        createStationGrid(stationsToShow);
+                    }, 300);
+                } else {
+                    createStationGrid(stationsToShow);
+                }
+            }
+            
+            function createStationGrid(stations) {
+                const grid = document.createElement('div');
+                grid.className = 'station-grid';
+                
+                stations.forEach((station, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'station-card';
+                    if (currentlyPlayingStation && currentlyPlayingStation.id === station.id) {
+                        card.classList.add('playing');
+                    }
+                    
+                    card.addEventListener('click', () => playStation(station));
+                    
+                    // Station logo or placeholder
+                    const logo = document.createElement('img');
+                    logo.className = 'station-logo';
+                    logo.src = station.favicon || 'https://via.placeholder.com/200x120?text=No+Logo';
+                    logo.alt = station.name;
+                    logo.loading = 'lazy';
+                    logo.onerror = function() {
+                        this.src = 'https://via.placeholder.com/200x120?text=No+Logo';
+                    };
+                    
+                    // Station info
+                    const info = document.createElement('div');
+                    info.className = 'station-info';
+                    
+                    const name = document.createElement('div');
+                    name.className = 'station-name';
+                    name.textContent = station.name;
+                    
+                    const details = document.createElement('div');
+                    details.className = 'station-details';
+                    
+                    if (station.language) {
+                        const language = document.createElement('span');
+                        language.textContent = `Language: ${station.language}`;
+                        details.appendChild(language);
+                    }
+                    
+                    if (station.tags) {
+                        const tags = document.createElement('span');
+                        tags.textContent = `Tags: ${station.tags.split(',').slice(0, 3).join(', ')}`;
+                        details.appendChild(tags);
+                    }
+                    
+                    info.appendChild(name);
+                    info.appendChild(details);
+                    
+                    card.appendChild(logo);
+                    card.appendChild(info);
+                    grid.appendChild(card);
+                    
+                    // Staggered animation
+                    card.style.animationDelay = `${index * 0.05}s`;
+                });
+                
+                stationContainer.appendChild(grid);
+            }
+            
+            // Update pagination controls
+            function updatePagination() {
+                const totalPages = Math.ceil(filteredStations.length / stationsPerPage);
+                
+                prevPageBtn.disabled = currentPage <= 1;
+                nextPageBtn.disabled = currentPage >= totalPages;
+                
+                pageInfo.textContent = `Page ${currentPage} of ${totalPages} | ${filteredStations.length} stations found`;
+            }
+            
+            // Play selected station
+            function playStation(station) {
+                // Remove playing class from all cards
+                document.querySelectorAll('.station-card').forEach(card => {
+                    card.classList.remove('playing');
+                });
+                
+                // Add playing class to current card
+                event.currentTarget.classList.add('playing');
+                
+                // Find a working URL
+                const workingUrl = station.url.find(url => 
+                    url && (url.startsWith('http') || url.startsWith('https')));
+                
+                if (workingUrl) {
+                    // Smooth transition for now playing info
+                    nowPlaying.style.opacity = '0';
+                    setTimeout(() => {
+                        nowPlaying.textContent = `Now Playing: ${station.name}`;
+                        if (station.language) {
+                            nowPlaying.textContent += ` (${station.language})`;
+                        }
+                        nowPlaying.style.opacity = '1';
+                    }, 200);
+                    
+                    // Smooth audio transition
+                    audioPlayer.style.opacity = '0';
+                    setTimeout(() => {
+                        audioPlayer.src = workingUrl;
+                        currentlyPlayingStation = station;
+                        
+                        audioPlayer.play()
+                            .then(() => {
+                                audioPlayer.style.opacity = '1';
+                            })
+                            .catch(error => {
+                                nowPlaying.textContent = `Error playing: ${station.name}`;
+                                showError('Could not play station. It may be unavailable.');
+                                audioPlayer.style.opacity = '1';
+                            });
+                    }, 200);
+                } else {
+                    showError(`No valid stream URL found for: ${station.name}`);
+                }
+            }
+            
+            function showError(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error';
+                errorDiv.textContent = message;
+                stationContainer.innerHTML = '';
+                stationContainer.appendChild(errorDiv);
+                
+                // Reset pagination
+                prevPageBtn.disabled = true;
+                nextPageBtn.disabled = true;
+                pageInfo.textContent = '';
+            }
+            
+            // Event listeners
+            languageFilter.addEventListener('change', applyFilters);
+            searchBtn.addEventListener('click', applyFilters);
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    applyFilters();
+                }
+            });
+            
+            prevPageBtn.addEventListener('click', function() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderStations();
+                    updatePagination();
+                    window.scrollTo({top: 0, behavior: 'smooth'});
+                }
+            });
+            
+            nextPageBtn.addEventListener('click', function() {
+                const totalPages = Math.ceil(filteredStations.length / stationsPerPage);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderStations();
+                    updatePagination();
+                    window.scrollTo({top: 0, behavior: 'smooth'});
+                }
+            });
+            
+            // Audio player event listeners for better UX
+            audioPlayer.addEventListener('play', function() {
+                document.querySelector('.station-card.playing')?.classList.add('active');
+            });
+            
+            audioPlayer.addEventListener('pause', function() {
+                document.querySelector('.station-card.playing')?.classList.remove('active');
+            });
+            
+            audioPlayer.addEventListener('error', function() {
+                if (currentlyPlayingStation) {
+                    nowPlaying.textContent = `Error playing: ${currentlyPlayingStation.name}`;
+                    showError('Could not play station. It may be unavailable.');
+                }
+            });
+            
+            // Initial load
+            fetchStations();
+        });
+    </script>
+</body>
+</html>
