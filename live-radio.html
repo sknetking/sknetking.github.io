@@ -602,12 +602,9 @@
                             })
                             .catch(error => {
                                 nowPlaying.textContent = `Error playing: ${station.name}`;
-                                showError('Could not play station. It may be unavailable.');
                                 audioPlayer.style.opacity = '1';
                             });
                     }, 200);
-                } else {
-                    showError(`No valid stream URL found for: ${station.name}`);
                 }
             }
             
@@ -664,7 +661,7 @@
             audioPlayer.addEventListener('error', function() {
                 if (currentlyPlayingStation) {
                     nowPlaying.textContent = `Error playing: ${currentlyPlayingStation.name}`;
-                    showError('Could not play station. It may be unavailable.');
+                    
                 }
             });
             
