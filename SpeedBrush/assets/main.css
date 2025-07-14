@@ -563,6 +563,11 @@ footer {
     .pricing-cards {
         grid-template-columns: 1fr;
     }
+    .price {
+        text-align: center;
+        color: var(--secondary-color);
+        font-size: larger;
+    }
 }
 
 
