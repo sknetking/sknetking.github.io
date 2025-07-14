@@ -139,4 +139,34 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`Viewing: ${title}`);
         });
     });
+
+document.getElementById('whatsappContactForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Get form values
+    const name = document.getElementById('userName').value;
+    const phone = document.getElementById('userPhone').value;
+    const project = document.getElementById('projectType').value;
+    const details = document.getElementById('projectDetails').value;
+    
+    // Format WhatsApp message
+    const whatsappMessage = 
+        `*New Painting Inquiry*%0A%0A` +
+        `*Name:* ${name}%0A` +
+        `*Phone:* ${phone}%0A` +
+        `*Project Type:* ${project}%0A` +
+        `*Project Details:* ${details}%0A%0A` +
+        `_Sent via SpeedBrush website_`;
+    
+    // Replace with your WhatsApp number (with country code, no spaces/symbols)
+    const whatsappNumber = '7398113232'; // Example: 91 for India + 9876543210
+    
+    // Create WhatsApp URL
+    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+    
+    // Open WhatsApp
+    window.open(whatsappUrl, '_blank');
+});
+    
+    
 });
