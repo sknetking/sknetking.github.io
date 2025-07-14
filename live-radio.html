@@ -373,7 +373,7 @@
             <label for="language-filter">Language:</label>
             <select id="language-filter">
                 <option value="">All Languages</option>
-                <option value="hindi">Hindi</option>
+                <option value="hindi" selected>Hindi</option>
                 <option value="english">English</option>
                 <option value="punjabi">Punjabi</option>
                 <option value="bengali">Bengali</option>
@@ -567,14 +567,43 @@
             }
             
             // Update pagination controls
-            function updatePagination() {
-                const totalPages = Math.ceil(filteredStations.length / stationsPerPage);
-                
-                prevPageBtn.disabled = currentPage <= 1;
-                nextPageBtn.disabled = currentPage >= totalPages;
-                
-                pageInfo.textContent = `Page ${currentPage} of ${totalPages} | ${filteredStations.length} stations found`;
+          function updatePagination() {
+    const totalPages = Math.ceil(filteredStations.length / stationsPerPage);
+
+    prevPageBtn.disabled = currentPage <= 1;
+    nextPageBtn.disabled = currentPage >= totalPages;
+
+    // Generate page numbers: currentPage - 5 to currentPage + 5
+    let paginationHTML = `Page ${currentPage} of ${totalPages} | ${filteredStations.length} stations found <br><div class="pagination-links">`;
+
+    const startPage = Math.max(1, currentPage - 5);
+    const endPage = Math.min(totalPages, currentPage + 5);
+
+    for (let i = startPage; i <= endPage; i++) {
+        if (i === currentPage) {
+            paginationHTML += `<span class="current-page">${i}</span> `;
+        } else {
+            paginationHTML += `<a href="#" class="page-link" data-page="${i}">${i}</a> `;
+        }
+    }
+
+    paginationHTML += `</div>`;
+    pageInfo.innerHTML = paginationHTML;
+
+    // Add click events to the page numbers
+    document.querySelectorAll('.page-link').forEach(link => {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+            const selectedPage = parseInt(this.getAttribute('data-page'));
+            if (selectedPage !== currentPage) {
+                currentPage = selectedPage;
+                renderStations(); // Re-render your items
+                updatePagination(); // Update pagination
             }
+        });
+    });
+}
+
             
             // Play selected station
             function playStation(station) {
