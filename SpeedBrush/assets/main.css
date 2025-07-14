@@ -63,10 +63,13 @@ a {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-section {
+ section {
     padding: 5rem 0;
-}
+} 
 
+section#home {
+  padding: 0px;
+}
 .section-title {
     text-align: center;
     margin-bottom: 3rem;
