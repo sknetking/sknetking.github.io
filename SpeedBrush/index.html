@@ -236,34 +236,30 @@
             <h2>Get In Touch</h2>
             <p class="subtitle">Ready to discuss your custom painting? Fill out the form below or contact me directly.</p>
             
-            <div class="contact-container">
-                <form class="contact-form">
+                    <form class="contact-form" id="whatsappContactForm">
                     <div class="form-group">
-                        <input type="text" placeholder="Your Name" required>
+                        <input type="text" id="userName" name="name" placeholder="Your Name" required>
                     </div>
                     <div class="form-group">
-                        <input type="email" placeholder="Email Address" required>
+                        <input type="tel" id="userPhone" name="phone" placeholder="Phone Number (required)" required>
                     </div>
                     <div class="form-group">
-                        <input type="tel" placeholder="Phone Number (optional)">
-                    </div>
-                    <div class="form-group">
-                        <select>
+                        <select id="projectType" name="project">
                             <option value="">What type of project are you interested in?</option>
-                            <option value="residential">Residential Painting</option>
-                            <option value="commercial">Commercial/Office Art</option>
-                            <option value="portrait">Portrait Commission</option>
-                            <option value="landscape">Landscape Painting</option>
-                            <option value="abstract">Abstract Work</option>
-                            <option value="other">Other</option>
+                            <option value="Residential Painting">Residential Painting</option>
+                            <option value="Commercial/Office Art">Commercial/Office Art</option>
+                            <option value="Portrait Commission">Portrait Commission</option>
+                            <option value="Landscape Painting">Landscape Painting</option>
+                            <option value="Abstract Work">Abstract Work</option>
+                            <option value="Other">Other</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <textarea placeholder="Tell me about your project..." rows="5" required></textarea>
+                        <textarea id="projectDetails" name="details" placeholder="Tell me about your project..." rows="5" required></textarea>
                     </div>
-                    <button type="submit" class="btn">Send Message</button>
+                    <button type="submit" class="btn">Send via WhatsApp</button>
                 </form>
-                
+               
                 <div class="contact-info">
                     <h3>Other Ways to Connect</h3>
                     <div class="info-item">
