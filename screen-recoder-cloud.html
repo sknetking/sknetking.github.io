@@ -1,467 +1,160 @@
-<html lang="en"><head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Enhanced Screen Recorder</title>
-  <!-- Add Font Awesome for icons -->
+  <title>Screen Recorder with Google Drive Upload</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Add Google API client -->
-  <script src="https://apis.google.com/js/api.js"></script>
   <script src="https://accounts.google.com/gsi/client"></script>
-  
   <style>
-    /* General Reset */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    /* Your existing CSS styles here */
+    .drive-upload {
+      margin-top: 15px;
+      display: none;
     }
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f5f5f5;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-    
-    /* Recorder Container */
-    .recorder-container {
-      text-align: center;
-      background-color: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      width: 90%;
-      max-width: 600px;
-    }
-    
-    /* Audio Check */
-    .audio-check {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 20px;
-      font-size: 18px;
-      color: #2c3e50;
-    }
-    .audio-check input {
-      margin-right: 10px;
-    }
-    .audio-check i {
-      margin-right: 5px;
-      color: #1abc9c;
-    }
-    
-    /* Buttons */
-    .controls {
-      margin: 10px 0;
-    }
-    .btn {
-      background-color: #3498db;
-      color: #fff;
-      border: none;
-      padding: 5px 10px;
-      margin: 5px;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      transition: background-color 0.3s ease;
-    }
-    .btn i {
-      font-size: 18px;
-    }
-    .btn:hover {
-      background-color: #1a9900;
-    }
-    .btn:disabled {
-      background-color: #bdc3c7;
-      cursor: not-allowed;
-    }
-    
-    /* Video Previews */
-    video {
-      width: 100%;
-      max-width: 600px;
-      margin: 15px 0;
-      border: 1px solid #2c3e50;
-      border-radius: 5px;
-    }
-    
-    /* Download Link */
-    .download-link {
-      text-decoration: none;
-      font-size: 18px;
-      color: #1abc9c;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      transition: color 0.3s ease;
-    }
-    .download-link:hover {
-      color: #16a085;
-    }
-    
-    .audio-check input:checked {
-      background: aqua;
-      margin-right: 10px;
-      height: 18px;
-      width: 18px;
-      border: solid black 2px;
-    }
-    .audio-check input {
-      margin-right: 10px;
-      height: 18px;
-      width: 18px;
-      border: solid black 2px;
-    }
-    
-    /* Status messages */
     .status {
       margin: 10px 0;
       padding: 10px;
       border-radius: 5px;
-      display: none;
     }
-    .status.success {
+    .success {
       background-color: #d4edda;
       color: #155724;
-      display: block;
     }
-    .status.error {
+    .error {
       background-color: #f8d7da;
       color: #721c24;
-      display: block;
-    }
-    
-    /* Folder selection */
-    .folder-selection {
-      margin: 15px 0;
-      display: none;
-    }
-    #folderSelect {
-      padding: 5px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      margin-right: 10px;
     }
   </style>
 </head>
-  
 <body>
   <div class="recorder-container">
-    <label class="audio-check">
-      <input type="checkbox" id="audioToggle" checked="">
-      <i class="fas fa-microphone"></i> Include Audio
-    </label>
+    <!-- Your existing recorder UI here -->
     
-    <div class="controls">
-      <button id="startRecording" class="btn start">
-        <i class="fas fa-circle"></i> Start Recording
+    <div class="drive-upload">
+      <button id="authButton" class="btn">
+        <i class="fab fa-google"></i> Sign in with Google
       </button>
-      <button id="pauseRecording" class="btn pause" disabled="">
-        <i class="fas fa-pause"></i> Pause
+      <button id="uploadButton" class="btn" disabled>
+        <i class="fab fa-google-drive"></i> Upload to Drive
       </button>
-      <button id="resumeRecording" class="btn resume" disabled="">
-        <i class="fas fa-play"></i> Resume
-      </button>
-      <button id="stopRecording" class="btn stop" disabled="">
-        <i class="fas fa-square"></i> Stop Recording
-      </button>
+      <div id="status" class="status"></div>
     </div>
-    
-    <video id="livePreview" autoplay="" muted="" style="display: none;"></video>
-    <video id="videoPreview" controls="" style="display: none;"></video>
-    
-    <div class="folder-selection">
-      <h3>Upload to Google Drive</h3>
-      <select id="folderSelect">
-        <option value="root">Root Folder</option>
-      </select>
-      <button id="uploadDrive" class="btn">
-        <i class="fab fa-google-drive"></i> Upload
-      </button>
-      <button id="signInButton" class="btn" style="display: none;">
-        <i class="fab fa-google"></i> Sign in to Google
-      </button>
-    </div>
-    
-    <div id="status" class="status"></div>
-    
-    <a id="downloadLink" href="#" download="recording.webm" style="display: none;" class="download-link">
-      <i class="fas fa-download"></i> Download Recording
-    </a>
   </div>
 
   <script>
-    // Screen recorder variables
-    let mediaRecorder;
-    let recordedChunks = [];
-    let liveStream;
+    // Your existing screen recorder code here
     let recordingBlob = null;
-    
-    // Google Drive API variables
+
+    // Google Drive Upload Integration
     const CLIENT_ID = '507991275485-rqd80rpao1lm821vrtplfh0jca6alkpb.apps.googleusercontent.com';
-    const API_KEY = 'AIzaSyCPFANyFpjIDMxOXf1iqbnVuS5DqmidEnk';
-    const SCOPES = 'https://www.googleapis.com/auth/drive.file';
     let tokenClient;
-    let gapiInited = false;
-    let gisInited = false;
-    
-    // DOM elements
-    const signInButton = document.getElementById('signInButton');
-    const uploadDriveButton = document.getElementById('uploadDrive');
-    const folderSelect = document.getElementById('folderSelect');
-    const statusDiv = document.getElementById('status');
-    
-    // Initialize Google APIs when the page loads
-    window.onload = function() {
-      // Load Google API client
-      gapi.load('client', initializeGapiClient);
-      
-      // Initialize Google Identity Services
+    let accessToken = null;
+
+    function initializeGoogleAuth() {
       tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
-        scope: SCOPES,
-        callback: '', // defined later
-      });
-      gisInited = true;
-      
-      // Show sign-in button if not already authenticated
-      signInButton.style.display = 'inline-block';
-    };
-    
-    function initializeGapiClient() {
-      gapi.client.init({
-        apiKey: API_KEY,
-        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-      }).then(function() {
-        gapiInited = true;
-      }).catch(function(error) {
-        console.error('Error initializing Google API client:', error);
-      });
-    }
-    
-    // Handle Google sign-in
-    signInButton.addEventListener('click', function() {
-      tokenClient.callback = async (resp) => {
-        if (resp.error !== undefined) {
-          throw resp;
+        scope: 'https://www.googleapis.com/auth/drive.file',
+        callback: (tokenResponse) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            accessToken = tokenResponse.access_token;
+            document.getElementById('authButton').style.display = 'none';
+            document.getElementById('uploadButton').disabled = false;
+            showStatus('Successfully authenticated with Google Drive', 'success');
+          }
+        },
+        error_callback: (error) => {
+          showStatus('Authentication error: ' + error.message, 'error');
         }
-        signInButton.style.display = 'none';
-        uploadDriveButton.disabled = false;
-        await listFolders();
-      };
-      
-      if (gapi.client.getToken() === null) {
-        tokenClient.requestAccessToken({prompt: 'consent'});
-      } else {
-        tokenClient.requestAccessToken({prompt: ''});
-      }
-    });
-    
-    // List folders in user's Google Drive
-    async function listFolders() {
-      try {
-        const response = await gapi.client.drive.files.list({
-          q: "mimeType='application/vnd.google-apps.folder' and trashed=false",
-          fields: 'files(id, name)',
-        });
-        
-        const folders = response.result.files;
-        folderSelect.innerHTML = '<option value="root">Root Folder</option>';
-        
-        folders.forEach(folder => {
-          const option = document.createElement('option');
-          option.value = folder.id;
-          option.textContent = folder.name;
-          folderSelect.appendChild(option);
-        });
-        
-        showStatus('Google Drive connected successfully.', 'success');
-      } catch (err) {
-        showStatus('Error loading folders: ' + err.message, 'error');
-        console.error(err);
-      }
+      });
     }
-    
-    // Upload to Google Drive
-    uploadDriveButton.addEventListener('click', async function() {
+
+    function showStatus(message, type) {
+      const statusDiv = document.getElementById('status');
+      statusDiv.textContent = message;
+      statusDiv.className = 'status ' + type;
+    }
+
+    document.getElementById('authButton').addEventListener('click', () => {
+      tokenClient.requestAccessToken();
+    });
+
+    document.getElementById('uploadButton').addEventListener('click', async () => {
       if (!recordingBlob) {
-        showStatus('No recording to upload.', 'error');
+        showStatus('No recording available to upload', 'error');
         return;
       }
-      
-      const folderId = folderSelect.value;
-      
+
+      if (!accessToken) {
+        showStatus('Please sign in to Google first', 'error');
+        return;
+      }
+
       try {
         showStatus('Uploading to Google Drive...', 'success');
         
         const metadata = {
-          name: `screen-recording-${new Date().toISOString()}.webm`,
-          mimeType: 'video/webm',
-          parents: folderId !== 'root' ? [folderId] : undefined,
+          name: `recording-${new Date().toISOString().replace(/[:.]/g, '-')}.webm`,
+          mimeType: 'video/webm'
         };
-        
+
         const form = new FormData();
         form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
         form.append('file', recordingBlob);
-        
-        const accessToken = gapi.client.getToken().access_token;
-        
+
         const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
           method: 'POST',
-          headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
-          body: form,
-        });
-        
-        const result = await response.json();
-        
-        if (result.error) {
-          throw new Error(result.error.message);
-        }
-        
-        showStatus(`Recording uploaded successfully! <a href="https://drive.google.com/file/d/${result.id}/view" target="_blank">View on Drive</a>`, 'success');
-      } catch (err) {
-        showStatus('Upload error: ' + err.message, 'error');
-        console.error(err);
-      }
-    });
-    
-    // Helper function to show status messages
-    function showStatus(message, type) {
-      statusDiv.innerHTML = message;
-      statusDiv.className = 'status ' + type;
-    }
-    
-    // Original screen recorder code with modifications
-    document.getElementById('startRecording').addEventListener('click', async () => {
-      const includeAudio = document.getElementById('audioToggle').checked;
-
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-        alert('Screen recording is not supported in this browser.');
-        return;
-      }
-
-      try {
-        // Request screen sharing with HD resolution and 30fps
-        const screenStream = await navigator.mediaDevices.getDisplayMedia({
-          video: {
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-            frameRate: { ideal: 35 }
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
           },
-          audio: includeAudio ? { systemAudio: "include" } : false
+          body: form
         });
 
-        if (includeAudio && !screenStream.getAudioTracks().length) {
-          // Fallback: Get microphone audio if system audio is not available
-          const audioStream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-              sampleRate: 44100
-            }
-          });
-
-          liveStream = new MediaStream([
-            ...screenStream.getVideoTracks(),
-            ...audioStream.getAudioTracks()
-          ]);
-        } else {
-          liveStream = screenStream;
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error.message || 'Upload failed');
         }
 
-        // Show live preview
-        const livePreview = document.getElementById('livePreview');
-        livePreview.srcObject = liveStream;
-        livePreview.style.display = 'block';
-
-        setupRecorder(liveStream);
-      } catch (err) {
-        console.error('Error accessing screen or audio:', err);
-        alert('Could not start recording. Please allow permissions and try again.');
-        document.getElementById('startRecording').disabled = false;
+        const result = await response.json();
+        showStatus(`Upload successful! <a href="https://drive.google.com/file/d/${result.id}/view" target="_blank">View file</a>`, 'success');
+      } catch (error) {
+        showStatus('Upload error: ' + error.message, 'error');
+        console.error('Upload error:', error);
       }
     });
 
-    function setupRecorder(stream) {
-      recordedChunks = [];
-
-      const mimeType = MediaRecorder.isTypeSupported('video/webm; codecs=vp9')
-        ? 'video/webm; codecs=vp9'
-        : 'video/webm; codecs=vp8';
-
-      mediaRecorder = new MediaRecorder(stream, { mimeType });
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          recordedChunks.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        recordingBlob = new Blob(recordedChunks, { type: 'video/webm' });
-        const url = URL.createObjectURL(recordingBlob);
-
-        // Hide live preview
-        const livePreview = document.getElementById('livePreview');
-        livePreview.style.display = 'none';
-
-        // Show video preview
-        const videoPreview = document.getElementById('videoPreview');
-        videoPreview.src = url;
-        videoPreview.style.display = 'block';
-
-        // Enable download link
-        const downloadLink = document.getElementById('downloadLink');
-        downloadLink.href = url;
-        downloadLink.style.display = 'inline-block';
-        
-        // Show Google Drive upload options
-        document.querySelector('.folder-selection').style.display = 'block';
-
-        // Stop all tracks to release resources
-        stream.getTracks().forEach((track) => track.stop());
-      };
-
-      mediaRecorder.start();
-
-      // Update button states
-      document.getElementById('startRecording').disabled = true;
-      document.getElementById('pauseRecording').disabled = false;
-      document.getElementById('stopRecording').disabled = false;
-    }
-
-    document.getElementById('pauseRecording').addEventListener('click', () => {
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.pause();
-        document.getElementById('pauseRecording').disabled = true;
-        document.getElementById('resumeRecording').disabled = false;
-      }
-    });
-
-    document.getElementById('resumeRecording').addEventListener('click', () => {
-      if (mediaRecorder && mediaRecorder.state === 'paused') {
-        mediaRecorder.resume();
-        document.getElementById('pauseRecording').disabled = false;
-        document.getElementById('resumeRecording').disabled = true;
-      }
-    });
-
+    // Modify your existing stopRecording handler to show the upload options
     document.getElementById('stopRecording').addEventListener('click', () => {
       if (mediaRecorder && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
       }
+      
+      // Store the recording blob
+      recordingBlob = new Blob(recordedChunks, { type: 'video/webm' });
+      
+      // Show the upload options
+      document.querySelector('.drive-upload').style.display = 'block';
+      
+      // Initialize Google Auth when first needed
+      if (!tokenClient) {
+        initializeGoogleAuth();
+      }
+    });
 
-      // Update button states
-      document.getElementById('startRecording').disabled = false;
-      document.getElementById('pauseRecording').disabled = true;
-      document.getElementById('resumeRecording').disabled = true;
-      document.getElementById('stopRecording').disabled = true;
+    // Initialize when page loads
+    window.addEventListener('load', () => {
+      // Load the Google API client
+      const script = document.createElement('script');
+      script.src = 'https://apis.google.com/js/api.js';
+      script.onload = () => {
+        gapi.load('client', () => {
+          gapi.client.init({}).then(() => {
+            console.log('Google API client initialized');
+          });
+        });
+      };
+      document.head.appendChild(script);
     });
   </script>
-
-</body></html>
+</body>
+</html>
