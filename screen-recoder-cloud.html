@@ -6,6 +6,9 @@
   <!-- Add Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Add Google API client -->
+  <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
+<meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
+  
   <script src="https://apis.google.com/js/api.js"></script>
   <script src="https://accounts.google.com/gsi/client"></script>
   
@@ -227,7 +230,7 @@
     const driveUploadSection = document.getElementById('driveUploadSection');
     
     // Initialize Google Auth
-    function initializeGoogleAuth() {
+  function initializeGoogleAuth() {
       tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
         scope: 'https://www.googleapis.com/auth/drive.file',
@@ -241,11 +244,13 @@
         },
         error_callback: (error) => {
           showStatus('Authentication error: ' + error.message, 'error');
-        }
+        },
+        prompt: '' // This prevents popup issues
       });
       
       authButton.addEventListener('click', () => {
-        tokenClient.requestAccessToken();
+        // Use redirect instead of popup
+        tokenClient.requestAccessToken({prompt: 'consent'});
       });
     }
     
