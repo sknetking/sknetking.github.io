@@ -1,45 +1,198 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Screen Recorder with Google Drive Upload</title>
+  <title>Enhanced Screen Recorder</title>
+  <!-- Add Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Add Google API client -->
+  <script src="https://apis.google.com/js/api.js"></script>
   <script src="https://accounts.google.com/gsi/client"></script>
+  
   <style>
-    /* Your existing CSS styles here */
-    .drive-upload {
-      margin-top: 15px;
-      display: none;
+    /* General Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    
+    /* Recorder Container */
+    .recorder-container {
+      text-align: center;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 600px;
+    }
+    
+    /* Audio Check */
+    .audio-check {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      font-size: 18px;
+      color: #2c3e50;
+    }
+    .audio-check input {
+      margin-right: 10px;
+    }
+    .audio-check i {
+      margin-right: 5px;
+      color: #1abc9c;
+    }
+    
+    /* Buttons */
+    .controls {
+      margin: 10px 0;
+    }
+    .btn {
+      background-color: #3498db;
+      color: #fff;
+      border: none;
+      padding: 5px 10px;
+      margin: 5px;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: background-color 0.3s ease;
+    }
+    .btn i {
+      font-size: 18px;
+    }
+    .btn:hover {
+      background-color: #1a9900;
+    }
+    .btn:disabled {
+      background-color: #bdc3c7;
+      cursor: not-allowed;
+    }
+    
+    /* Video Previews */
+    video {
+      width: 100%;
+      max-width: 600px;
+      margin: 15px 0;
+      border: 1px solid #2c3e50;
+      border-radius: 5px;
+    }
+    
+    /* Download Link */
+    .download-link {
+      text-decoration: none;
+      font-size: 18px;
+      color: #1abc9c;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: color 0.3s ease;
+    }
+    .download-link:hover {
+      color: #16a085;
+    }
+    
+    .audio-check input:checked {
+      background: aqua;
+      margin-right: 10px;
+      height: 18px;
+      width: 18px;
+      border: solid black 2px;
+    }
+    .audio-check input {
+      margin-right: 10px;
+      height: 18px;
+      width: 18px;
+      border: solid black 2px;
+    }
+    
+    /* Status messages */
     .status {
       margin: 10px 0;
       padding: 10px;
       border-radius: 5px;
+      display: none;
     }
-    .success {
+    .status.success {
       background-color: #d4edda;
       color: #155724;
+      display: block;
     }
-    .error {
+    .status.error {
       background-color: #f8d7da;
       color: #721c24;
+      display: block;
+    }
+    
+    /* Folder selection */
+    .folder-selection {
+      margin: 15px 0;
+      display: none;
+    }
+    #folderSelect {
+      padding: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      margin-right: 10px;
     }
   </style>
 </head>
+  
 <body>
   <div class="recorder-container">
-    <!-- Your existing recorder UI here -->
+    <label class="audio-check">
+      <input type="checkbox" id="audioToggle" checked="">
+      <i class="fas fa-microphone"></i> Include Audio
+    </label>
     
-    <div class="drive-upload">
-      <button id="authButton" class="btn">
-        <i class="fab fa-google"></i> Sign in with Google
+    <div class="controls">
+      <button id="startRecording" class="btn start">
+        <i class="fas fa-circle"></i> Start Recording
       </button>
-      <button id="uploadButton" class="btn" disabled>
-        <i class="fab fa-google-drive"></i> Upload to Drive
+      <button id="pauseRecording" class="btn pause" disabled="">
+        <i class="fas fa-pause"></i> Pause
       </button>
-      <div id="status" class="status"></div>
+      <button id="resumeRecording" class="btn resume" disabled="">
+        <i class="fas fa-play"></i> Resume
+      </button>
+      <button id="stopRecording" class="btn stop" disabled="">
+        <i class="fas fa-square"></i> Stop Recording
+      </button>
     </div>
+    
+    <video id="livePreview" autoplay="" muted="" style="display: none;"></video>
+    <video id="videoPreview" controls="" style="display: none;"></video>
+    
+    <div class="folder-selection">
+      <h3>Upload to Google Drive</h3>
+      <select id="folderSelect">
+        <option value="root">Root Folder</option>
+      </select>
+      <button id="uploadDrive" class="btn">
+        <i class="fab fa-google-drive"></i> Upload
+      </button>
+      <button id="signInButton" class="btn" style="display: none;">
+        <i class="fab fa-google"></i> Sign in to Google
+      </button>
+    </div>
+    
+    <div id="status" class="status"></div>
+    
+    <a id="downloadLink" href="#" download="recording.webm" style="display: none;" class="download-link">
+      <i class="fas fa-download"></i> Download Recording
+    </a>
   </div>
 
  <script>
