@@ -1,12 +1,11 @@
-<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>P2P Chat with Audio Calling</title>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <style>
-        body {
+      body {
             font-family: Arial, sans-serif;
             max-width: 800px;
             margin: 0 auto;
@@ -94,44 +93,6 @@
             background: #f0f0f0;
             border-radius: 5px;
         }
-        .peers-panel {
-            background: #f0f0f0;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        #peersList {
-            max-height: 200px;
-            overflow-y: auto;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            background: white;
-            border-radius: 4px;
-        }
-        .peer-item {
-            padding: 8px;
-            margin: 5px;
-            cursor: pointer;
-            border-bottom: 1px solid #eee;
-        }
-        .peer-item:hover {
-            background-color: #e6f2ff;
-        }
-        .peer-name {
-            font-weight: bold;
-        }
-        .peer-id {
-            color: #666;
-            font-size: 0.8em;
-        }
-        .peer-status {
-            float: right;
-            font-size: 0.8em;
-            color: #34a853;
-        }
-        .peer-offline {
-            color: #ea4335;
-        }
     </style>
 </head>
 <body>
@@ -141,16 +102,18 @@
         <div class="control-panel">
             <div class="peer-info">
                 <div>Your ID: <span id="yourId">Generating...</span></div>
-                <div>Your Name: <input type="text" id="userNameInput" placeholder="Your name"></div>
                 <div>Connected to: <span id="peerName">None</span></div>
             </div>
-        </div>
-        
-        <div class="peers-panel">
-            <h3>Available Peers</h3>
-            <div id="peersList">Loading peers...</div>
-            <button id="refreshPeersBtn">Refresh List</button>
-            <small>Peers will appear when they're online</small>
+            
+            <div>
+                <input type="text" id="customIdInput" placeholder="Custom ID">
+                <button id="setCustomIdBtn">Set Custom ID</button>
+            </div>
+            
+            <div>
+              Peer ID to connect  <input type="text" id="peerIdInput" placeholder="Peer ID to connect" value='shyam'>
+                <button id="connectBtn">Connect</button>
+            </div>
         </div>
         
         <div id="messages"></div>
@@ -174,36 +137,32 @@
         <div class="audio-container">
             <audio id="remoteAudio" controls></audio>
         </div>
-        
-        <audio id="myAudio" style='display:none;' controls loop>
-            <source src="https://github.com/sknetking/useascdn/raw/refs/heads/main/original-phone-ringtone.mp3" type="audio/ogg">
-            <source src="https://github.com/sknetking/useascdn/raw/refs/heads/main/original-phone-ringtone.mp3" type="audio/mpeg">
-            Your browser does not support the audio element.
-        </audio>
+ <audio id="myAudio" style='display:none;' controls loop>
+  <source src="https://github.com/sknetking/useascdn/raw/refs/heads/main/original-phone-ringtone.mp3" type="audio/ogg">
+  <source src="https://github.com/sknetking/useascdn/raw/refs/heads/main/original-phone-ringtone.mp3" type="audio/mpeg">
+Your browser does not support the audio element.
+</audio>
+      
     </div>
-    
-    <h2>How to use it</h2>
-    <p>
-        <b>P2P Chat with Audio Calling</b><br>
-        This is a simple peer-to-peer chat demo app with built-in audio calling. To use it, both users open the same link,<br>
-        enter their name, and select a peer from the list to connect. Once connected,<br>
-        they can exchange messages and start an audio call in real-time — no server needed for chat or calling.<br>
-    </p>
-    <mark>Note: Your chat data is not stored anywhere and your audio is end-to-end encrypted. This is a serverless WebRTC application.</mark>
-
+<h2> How to use it</h2>
+<p>
+<b>P2P Chat with Audio Calling</b><br>
+This is a simple peer-to-peer chat demo app with built-in audio calling. To use it, both users open the same link,<br>
+    enter their own ID, and then connect by entering the other person's ID. Once connected,<br>
+    they can exchange messages and start an audio call in real-time — no server needed for chat or calling.<br>
+</p>
+<mark> Note :Your chat data not store any where and your audio also. It end to end chat app without server working on Web RTC concept. </mark>
     <script>
-   // Configuration
-const GIST_ID = 'bdbdba4a9f0494c4f04615b0fd4dcc99'; // Replace with your Gist ID
-const GIST_FILENAME = 'mydb.json';
-const PEER_UPDATE_INTERVAL = 30000; // 30 seconds
-const GIST_TOKEN = ''; // Add your GitHub personal access token here
-
-// DOM elements
+    // DOM elements
 const yourIdEl = document.getElementById('yourId');
 const peerNameEl = document.getElementById('peerName');
+const peerIdInput = document.getElementById('peerIdInput');
+const connectBtn = document.getElementById('connectBtn');
 const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
 const messagesEl = document.getElementById('messages');
+const customIdInput = document.getElementById('customIdInput');
+const setCustomIdBtn = document.getElementById('setCustomIdBtn');
 const callBtn = document.getElementById('callBtn');
 const endCallBtn = document.getElementById('endCallBtn');
 const callNotification = document.getElementById('callNotification');
@@ -212,80 +171,38 @@ const rejectCallBtn = document.getElementById('rejectCallBtn');
 const callerNameEl = document.getElementById('callerName');
 const remoteAudio = document.getElementById('remoteAudio');
 const audio = document.getElementById("myAudio");
-const peersListEl = document.getElementById('peersList');
-const refreshPeersBtn = document.getElementById('refreshPeersBtn');
-const userNameInput = document.getElementById('userNameInput');
 
-// Application state
 let peer;
 let conn;
 let currentStream;
 let call;
 let incomingCall = null;
-let myPeerInfo = {
-    id: '',
-    name: '',
-    lastSeen: 0
-};
-let knownPeers = {};
-let peerUpdateInterval;
-let remotePeerName = '';
 const STORAGE_KEY = 'peerjs_custom_id';
 const NAME_STORAGE_KEY = 'peerjs_custom_name';
+let currentPeerName = '';
+let remotePeerName = '';
 
-// Initialize the application
-initialize();
+function playAudio() {
+    audio.play();
+}
+function stopAudio() {
+    audio.pause();
+    audio.currentTime = 0;
+}
 
 function initialize() {
-    // Load saved name if exists
+    const storedId = localStorage.getItem(STORAGE_KEY);
     const storedName = localStorage.getItem(NAME_STORAGE_KEY);
-    if (storedName) {
-        userNameInput.value = storedName;
-        myPeerInfo.name = storedName;
-    }
-    
-    // Set up event listeners
-    userNameInput.addEventListener('change', updateUserName);
-    refreshPeersBtn.addEventListener('click', updatePeerPresence);
-    sendBtn.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
-    });
-    callBtn.addEventListener('click', startCall);
-    endCallBtn.addEventListener('click', endCall);
-    answerCallBtn.addEventListener('click', answerCall);
-    rejectCallBtn.addEventListener('click', rejectCall);
-    
-    // Initialize PeerJS connection
-    createPeerConnection();
+
+    if (storedId) customIdInput.value = storedId;
+    if (storedName) currentPeerName = storedName;
+
+    createPeerConnection(storedId || undefined);
 }
 
-function updateUserName() {
-    const newName = userNameInput.value.trim();
-    if (newName) {
-        myPeerInfo.name = newName;
-        localStorage.setItem(NAME_STORAGE_KEY, newName);
-        
-        // Update in Gist if we're already registered
-        if (myPeerInfo.id) {
-            updatePeerPresence();
-        }
-        
-        // Update current connection if exists
-        if (conn && conn.open) {
-            conn.send(JSON.stringify({ type: 'name', name: newName }));
-        }
-    }
-}
-
-function createPeerConnection(customId) {
+function createPeerConnection(peerId) {
     if (peer && !peer.destroyed) peer.destroy();
-    
-    // Try to use stored ID or generate new one
-    const peerId = customId || localStorage.getItem(STORAGE_KEY) || 
-                  Math.random().toString(36).substring(2, 10) + 
-                  Math.random().toString(36).substring(2, 10);
-    
+
     peer = new Peer(peerId, {
         host: '0.peerjs.com',
         port: 443,
@@ -301,35 +218,28 @@ function createPeerConnection(customId) {
                     credential: 'webrtc',
                     username: 'webrtc@live.com'
                 }
+                // Replace above with your own TURN server in production
             ]
         }
     });
-    
+
     peer.on('open', id => {
         yourIdEl.textContent = id;
-        myPeerInfo.id = id;
         localStorage.setItem(STORAGE_KEY, id);
         logMessage(`✅ Your ID: ${id}`);
-        
-        // Start peer discovery
-        startPeerDiscovery();
     });
-    
+
     peer.on('connection', connection => {
         conn = connection;
         setupConnection();
-        
-        // Exchange names
+
         setTimeout(() => {
             if (conn.open) {
-                conn.send(JSON.stringify({ 
-                    type: 'name', 
-                    name: myPeerInfo.name || myPeerInfo.id 
-                }));
+                conn.send(JSON.stringify({ type: 'name-request', name: currentPeerName }));
             }
         }, 500);
     });
-    
+
     peer.on('call', incoming => {
         incomingCall = incoming;
         callerNameEl.textContent = remotePeerName || incoming.peer;
@@ -337,183 +247,44 @@ function createPeerConnection(customId) {
         playAudio();
         logMessage("📞 Incoming call...");
     });
-    
+
     peer.on('error', err => {
         console.error(err);
         if (err.type === 'unavailable-id') {
-            logMessage(`❌ ID "${customId}" is already taken. Generating new ID...`);
+            logMessage(`❌ ID "${customIdInput.value}" is already taken.`);
             localStorage.removeItem(STORAGE_KEY);
-            createPeerConnection(); // Try again with new ID
         } else {
             logMessage(`❌ PeerJS error: ${err.type}`);
         }
     });
-    
-    peer.on('disconnected', () => {
-        logMessage("⚠️ Connection lost. Attempting to reconnect...");
-        peer.reconnect();
-    });
-    
-    peer.on('close', () => {
-        logMessage("❌ Peer connection closed");
-    });
 }
 
-function startPeerDiscovery() {
-    // Update immediately and then at regular intervals
-    updatePeerPresence();
-    peerUpdateInterval = setInterval(updatePeerPresence, PEER_UPDATE_INTERVAL);
-}
+function setCustomId() {
+    const customId = customIdInput.value.trim();
 
-async function updatePeerPresence() {
-    if (!myPeerInfo.id) return;
-    
-    myPeerInfo.lastSeen = Date.now();
-    peersListEl.innerHTML = 'Loading peers...';
-    
-    try {
-        // First try to get existing gist
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-        
-        const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-            signal: controller.signal,
-            headers: GIST_TOKEN ? {
-                'Authorization': `token ${GIST_TOKEN}`
-            } : {}
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-            if (response.status === 404) {
-                throw new Error('Gist not found. Check your GIST_ID');
-            }
-            if (response.status === 403) {
-                if (response.headers.get('x-ratelimit-remaining') === '0') {
-                    throw new Error('GitHub API rate limit exceeded');
-                }
-                throw new Error('Forbidden. Check your GIST_TOKEN');
-            }
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const gist = await response.json();
-        
-        let peers = {};
-        if (gist.files && gist.files[GIST_FILENAME]) {
-            try {
-                peers = JSON.parse(gist.files[GIST_FILENAME].content);
-            } catch (e) {
-                console.error('Error parsing peers JSON:', e);
-                peers = {};
-            }
-        }
-        
-        // Update with our info
-        peers[myPeerInfo.id] = {
-            name: myPeerInfo.name || myPeerInfo.id,
-            lastSeen: myPeerInfo.lastSeen
-        };
-        
-        // Clean up old peers (older than 5 minutes)
-        const now = Date.now();
-        Object.keys(peers).forEach(peerId => {
-            if (now - peers[peerId].lastSeen > 300000) {
-                delete peers[peerId];
-            }
-        });
-        
-        // Prepare request options
-        const requestOptions = {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(GIST_TOKEN ? { 'Authorization': `token ${GIST_TOKEN}` } : {})
-            },
-            body: JSON.stringify({
-                files: {
-                    [GIST_FILENAME]: {
-                        content: JSON.stringify(peers, null, 2)
-                    }
-                }
-            })
-        };
-        
-        // Update the gist
-        const updateController = new AbortController();
-        const updateTimeoutId = setTimeout(() => updateController.abort(), 10000);
-        
-        const updateResponse = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-            ...requestOptions,
-            signal: updateController.signal
-        });
-        
-        clearTimeout(updateTimeoutId);
-        
-        if (!updateResponse.ok) {
-            throw new Error(`Failed to update gist: ${updateResponse.status}`);
-        }
-        
-        updatePeersList(peers);
-    } catch (err) {
-        console.error('Failed to update peer presence:', err);
-        let errorMsg = 'Failed to load peers. ';
-        
-        if (err.name === 'AbortError') {
-            errorMsg += 'Request timed out. Check your connection.';
-        } else if (err.message.includes('rate limit')) {
-            errorMsg += 'GitHub API rate limit exceeded. ' + 
-                      (GIST_TOKEN ? '' : 'Add a GIST_TOKEN for higher limits.');
-        } else {
-            errorMsg += err.message;
-        }
-        
-        peersListEl.innerHTML = errorMsg;
-        logMessage(`❌ ${errorMsg}`);
-    }
-}
-
-function updatePeersList(peers) {
-    knownPeers = peers;
-    
-    if (Object.keys(peers).length === 0) {
-        peersListEl.innerHTML = 'No other peers online';
+    if (!customId || !/^[a-zA-Z0-9\-_]+$/.test(customId)) {
+        alert('Custom ID is invalid.');
         return;
     }
-    
-    let peersHTML = '';
-    Object.keys(peers).forEach(peerId => {
-        if (peerId === myPeerInfo.id) return; // Don't show self
-        
-        const peer = peers[peerId];
-        const isOnline = (Date.now() - peer.lastSeen) < 120000; // 2 minutes
-        
-        peersHTML += `
-            <div class="peer-item" data-peer-id="${peerId}">
-                <div>
-                    <span class="peer-name">${peer.name || 'Anonymous'}</span>
-                    <span class="peer-status ${isOnline ? '' : 'peer-offline'}">
-                        ${isOnline ? 'online' : 'offline'}
-                    </span>
-                </div>
-                <div class="peer-id">${peerId}</div>
-            </div>
-        `;
-    });
-    
-    peersListEl.innerHTML = peersHTML || 'No other peers online';
-    
-    // Add click handlers
-    document.querySelectorAll('.peer-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const peerId = item.getAttribute('data-peer-id');
-            connectToPeer(peerId);
-        });
-    });
+
+    const existingName = localStorage.getItem(NAME_STORAGE_KEY);
+    if (!existingName) {
+        const name = prompt('Enter your display name:');
+        if (name) {
+            currentPeerName = name.trim();
+            localStorage.setItem(NAME_STORAGE_KEY, currentPeerName);
+        }
+    } else {
+        currentPeerName = existingName;
+    }
+
+    createPeerConnection(customId);
 }
 
-function connectToPeer(peerId) {
+connectBtn.onclick = () => {
+    const peerId = peerIdInput.value.trim();
+    if (!peerId) return;
+
     if (!peer.open) {
         logMessage("⏳ Waiting for peer to be ready...");
         peer.once('open', () => {
@@ -524,7 +295,7 @@ function connectToPeer(peerId) {
         conn = peer.connect(peerId);
         setupConnection();
     }
-}
+};
 
 function setupConnection() {
     conn.on('open', () => {
@@ -532,27 +303,35 @@ function setupConnection() {
         messageInput.disabled = false;
         sendBtn.disabled = false;
         callBtn.disabled = false;
-        
-        // Send our name
-        conn.send(JSON.stringify({ 
-            type: 'name', 
-            name: myPeerInfo.name || myPeerInfo.id 
-        }));
+
+        if (currentPeerName) {
+            conn.send(JSON.stringify({ type: 'name', name: currentPeerName }));
+        }
     });
-    
+
     conn.on('data', data => {
         try {
             const parsed = JSON.parse(data);
             if (parsed.type === 'name') {
                 remotePeerName = parsed.name;
                 peerNameEl.textContent = remotePeerName;
+                logMessage(`📛 Peer name: ${remotePeerName}`);
+            } else if (parsed.type === 'name-request') {
+                if (currentPeerName) {
+                    conn.send(JSON.stringify({ type: 'name', name: currentPeerName }));
+                }
+                if (parsed.name) {
+                    remotePeerName = parsed.name;
+                    peerNameEl.textContent = remotePeerName;
+                    logMessage(`📛 Peer name: ${remotePeerName}`);
+                }
             }
         } catch {
-            const displayName = remotePeerName ? `${remotePeerName}` : conn.peer;
-            logMessage(`${displayName}: ${data}`);
+            const displayName = remotePeerName ? `${remotePeerName} (${conn.peer})` : conn.peer;
+            logMessage(data, displayName);
         }
     });
-    
+
     conn.on('close', () => {
         logMessage("❌ Disconnected");
         messageInput.disabled = true;
@@ -563,43 +342,15 @@ function setupConnection() {
         callNotification.style.display = 'none';
         if (call) endCall();
     });
-    
+
     conn.on('error', err => {
         logMessage(`❌ Connection error: ${err}`);
     });
 }
 
-function sendMessage() {
-    const msg = messageInput.value.trim();
-    if (msg && conn?.open) {
-        conn.send(msg);
-        logMessage(`You: ${msg}`);
-        messageInput.value = '';
-    }
-}
-
-function logMessage(msg, from = null) {
-    const now = new Date().toLocaleTimeString();
-    const div = document.createElement('div');
-    div.innerHTML = from
-        ? `<small>[${now}]</small> <strong>${from}:</strong> ${msg}`
-        : `<small>[${now}]</small> ${msg}`;
-    messagesEl.appendChild(div);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-}
-
-function playAudio() {
-    audio.play().catch(e => console.log('Audio play failed:', e));
-}
-
-function stopAudio() {
-    audio.pause();
-    audio.currentTime = 0;
-}
-
-function answerCall() {
+answerCallBtn.onclick = () => {
     if (!incomingCall) return;
-    
+
     navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
         currentStream = stream;
         call = incomingCall;
@@ -607,15 +358,13 @@ function answerCall() {
         setupCall();
         callNotification.style.display = 'none';
         logMessage("📞 Call answered");
-        stopAudio();
     }).catch(err => {
         logMessage(`❌ Error accessing mic: ${err.message}`);
         callNotification.style.display = 'none';
-        stopAudio();
     });
-}
+};
 
-function rejectCall() {
+rejectCallBtn.onclick = () => {
     if (incomingCall) {
         incomingCall.close();
         incomingCall = null;
@@ -623,23 +372,7 @@ function rejectCall() {
     callNotification.style.display = 'none';
     logMessage("📞 Call rejected");
     stopAudio();
-}
-
-function startCall() {
-    if (!conn || !conn.open) {
-        logMessage("❌ Not connected to any peer");
-        return;
-    }
-    
-    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-        currentStream = stream;
-        call = peer.call(conn.peer, stream);
-        setupCall();
-        logMessage("📞 Calling...");
-    }).catch(err => {
-        logMessage(`❌ Cannot access mic: ${err.message}`);
-    });
-}
+};
 
 function setupCall() {
     call.on('stream', remoteStream => {
@@ -648,18 +381,36 @@ function setupCall() {
         callBtn.disabled = true;
         endCallBtn.disabled = false;
         logMessage("🎧 Connected to call");
+        stopAudio();
     });
-    
+
     call.on('close', () => {
         endCall();
         logMessage("📞 Call ended");
+        stopAudio();
     });
-    
+
     call.on('error', err => {
         logMessage(`❌ Call error: ${err.message}`);
         endCall();
     });
 }
+
+callBtn.onclick = () => {
+    if (!conn || !conn.open) {
+        logMessage("❌ Not connected to any peer");
+        return;
+    }
+
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        currentStream = stream;
+        call = peer.call(conn.peer, stream);
+        setupCall();
+        logMessage("📞 Calling...");
+    }).catch(err => {
+        logMessage(`❌ Cannot access mic: ${err.message}`);
+    });
+};
 
 function endCall() {
     if (call) {
@@ -675,13 +426,39 @@ function endCall() {
     remoteAudio.srcObject = null;
 }
 
-// Clean up on page unload
+sendBtn.onclick = () => {
+    const msg = messageInput.value.trim();
+    if (msg && conn?.open) {
+        conn.send(msg);
+        logMessage(`You: ${msg}`);
+        messageInput.value = '';
+    }
+};
+
+function logMessage(msg, from = null) {
+    const now = new Date().toLocaleTimeString();
+    const div = document.createElement('div');
+    div.innerHTML = from
+        ? `<small>[${now}]</small> <strong>${from}:</strong> ${msg}`
+        : `<small>[${now}]</small> ${msg}`;
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+// UI events
+setCustomIdBtn.onclick = setCustomId;
+customIdInput.addEventListener('keypress', e => { if (e.key === 'Enter') setCustomId(); });
+messageInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
+endCallBtn.onclick = endCall;
+
 window.addEventListener('beforeunload', () => {
     if (peer && !peer.destroyed) peer.destroy();
     if (conn && conn.open) conn.close();
     endCall();
-    clearInterval(peerUpdateInterval);
 });
+
+initialize();
+
     </script>
 </body>
 </html>
