@@ -391,7 +391,7 @@
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': 'token YOUR_GITHUB_TOKEN' // Will be replaced by GitHub Actions
+                    'Authorization': 'token ${GIST_TOKEN}' // Will be replaced by GitHub Actions
                 },
                 body: JSON.stringify({
                     files: {
