@@ -192,186 +192,222 @@
     <mark>Note: Your chat data is not stored anywhere and your audio is end-to-end encrypted. This is a serverless WebRTC application.</mark>
 
     <script>
-    // Configuration - YOU MUST SET THESE VALUES
-    const GIST_ID = 'bdbdba4a9f0494c4f04615b0fd4dcc99'; // Replace with your Gist ID
-    const GIST_FILENAME = 'mydb.json';
-    const PEER_UPDATE_INTERVAL = 30000; // 30 seconds
-    // const GIST_TOKEN = getGitHubToken();
-    // const GIST_ID = getGistId();
+   // Configuration
+const GIST_ID = 'bdbdba4a9f0494c4f04615b0fd4dcc99'; // Replace with your Gist ID
+const GIST_FILENAME = 'mydb.json';
+const PEER_UPDATE_INTERVAL = 30000; // 30 seconds
+const GIST_TOKEN = ''; // Add your GitHub personal access token here
 
-    // DOM elements
-    const yourIdEl = document.getElementById('yourId');
-    const peerNameEl = document.getElementById('peerName');
-    const messageInput = document.getElementById('messageInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const messagesEl = document.getElementById('messages');
-    const callBtn = document.getElementById('callBtn');
-    const endCallBtn = document.getElementById('endCallBtn');
-    const callNotification = document.getElementById('callNotification');
-    const answerCallBtn = document.getElementById('answerCallBtn');
-    const rejectCallBtn = document.getElementById('rejectCallBtn');
-    const callerNameEl = document.getElementById('callerName');
-    const remoteAudio = document.getElementById('remoteAudio');
-    const audio = document.getElementById("myAudio");
-    const peersListEl = document.getElementById('peersList');
-    const refreshPeersBtn = document.getElementById('refreshPeersBtn');
-    const userNameInput = document.getElementById('userNameInput');
-    
-    // Application state
-    let peer;
-    let conn;
-    let currentStream;
-    let call;
-    let incomingCall = null;
-    let myPeerInfo = {
-        id: '',
-        name: '',
-        lastSeen: 0
-    };
-    let knownPeers = {};
-    let peerUpdateInterval;
-    const STORAGE_KEY = 'peerjs_custom_id';
-    const NAME_STORAGE_KEY = 'peerjs_custom_name';
-    
-    // Initialize the application
-    initialize();
-    
-    function initialize() {
-        // Load saved name if exists
-        const storedName = localStorage.getItem(NAME_STORAGE_KEY);
-        if (storedName) {
-            userNameInput.value = storedName;
-            myPeerInfo.name = storedName;
-        }
-        
-        // Set up event listeners
-        userNameInput.addEventListener('change', updateUserName);
-        refreshPeersBtn.addEventListener('click', updatePeerPresence);
-        sendBtn.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
-        callBtn.addEventListener('click', startCall);
-        endCallBtn.addEventListener('click', endCall);
-        answerCallBtn.addEventListener('click', answerCall);
-        rejectCallBtn.addEventListener('click', rejectCall);
-        
-        // Initialize PeerJS connection
-        createPeerConnection();
+// DOM elements
+const yourIdEl = document.getElementById('yourId');
+const peerNameEl = document.getElementById('peerName');
+const messageInput = document.getElementById('messageInput');
+const sendBtn = document.getElementById('sendBtn');
+const messagesEl = document.getElementById('messages');
+const callBtn = document.getElementById('callBtn');
+const endCallBtn = document.getElementById('endCallBtn');
+const callNotification = document.getElementById('callNotification');
+const answerCallBtn = document.getElementById('answerCallBtn');
+const rejectCallBtn = document.getElementById('rejectCallBtn');
+const callerNameEl = document.getElementById('callerName');
+const remoteAudio = document.getElementById('remoteAudio');
+const audio = document.getElementById("myAudio");
+const peersListEl = document.getElementById('peersList');
+const refreshPeersBtn = document.getElementById('refreshPeersBtn');
+const userNameInput = document.getElementById('userNameInput');
+
+// Application state
+let peer;
+let conn;
+let currentStream;
+let call;
+let incomingCall = null;
+let myPeerInfo = {
+    id: '',
+    name: '',
+    lastSeen: 0
+};
+let knownPeers = {};
+let peerUpdateInterval;
+let remotePeerName = '';
+const STORAGE_KEY = 'peerjs_custom_id';
+const NAME_STORAGE_KEY = 'peerjs_custom_name';
+
+// Initialize the application
+initialize();
+
+function initialize() {
+    // Load saved name if exists
+    const storedName = localStorage.getItem(NAME_STORAGE_KEY);
+    if (storedName) {
+        userNameInput.value = storedName;
+        myPeerInfo.name = storedName;
     }
     
-    function updateUserName() {
-        const newName = userNameInput.value.trim();
-        if (newName) {
-            myPeerInfo.name = newName;
-            localStorage.setItem(NAME_STORAGE_KEY, newName);
-            
-            // Update in Gist if we're already registered
-            if (myPeerInfo.id) {
-                updatePeerPresence();
-            }
-            
-            // Update current connection if exists
-            if (conn && conn.open) {
-                conn.send(JSON.stringify({ type: 'name', name: newName }));
-            }
+    // Set up event listeners
+    userNameInput.addEventListener('change', updateUserName);
+    refreshPeersBtn.addEventListener('click', updatePeerPresence);
+    sendBtn.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+    callBtn.addEventListener('click', startCall);
+    endCallBtn.addEventListener('click', endCall);
+    answerCallBtn.addEventListener('click', answerCall);
+    rejectCallBtn.addEventListener('click', rejectCall);
+    
+    // Initialize PeerJS connection
+    createPeerConnection();
+}
+
+function updateUserName() {
+    const newName = userNameInput.value.trim();
+    if (newName) {
+        myPeerInfo.name = newName;
+        localStorage.setItem(NAME_STORAGE_KEY, newName);
+        
+        // Update in Gist if we're already registered
+        if (myPeerInfo.id) {
+            updatePeerPresence();
+        }
+        
+        // Update current connection if exists
+        if (conn && conn.open) {
+            conn.send(JSON.stringify({ type: 'name', name: newName }));
         }
     }
+}
+
+function createPeerConnection(customId) {
+    if (peer && !peer.destroyed) peer.destroy();
     
-    function createPeerConnection(customId) {
-        if (peer && !peer.destroyed) peer.destroy();
-        
-        peer = new Peer(customId, {
-            host: '0.peerjs.com',
-            port: 443,
-            path: '/',
-            secure: true,
-            debug: 2,
-            config: {
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' },
-                    {
-                        urls: 'turn:numb.viagenie.ca',
-                        credential: 'webrtc',
-                        username: 'webrtc@live.com'
-                    }
-                ]
-            }
-        });
-        
-        peer.on('open', id => {
-            yourIdEl.textContent = id;
-            myPeerInfo.id = id;
-            localStorage.setItem(STORAGE_KEY, id);
-            logMessage(`✅ Your ID: ${id}`);
-            
-            // Start peer discovery
-            startPeerDiscovery();
-        });
-        
-        peer.on('connection', connection => {
-            conn = connection;
-            setupConnection();
-            
-            // Exchange names
-            setTimeout(() => {
-                if (conn.open) {
-                    conn.send(JSON.stringify({ 
-                        type: 'name', 
-                        name: myPeerInfo.name || myPeerInfo.id 
-                    }));
+    // Try to use stored ID or generate new one
+    const peerId = customId || localStorage.getItem(STORAGE_KEY) || 
+                  Math.random().toString(36).substring(2, 10) + 
+                  Math.random().toString(36).substring(2, 10);
+    
+    peer = new Peer(peerId, {
+        host: '0.peerjs.com',
+        port: 443,
+        path: '/',
+        secure: true,
+        debug: 2,
+        config: {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                {
+                    urls: 'turn:numb.viagenie.ca',
+                    credential: 'webrtc',
+                    username: 'webrtc@live.com'
                 }
-            }, 500);
-        });
+            ]
+        }
+    });
+    
+    peer.on('open', id => {
+        yourIdEl.textContent = id;
+        myPeerInfo.id = id;
+        localStorage.setItem(STORAGE_KEY, id);
+        logMessage(`✅ Your ID: ${id}`);
         
-        peer.on('call', incoming => {
-            incomingCall = incoming;
-            callerNameEl.textContent = remotePeerName || incoming.peer;
-            callNotification.style.display = 'block';
-            playAudio();
-            logMessage("📞 Incoming call...");
-        });
+        // Start peer discovery
+        startPeerDiscovery();
+    });
+    
+    peer.on('connection', connection => {
+        conn = connection;
+        setupConnection();
         
-        peer.on('error', err => {
-            console.error(err);
-            if (err.type === 'unavailable-id') {
-                logMessage(`❌ ID "${customId}" is already taken.`);
-                localStorage.removeItem(STORAGE_KEY);
-            } else {
-                logMessage(`❌ PeerJS error: ${err.type}`);
+        // Exchange names
+        setTimeout(() => {
+            if (conn.open) {
+                conn.send(JSON.stringify({ 
+                    type: 'name', 
+                    name: myPeerInfo.name || myPeerInfo.id 
+                }));
             }
-        });
-        
-        peer.on('disconnected', () => {
-            logMessage("⚠️ Connection lost. Attempting to reconnect...");
-            peer.reconnect();
-        });
-        
-        peer.on('close', () => {
-            logMessage("❌ Peer connection closed");
-        });
-    }
+        }, 500);
+    });
     
-    function startPeerDiscovery() {
-        // Update immediately and then at regular intervals
-        updatePeerPresence();
-        peerUpdateInterval = setInterval(updatePeerPresence, PEER_UPDATE_INTERVAL);
-    }
+    peer.on('call', incoming => {
+        incomingCall = incoming;
+        callerNameEl.textContent = remotePeerName || incoming.peer;
+        callNotification.style.display = 'block';
+        playAudio();
+        logMessage("📞 Incoming call...");
+    });
     
-    async function updatePeerPresence() {
+    peer.on('error', err => {
+        console.error(err);
+        if (err.type === 'unavailable-id') {
+            logMessage(`❌ ID "${customId}" is already taken. Generating new ID...`);
+            localStorage.removeItem(STORAGE_KEY);
+            createPeerConnection(); // Try again with new ID
+        } else {
+            logMessage(`❌ PeerJS error: ${err.type}`);
+        }
+    });
+    
+    peer.on('disconnected', () => {
+        logMessage("⚠️ Connection lost. Attempting to reconnect...");
+        peer.reconnect();
+    });
+    
+    peer.on('close', () => {
+        logMessage("❌ Peer connection closed");
+    });
+}
+
+function startPeerDiscovery() {
+    // Update immediately and then at regular intervals
+    updatePeerPresence();
+    peerUpdateInterval = setInterval(updatePeerPresence, PEER_UPDATE_INTERVAL);
+}
+
+async function updatePeerPresence() {
     if (!myPeerInfo.id) return;
     
     myPeerInfo.lastSeen = Date.now();
+    peersListEl.innerHTML = 'Loading peers...';
     
     try {
         // First try to get existing gist
-        const response = await fetch(`https://api.github.com/gists/${GIST_ID}`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+        const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+            signal: controller.signal,
+            headers: GIST_TOKEN ? {
+                'Authorization': `token ${GIST_TOKEN}`
+            } : {}
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error('Gist not found. Check your GIST_ID');
+            }
+            if (response.status === 403) {
+                if (response.headers.get('x-ratelimit-remaining') === '0') {
+                    throw new Error('GitHub API rate limit exceeded');
+                }
+                throw new Error('Forbidden. Check your GIST_TOKEN');
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const gist = await response.json();
         
         let peers = {};
         if (gist.files && gist.files[GIST_FILENAME]) {
-            peers = JSON.parse(gist.files[GIST_FILENAME].content);
+            try {
+                peers = JSON.parse(gist.files[GIST_FILENAME].content);
+            } catch (e) {
+                console.error('Error parsing peers JSON:', e);
+                peers = {};
+            }
         }
         
         // Update with our info
@@ -383,7 +419,7 @@
         // Clean up old peers (older than 5 minutes)
         const now = Date.now();
         Object.keys(peers).forEach(peerId => {
-            if (now - peers[peerId].lastSeen > 300000) { // 5 minutes
+            if (now - peers[peerId].lastSeen > 300000) {
                 delete peers[peerId];
             }
         });
@@ -393,8 +429,7 @@
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
-                // Uncomment below if you need authentication
-             'Authorization': `token ${GIST_TOKEN`
+                ...(GIST_TOKEN ? { 'Authorization': `token ${GIST_TOKEN}` } : {})
             },
             body: JSON.stringify({
                 files: {
@@ -405,7 +440,16 @@
             })
         };
         
-        const updateResponse = await fetch(`https://api.github.com/gists/${GIST_ID}`, requestOptions);
+        // Update the gist
+        const updateController = new AbortController();
+        const updateTimeoutId = setTimeout(() => updateController.abort(), 10000);
+        
+        const updateResponse = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+            ...requestOptions,
+            signal: updateController.signal
+        });
+        
+        clearTimeout(updateTimeoutId);
         
         if (!updateResponse.ok) {
             throw new Error(`Failed to update gist: ${updateResponse.status}`);
@@ -414,218 +458,230 @@
         updatePeersList(peers);
     } catch (err) {
         console.error('Failed to update peer presence:', err);
-        peersListEl.innerHTML = 'Failed to load peers. Refresh to try again.';
+        let errorMsg = 'Failed to load peers. ';
+        
+        if (err.name === 'AbortError') {
+            errorMsg += 'Request timed out. Check your connection.';
+        } else if (err.message.includes('rate limit')) {
+            errorMsg += 'GitHub API rate limit exceeded. ' + 
+                      (GIST_TOKEN ? '' : 'Add a GIST_TOKEN for higher limits.');
+        } else {
+            errorMsg += err.message;
+        }
+        
+        peersListEl.innerHTML = errorMsg;
+        logMessage(`❌ ${errorMsg}`);
     }
 }
+
+function updatePeersList(peers) {
+    knownPeers = peers;
     
-    function updatePeersList(peers) {
-        knownPeers = peers;
-        
-        if (Object.keys(peers).length === 0) {
-            peersListEl.innerHTML = 'No other peers online';
-            return;
-        }
-        
-        let peersHTML = '';
-        Object.keys(peers).forEach(peerId => {
-            if (peerId === myPeerInfo.id) return; // Don't show self
-            
-            const peer = peers[peerId];
-            const isOnline = (Date.now() - peer.lastSeen) < 120000; // 2 minutes
-            
-            peersHTML += `
-                <div class="peer-item" data-peer-id="${peerId}">
-                    <div>
-                        <span class="peer-name">${peer.name || 'Anonymous'}</span>
-                        <span class="peer-status ${isOnline ? '' : 'peer-offline'}">
-                            ${isOnline ? 'online' : 'offline'}
-                        </span>
-                    </div>
-                    <div class="peer-id">${peerId}</div>
-                </div>
-            `;
-        });
-        
-        peersListEl.innerHTML = peersHTML || 'No other peers online';
-        
-        // Add click handlers
-        document.querySelectorAll('.peer-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const peerId = item.getAttribute('data-peer-id');
-                connectToPeer(peerId);
-            });
-        });
+    if (Object.keys(peers).length === 0) {
+        peersListEl.innerHTML = 'No other peers online';
+        return;
     }
     
-    function connectToPeer(peerId) {
-        if (!peer.open) {
-            logMessage("⏳ Waiting for peer to be ready...");
-            peer.once('open', () => {
-                conn = peer.connect(peerId);
-                setupConnection();
-            });
-        } else {
+    let peersHTML = '';
+    Object.keys(peers).forEach(peerId => {
+        if (peerId === myPeerInfo.id) return; // Don't show self
+        
+        const peer = peers[peerId];
+        const isOnline = (Date.now() - peer.lastSeen) < 120000; // 2 minutes
+        
+        peersHTML += `
+            <div class="peer-item" data-peer-id="${peerId}">
+                <div>
+                    <span class="peer-name">${peer.name || 'Anonymous'}</span>
+                    <span class="peer-status ${isOnline ? '' : 'peer-offline'}">
+                        ${isOnline ? 'online' : 'offline'}
+                    </span>
+                </div>
+                <div class="peer-id">${peerId}</div>
+            </div>
+        `;
+    });
+    
+    peersListEl.innerHTML = peersHTML || 'No other peers online';
+    
+    // Add click handlers
+    document.querySelectorAll('.peer-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const peerId = item.getAttribute('data-peer-id');
+            connectToPeer(peerId);
+        });
+    });
+}
+
+function connectToPeer(peerId) {
+    if (!peer.open) {
+        logMessage("⏳ Waiting for peer to be ready...");
+        peer.once('open', () => {
             conn = peer.connect(peerId);
             setupConnection();
-        }
-    }
-    
-    function setupConnection() {
-        conn.on('open', () => {
-            logMessage("🔌 Connected to peer!");
-            messageInput.disabled = false;
-            sendBtn.disabled = false;
-            callBtn.disabled = false;
-            
-            // Send our name
-            conn.send(JSON.stringify({ 
-                type: 'name', 
-                name: myPeerInfo.name || myPeerInfo.id 
-            }));
         });
-        
-        conn.on('data', data => {
-            try {
-                const parsed = JSON.parse(data);
-                if (parsed.type === 'name') {
-                    remotePeerName = parsed.name;
-                    peerNameEl.textContent = remotePeerName;
-                }
-            } catch {
-                const displayName = remotePeerName ? `${remotePeerName}` : conn.peer;
-                logMessage(`${displayName}: ${data}`);
-            }
-        });
-        
-        conn.on('close', () => {
-            logMessage("❌ Disconnected");
-            messageInput.disabled = true;
-            sendBtn.disabled = true;
-            callBtn.disabled = true;
-            endCallBtn.disabled = true;
-            peerNameEl.textContent = 'None';
-            callNotification.style.display = 'none';
-            if (call) endCall();
-        });
-        
-        conn.on('error', err => {
-            logMessage(`❌ Connection error: ${err}`);
-        });
+    } else {
+        conn = peer.connect(peerId);
+        setupConnection();
     }
-    
-    function sendMessage() {
-        const msg = messageInput.value.trim();
-        if (msg && conn?.open) {
-            conn.send(msg);
-            logMessage(`You: ${msg}`);
-            messageInput.value = '';
-        }
-    }
-    
-    function logMessage(msg, from = null) {
-        const now = new Date().toLocaleTimeString();
-        const div = document.createElement('div');
-        div.innerHTML = from
-            ? `<small>[${now}]</small> <strong>${from}:</strong> ${msg}`
-            : `<small>[${now}]</small> ${msg}`;
-        messagesEl.appendChild(div);
-        messagesEl.scrollTop = messagesEl.scrollHeight;
-    }
-    
-    function playAudio() {
-        audio.play().catch(e => console.log('Audio play failed:', e));
-    }
-    
-    function stopAudio() {
-        audio.pause();
-        audio.currentTime = 0;
-    }
-    
-    function answerCall() {
-        if (!incomingCall) return;
-        
-        navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-            currentStream = stream;
-            call = incomingCall;
-            call.answer(stream);
-            setupCall();
-            callNotification.style.display = 'none';
-            logMessage("📞 Call answered");
-            stopAudio();
-        }).catch(err => {
-            logMessage(`❌ Error accessing mic: ${err.message}`);
-            callNotification.style.display = 'none';
-            stopAudio();
-        });
-    }
-    
-    function rejectCall() {
-        if (incomingCall) {
-            incomingCall.close();
-            incomingCall = null;
-        }
-        callNotification.style.display = 'none';
-        logMessage("📞 Call rejected");
-        stopAudio();
-    }
-    
-    function startCall() {
-        if (!conn || !conn.open) {
-            logMessage("❌ Not connected to any peer");
-            return;
-        }
-        
-        navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-            currentStream = stream;
-            call = peer.call(conn.peer, stream);
-            setupCall();
-            logMessage("📞 Calling...");
-        }).catch(err => {
-            logMessage(`❌ Cannot access mic: ${err.message}`);
-        });
-    }
-    
-    function setupCall() {
-        call.on('stream', remoteStream => {
-            remoteAudio.srcObject = remoteStream;
-            remoteAudio.play().catch(e => console.warn('Audio play failed:', e));
-            callBtn.disabled = true;
-            endCallBtn.disabled = false;
-            logMessage("🎧 Connected to call");
-        });
-        
-        call.on('close', () => {
-            endCall();
-            logMessage("📞 Call ended");
-        });
-        
-        call.on('error', err => {
-            logMessage(`❌ Call error: ${err.message}`);
-            endCall();
-        });
-    }
-    
-    function endCall() {
-        if (call) {
-            call.close();
-            call = null;
-        }
-        if (currentStream) {
-            currentStream.getTracks().forEach(t => t.stop());
-            currentStream = null;
-        }
+}
+
+function setupConnection() {
+    conn.on('open', () => {
+        logMessage("🔌 Connected to peer!");
+        messageInput.disabled = false;
+        sendBtn.disabled = false;
         callBtn.disabled = false;
+        
+        // Send our name
+        conn.send(JSON.stringify({ 
+            type: 'name', 
+            name: myPeerInfo.name || myPeerInfo.id 
+        }));
+    });
+    
+    conn.on('data', data => {
+        try {
+            const parsed = JSON.parse(data);
+            if (parsed.type === 'name') {
+                remotePeerName = parsed.name;
+                peerNameEl.textContent = remotePeerName;
+            }
+        } catch {
+            const displayName = remotePeerName ? `${remotePeerName}` : conn.peer;
+            logMessage(`${displayName}: ${data}`);
+        }
+    });
+    
+    conn.on('close', () => {
+        logMessage("❌ Disconnected");
+        messageInput.disabled = true;
+        sendBtn.disabled = true;
+        callBtn.disabled = true;
         endCallBtn.disabled = true;
-        remoteAudio.srcObject = null;
+        peerNameEl.textContent = 'None';
+        callNotification.style.display = 'none';
+        if (call) endCall();
+    });
+    
+    conn.on('error', err => {
+        logMessage(`❌ Connection error: ${err}`);
+    });
+}
+
+function sendMessage() {
+    const msg = messageInput.value.trim();
+    if (msg && conn?.open) {
+        conn.send(msg);
+        logMessage(`You: ${msg}`);
+        messageInput.value = '';
+    }
+}
+
+function logMessage(msg, from = null) {
+    const now = new Date().toLocaleTimeString();
+    const div = document.createElement('div');
+    div.innerHTML = from
+        ? `<small>[${now}]</small> <strong>${from}:</strong> ${msg}`
+        : `<small>[${now}]</small> ${msg}`;
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function playAudio() {
+    audio.play().catch(e => console.log('Audio play failed:', e));
+}
+
+function stopAudio() {
+    audio.pause();
+    audio.currentTime = 0;
+}
+
+function answerCall() {
+    if (!incomingCall) return;
+    
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        currentStream = stream;
+        call = incomingCall;
+        call.answer(stream);
+        setupCall();
+        callNotification.style.display = 'none';
+        logMessage("📞 Call answered");
+        stopAudio();
+    }).catch(err => {
+        logMessage(`❌ Error accessing mic: ${err.message}`);
+        callNotification.style.display = 'none';
+        stopAudio();
+    });
+}
+
+function rejectCall() {
+    if (incomingCall) {
+        incomingCall.close();
+        incomingCall = null;
+    }
+    callNotification.style.display = 'none';
+    logMessage("📞 Call rejected");
+    stopAudio();
+}
+
+function startCall() {
+    if (!conn || !conn.open) {
+        logMessage("❌ Not connected to any peer");
+        return;
     }
     
-    // Clean up on page unload
-    window.addEventListener('beforeunload', () => {
-        if (peer && !peer.destroyed) peer.destroy();
-        if (conn && conn.open) conn.close();
-        endCall();
-        clearInterval(peerUpdateInterval);
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        currentStream = stream;
+        call = peer.call(conn.peer, stream);
+        setupCall();
+        logMessage("📞 Calling...");
+    }).catch(err => {
+        logMessage(`❌ Cannot access mic: ${err.message}`);
     });
+}
+
+function setupCall() {
+    call.on('stream', remoteStream => {
+        remoteAudio.srcObject = remoteStream;
+        remoteAudio.play().catch(e => console.warn('Audio play failed:', e));
+        callBtn.disabled = true;
+        endCallBtn.disabled = false;
+        logMessage("🎧 Connected to call");
+    });
+    
+    call.on('close', () => {
+        endCall();
+        logMessage("📞 Call ended");
+    });
+    
+    call.on('error', err => {
+        logMessage(`❌ Call error: ${err.message}`);
+        endCall();
+    });
+}
+
+function endCall() {
+    if (call) {
+        call.close();
+        call = null;
+    }
+    if (currentStream) {
+        currentStream.getTracks().forEach(t => t.stop());
+        currentStream = null;
+    }
+    callBtn.disabled = false;
+    endCallBtn.disabled = true;
+    remoteAudio.srcObject = null;
+}
+
+// Clean up on page unload
+window.addEventListener('beforeunload', () => {
+    if (peer && !peer.destroyed) peer.destroy();
+    if (conn && conn.open) conn.close();
+    endCall();
+    clearInterval(peerUpdateInterval);
+});
     </script>
 </body>
 </html>
