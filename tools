@@ -1,0 +1,302 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Tools Collection</title>
+<link href="https://fonts.googleapis.com/css?family=Poppins:300i,400,400i,500,600,700,800" rel="stylesheet">
+		<link href="fonts/font-awesome.min.css" rel="stylesheet">
+		<link rel="icon" href="images/favicon.jpg">
+		<link href="fonts/themify-icons.css" rel="stylesheet">
+		<link href="fonts/etline.css" rel="stylesheet">
+		<link href="css/plugins.css" rel="stylesheet">
+<!-- 		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"> -->
+		<link href="css/lightbox.min.css" rel="stylesheet">
+		<link href="css/responsive.css" rel="stylesheet">
+		<link href="css/style.css" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+        }
+        
+        .page-header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #00b4db, #0083b0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .page-header p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto;
+            color: #a0d2eb;
+        }
+        
+        .tools-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+        
+        .tool-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            height: 320px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .tool-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .tool-image {
+            height: 160px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        
+        .tool-image::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60%;
+            background: linear-gradient(to top, rgba(15, 32, 39, 0.9), transparent);
+        }
+        
+        .tool-content {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .tool-title {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            color: #00b4db;
+        }
+        
+        .tool-description {
+            color: #c2e0ee;
+            margin-bottom: 15px;
+            flex-grow: 1;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        .tool-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(45deg, #00b4db, #0083b0);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: auto;
+        }
+        
+        .tool-link:hover {
+            background: linear-gradient(45deg, #0083b0, #00b4db);
+            box-shadow: 0 5px 15px rgba(0, 180, 219, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 768px) {
+            .tools-container {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+            
+            .page-header h1 {
+                font-size: 2.2rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .tools-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .tool-card {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+<header class="header_area">				
+				<div class="main_header navbar navbar-default menu-top">
+					<div class="container">
+						<div class="row">
+							<div class="col-md-2 col-sm-2 col-xs-4">
+								<div class="logo">
+									<a href="index.html" class="navbar-brand"><p>SKNetKing</p></a>
+									<div class="mobile-nav"></div>
+								</div>
+							</div>
+							
+							<div class="col-md-10 col-sm-10 col-xs-8">
+								<div class="navbar-header">
+									<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+										<span class="fa fa-navicon"></span>
+									</button>
+								</div>
+								
+								<nav id="navbar" class="navbar-collapse collapse">
+									<ul class="nav navbar-nav navbar-right">
+										<li><a href="#home">Home</a></li>
+										<li><a href="#about">About</a></li>
+										<li><a href="#service">Service</a></li>
+										<li><a href="#resume">Resume</a></li>
+										<li><a href="#portfolio">Portfolio</a></li>								
+										<li><a href="#blog">Blog</a></li>													
+										<li class="active"><a href="#contact">Contact</a></li>
+										<li id="tools">
+											<a href="/tools" class="submenu">Tools</a>
+										</li>
+									</ul>
+								</nav> 
+							</div>
+						</div>
+					</div><!--- END CONTAINER -->
+				</div> 
+			</header>
+
+    <div class="page-header">
+        <h1>My Developer Tools</h1>
+        <p>A collection of useful tools and utilities that I've created for various purposes.</p>
+    </div>
+    
+    <div class="tools-container" id="toolsContainer">
+        <!-- Tools will be dynamically inserted here -->
+    </div>
+
+    <script>
+        // Array containing all tools data
+        const toolsData = [
+            {
+                title: "Canvas Tool",
+                description: "A drawing application with various brushes, colors, and tools for creating digital art.",
+                link: "drawing-art.html",
+                image: "https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
+            },
+            {
+                title: "Age Calculator",
+                description: "Calculate your exact age, including years, months, weeks, days, hours, and even seconds!",
+                link: "age-calculator.html",
+                image: "https://images.unsplash.com/photo-1530519719205-2c6d5c2c2c6d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
+            },
+            {
+                title: "Screen Recorder",
+                description: "Record your screen, webcam, or both with this easy-to-use screen recording tool.",
+                link: "screen-recorder.html",
+                image: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
+            },
+            {
+                title: "Live Chat",
+                description: "A real-time chat application that allows users to communicate instantly in chat rooms.",
+                link: "live-chat.html",
+                image: "https://images.unsplash.com/photo-1577563908411-5077b6dc7624?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
+            },
+            {
+                title: "Live F.M.",
+                description: "Listen to live radio stations from around the world with this internet radio player.",
+                link: "live-radio.html",
+                image: "https://images.unsplash.com/photo-1587923623987-c7e4083beb23?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
+            },
+            {
+                title: "Color Picker",
+                description: "A sophisticated color picker tool with HEX, RGB and HSL codes for designers.",
+                link: "color-picker.html",
+                image: "https://images.unsplash.com/photo-1542779283-429940ce8336?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
+            },
+            {
+                title: "Unit Converter",
+                description: "Convert between different units of measurement: length, weight, temperature, and more.",
+                link: "unit-converter.html",
+                image: "https://images.unsplash.com/photo-1581091226033-d5c48150dbaa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
+            },
+            {
+                title: "Password Generator",
+                description: "Generate strong, secure, and random passwords for your online accounts.",
+                link: "password-generator.html",
+                image: "https://images.unsplash.com/photo-1597848212624-e5f4b759baa0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
+            }
+        ];
+
+        // Function to generate tool cards
+        function generateToolCards() {
+            const toolsContainer = document.getElementById('toolsContainer');
+            
+            toolsData.forEach(tool => {
+                const toolCard = document.createElement('div');
+                toolCard.className = 'tool-card';
+                
+                toolCard.innerHTML = `
+                    <div class="tool-image" style="background-image: url('${tool.image}')"></div>
+                    <div class="tool-content">
+                        <h3 class="tool-title">${tool.title}</h3>
+                        <p class="tool-description">${tool.description}</p>
+                        <a href="${tool.link}" class="tool-link">Use Tool</a>
+                    </div>
+                `;
+                
+                toolsContainer.appendChild(toolCard);
+            });
+        }
+
+        // Generate the tool cards when the page loads
+        window.onload = generateToolCards;
+    </script>
+	
+		<!-- Start jQuery -->
+			<script src="js/jquery.min.js"></script>
+			<script src="js/bootstrap.min.js"></script>
+			<script src="js/owl.carousel.min.js"></script>
+			<script src="js/modernizr-2.8.3.min.js"></script>
+			<script src="js/jquery.min.js"></script>
+			<script src="js/jquery.nav.js"></script>			
+			<script src="js/jquery.inview.min.js"></script>
+			<script src="js/isotope.pkgd.min.js"></script>
+			<script src="js/animated-headline.js"></script>	
+			<script src="js/particles.min.js"></script>
+			<script src="js/app.js"></script>
+			<script src="js/jquery.stellar.min.js"></script>
+			<script src="js/lightbox.min.js"></script>
+			<script src="js/scrolltopcontrol.js"></script>
+			<script src="js/wow.min.js"></script>
+			<script src="js/main.js"></script>
+		<!-- End jQuery -->
+</body>
+</html>
