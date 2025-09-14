@@ -279,6 +279,54 @@
         // Generate the tool cards when the page loads
         window.onload = generateToolCards;
     </script>
+
+	<!-- START CONTACT -->
+			<section id="contact" class="dark_bg section_padding">
+				<div class="container">
+					<div class="col-md-12 col-sm-12-col-xs-12">
+						<div class="section_heading text-center">
+							<h2>Contact <span>Us</span></h2>
+							<p>Lorem Ipsum is simply dummy text of the printing and typesetting<br> industry. Lorem Ipsum standard dummy text.</p>
+							<div class="sm_border"></div>
+						</div>	
+					</div>	
+					
+					<div class="row">						
+						<div class="col-md-12 col-sm-12">
+							<form class="form" name="enq" method="post" action="contact.php" onsubmit="return validation();">
+								<div class="row">
+									<div class="form-group col-md-4">
+										<input type="text" name="name" class="form-control" placeholder="Name" required="required">
+									</div>
+									<div class="form-group col-md-4">
+										<input type="email" name="email" class="form-control" placeholder="Email" required="required">
+									</div>
+									<div class="form-group col-md-4">
+										<input type="text" name="subject" class="form-control" placeholder="Subject" required="required">
+									</div>
+									<div class="form-group col-md-12">
+										<textarea rows="6" name="message" class="form-control" placeholder="Your Message" required="required"></textarea>
+									</div>
+									<div class="col-md-12 text-center">
+										<button type="submit" value="Send message" name="submit" id="submitButton" class="btn btn-default main_btn" title="Submit Your Message!">Send Message</button>
+									</div>
+								</div>
+							</form>
+						</div>						
+					</div>
+				</div>
+			</section>
+		<!-- END CONTACT -->
+		
+		<!-- START FOOTER -->
+			<div class="footer">
+				<div class="container">					
+					<div class="copy-text text-center">
+						<p>CopyRight © 2024 SKNetKing | All Rights Reserved</p>
+					</div>											
+				</div>						
+			</div>	
+		<!-- END FOOTER -->
 	
 		<!-- Start jQuery -->
 			<script src="js/jquery.min.js"></script>
