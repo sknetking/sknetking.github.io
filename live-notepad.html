@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Collaborative Notepad-SK NetKing</title>
+    <title>Live Collaborative Notepad</title>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -150,9 +150,13 @@
         </div>
         <div class="share-container">
             <input type="text" class="share-url" id="share-url" readonly>
-            <button class="copy-btn" onclick="copyShareLink()">
+            <button class="copy-btn" id="copy-room-btn" onclick="copyRoomLink()">
                 <i class="fas fa-copy"></i>
                 <span>Copy link</span>
+            </button>
+            <button class="copy-btn" id="share-web-btn" onclick="shareRoom()" title="Share via device share sheet">
+                <i class="fas fa-share-alt"></i>
+                <span>Share</span>
             </button>
         </div>
     </div>
@@ -161,10 +165,11 @@
     </div>
 
     <script>
-        let peer = null;
-        let connections = new Map();
-        let myPeerId = null;
-        let isInitiator = false;
+    let peer = null;
+    let connections = new Map();
+    let myPeerId = null;
+    let isInitiator = false;
+    let currentRoomId = null; // the room ID that should be shared
         let isTyping = false;
         let typingTimeout = null;
         
@@ -187,18 +192,21 @@
             peer.on('open', function(id) {
                 console.log('My peer ID is:', id);
                 myPeerId = id;
-                
-                // If roomId is provided, we're joining an existing room
+                // Determine room behavior
                 if (roomId) {
+                    // We're joining an existing room
                     isInitiator = false;
+                    currentRoomId = roomId; // store the room id we joined
                     connectToPeer(roomId);
-                    // Keep the room ID in the URL but use our unique peer ID for the connection
+                    // Keep the room ID in the URL (so share link stays the same)
                     const url = new URL(window.location.href);
-                    url.searchParams.set('r', roomId); // Keep the original room ID
+                    url.searchParams.set('r', roomId);
                     history.replaceState({}, '', url.toString());
+                    updateShareUrl();
                 } else {
-                    // We're creating a new room
+                    // We're creating a new room: use our peer id as room id
                     isInitiator = true;
+                    currentRoomId = id;
                     updateShareUrl();
                 }
                 
@@ -282,10 +290,82 @@
 
         function updateShareUrl() {
             const url = new URL(window.location.href);
-            // For initiator, use their peer ID as the room ID
-            if (isInitiator) {
-                url.searchParams.set('r', myPeerId);
+            // Show the room link (prefer currentRoomId, fall back to myPeerId)
+            const room = currentRoomId || myPeerId;
+            if (room) {
+                url.searchParams.set('r', room);
+                // Do not show the personal peer id in the input; keep the input canonical room link
                 document.getElementById('share-url').value = url.toString();
+            }
+
+            // enable/disable share button depending on availability
+            const shareBtn = document.getElementById('share-web-btn');
+            const copyBtn = document.getElementById('copy-room-btn');
+            if (shareBtn) shareBtn.disabled = !room;
+            if (copyBtn) copyBtn.disabled = !room;
+        }
+
+        // Copy the canonical room link (shared room ID)
+        function copyRoomLink() {
+            const room = currentRoomId || myPeerId;
+            if (!room) return;
+            const url = new URL(window.location.href);
+            // include both room and our peer id so recipient knows who to ask for content
+            url.searchParams.set('r', room);
+            if (myPeerId) url.searchParams.set('p', myPeerId);
+            const text = url.toString();
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).catch(() => {
+                    // fallback to older method
+                    const shareInput = document.getElementById('share-url');
+                    shareInput.value = text;
+                    shareInput.select();
+                    document.execCommand('copy');
+                });
+            } else {
+                const shareInput = document.getElementById('share-url');
+                shareInput.value = text;
+                shareInput.select();
+                document.execCommand('copy');
+            }
+
+            const copyBtn = document.getElementById('copy-room-btn');
+            if (copyBtn) {
+                const original = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check"></i><span>Copied!</span>';
+                setTimeout(() => copyBtn.innerHTML = original, 1500);
+            }
+        }
+
+        // Use Web Share API when available. Shares a URL containing room and peer id.
+        function shareRoom() {
+            const room = currentRoomId || myPeerId;
+            if (!room) return;
+            const url = new URL(window.location.href);
+            url.searchParams.set('r', room);
+            if (myPeerId) url.searchParams.set('p', myPeerId);
+            const shareUrl = url.toString();
+
+            const shareData = {
+                title: document.getElementById('doc-title').value || 'Live Notepad',
+                text: 'Join my Live Notepad',
+                url: shareUrl
+            };
+
+            const shareBtn = document.getElementById('share-web-btn');
+            if (navigator.share) {
+                navigator.share(shareData).catch(err => {
+                    console.warn('Web Share failed:', err);
+                });
+            } else {
+                // Fallback: copy to clipboard and show feedback
+                copyRoomLink();
+                if (shareBtn) {
+                    const original = shareBtn.innerHTML;
+                    shareBtn.innerHTML = '<i class="fas fa-check"></i><span>Copied</span>';
+                    setTimeout(() => shareBtn.innerHTML = original, 1500);
+                }
+                alert('Share URL copied to clipboard');
             }
         }
 
