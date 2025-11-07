@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Collaborative Notepad-SK NetKing</title>
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1a73e8;
+            --primary-light: #e8f0fe;
+            --border-color: #dee2e6;
+            --text-primary: #202124;
+            --text-secondary: #5f6368;
+            --background-color: #f8f9fa;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: white;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-title {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            border: none;
+            padding: 0.5rem;
+            border-radius: 4px;
+            min-width: 200px;
+        }
+
+        .header-title:focus {
+            outline: none;
+            background-color: var(--primary-light);
+        }
+
+        .share-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .share-url {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            min-width: 300px;
+            font-size: 0.9rem;
+        }
+
+        .copy-btn {
+            padding: 0.5rem 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.2s;
+        }
+
+        .copy-btn:hover {
+            background-color: #1557b0;
+        }
+
+        .status {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status.connected {
+            color: #34a853;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: currentColor;
+        }
+
+        .editor-container {
+            flex: 1;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .editor {
+            width: 100%;
+            max-width: 800px;
+            height: 100%;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: white;
+            font-size: 1rem;
+            line-height: 1.5;
+            resize: none;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .editor:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <input type="text" class="header-title" value="Untitled Document" id="doc-title">
+            <div class="status" id="status">
+                <span class="status-dot"></span>
+                <span class="status-text">Not connected</span>
+            </div>
+        </div>
+        <div class="share-container">
+            <input type="text" class="share-url" id="share-url" readonly>
+            <button class="copy-btn" onclick="copyShareLink()">
+                <i class="fas fa-copy"></i>
+                <span>Copy link</span>
+            </button>
+        </div>
+    </div>
+    <div class="editor-container">
+        <textarea class="editor" id="editor" placeholder="Start typing..."></textarea>
+    </div>
+
+    <script>
+        let peer = null;
+        let connections = new Map();
+        let myPeerId = null;
+        let isInitiator = false;
+        let isTyping = false;
+        let typingTimeout = null;
+        
+        // Generate a 4-character room ID
+        function generateRoomId() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < 4; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        // Initialize the peer connection
+        function initializePeer(roomId = null) {
+            // Generate a unique ID for this peer
+            const peerId = generateRoomId();
+            peer = new Peer(peerId);
+
+            peer.on('open', function(id) {
+                console.log('My peer ID is:', id);
+                myPeerId = id;
+                
+                // If roomId is provided, we're joining an existing room
+                if (roomId) {
+                    isInitiator = false;
+                    connectToPeer(roomId);
+                    // Keep the room ID in the URL but use our unique peer ID for the connection
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('r', roomId); // Keep the original room ID
+                    history.replaceState({}, '', url.toString());
+                } else {
+                    // We're creating a new room
+                    isInitiator = true;
+                    updateShareUrl();
+                }
+                
+                updateStatus(true);
+            });
+
+            peer.on('connection', function(conn) {
+                setupConnection(conn);
+            });
+
+            peer.on('error', function(err) {
+                console.error('Peer error:', err);
+                updateStatus(false);
+                alert('Connection error: ' + err.message);
+            });
+        }
+
+        function setupConnection(conn) {
+            connections.set(conn.peer, conn);
+
+            conn.on('open', function() {
+                console.log('Connected to peer:', conn.peer);
+                updateStatus(true);
+
+                // If we're the initiator, send the current content
+                if (isInitiator) {
+                    const editor = document.getElementById('editor');
+                    const title = document.getElementById('doc-title').value;
+                    conn.send({
+                        type: 'init',
+                        content: editor.value,
+                        title: title
+                    });
+                } else {
+                    // If we're joining, request the content
+                    conn.send({
+                        type: 'request-content'
+                    });
+                }
+            });
+
+            conn.on('data', function(data) {
+                if (typeof data === 'object') {
+                    if (data.type === 'init') {
+                        // Initial content received
+                        document.getElementById('editor').value = data.content;
+                        document.getElementById('doc-title').value = data.title;
+                    } else if (data.type === 'request-content') {
+                        // Send current content to new peer
+                        if (isInitiator) {
+                            conn.send({
+                                type: 'init',
+                                content: document.getElementById('editor').value,
+                                title: document.getElementById('doc-title').value
+                            });
+                        }
+                    } else if (data.type === 'edit') {
+                        // Content update received
+                        document.getElementById('editor').value = data.content;
+                    } else if (data.type === 'title') {
+                        // Title update received
+                        document.getElementById('doc-title').value = data.title;
+                    }
+                }
+            });
+
+            conn.on('close', function() {
+                console.log('Connection closed:', conn.peer);
+                connections.delete(conn.peer);
+                updateStatus(connections.size > 0);
+            });
+        }
+
+        function connectToPeer(peerId) {
+            if (!peer) return;
+            if (connections.has(peerId)) return;
+
+            const conn = peer.connect(peerId);
+            setupConnection(conn);
+        }
+
+        function updateShareUrl() {
+            const url = new URL(window.location.href);
+            // For initiator, use their peer ID as the room ID
+            if (isInitiator) {
+                url.searchParams.set('r', myPeerId);
+                document.getElementById('share-url').value = url.toString();
+            }
+        }
+
+        function copyShareLink() {
+            const shareInput = document.getElementById('share-url');
+            shareInput.select();
+            document.execCommand('copy');
+            
+            // Visual feedback
+            const copyBtn = document.querySelector('.copy-btn');
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fas fa-check"></i><span>Copied!</span>';
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+            }, 2000);
+        }
+
+        function updateStatus(connected) {
+            const status = document.getElementById('status');
+            status.className = 'status' + (connected ? ' connected' : '');
+            status.querySelector('.status-text').textContent = 
+                connected ? `${connections.size} user${connections.size !== 1 ? 's' : ''} connected` : 'Not connected';
+        }
+
+        // Handle text changes
+        document.getElementById('editor').addEventListener('input', function(e) {
+            const content = e.target.value;
+            
+            // Clear any existing timeout
+            if (typingTimeout) {
+                clearTimeout(typingTimeout);
+            }
+
+            // Set a new timeout
+            typingTimeout = setTimeout(() => {
+                // Broadcast changes to all connected peers
+                connections.forEach(conn => {
+                    if (conn.open) {
+                        conn.send({
+                            type: 'edit',
+                            content: content
+                        });
+                    }
+                });
+            }, 100); // Small delay to prevent too frequent updates
+        });
+
+        // Handle title changes
+        document.getElementById('doc-title').addEventListener('input', function(e) {
+            const title = e.target.value;
+            document.title = title + ' - Live Notepad';
+            
+            // Broadcast title change to all connected peers
+            connections.forEach(conn => {
+                if (conn.open) {
+                    conn.send({
+                        type: 'title',
+                        title: title
+                    });
+                }
+            });
+        });
+
+        // Check URL for room ID
+        window.addEventListener('load', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomId = urlParams.get('r');
+            initializePeer(roomId);
+        });
+    </script>
+</body>
+</html>
