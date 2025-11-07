@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Meeting Room</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #1a73e8;
+            --primary-light: #e8f0fe;
+            --secondary-color: #4CAF50;
+            --danger-color: #dc3545;
+            --background-color: #f8f9fa;
+            --sidebar-bg: #ffffff;
+            --chat-bg: #ffffff;
+            --border-color: #dee2e6;
+            --text-primary: #202124;
+            --text-secondary: #5f6368;
+            --shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --shadow-hover: 0 4px 6px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 380px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+            z-index: 10;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .app-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .app-logo i {
+            font-size: 24px;
+            color: var(--primary-color);
+        }
+
+        .app-logo h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+
+        .sidebar-toggle:hover {
+            background-color: var(--primary-light);
+        }
+
+        .sidebar-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .action-button {
+            width: 100%;
+            padding: 14px 16px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s;
+            box-shadow: var(--shadow);
+        }
+
+        .action-button:hover {
+            background-color: #1557b0;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .action-button.secondary {
+            background-color: white;
+            color: var(--primary-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .action-button.secondary:hover {
+            background-color: var(--primary-light);
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .text-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .share-section {
+            background-color: var(--primary-light);
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .share-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .share-input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .share-input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: white;
+        }
+
+        .icon-button {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+
+        .icon-button:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .peers-section {
+            margin-top: 30px;
+        }
+
+        .peers-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .peers-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .peer-count {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .peers-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .peer-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .peer-item:hover {
+            background-color: var(--primary-light);
+        }
+
+        .peer-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .peer-avatar {
+            width: 36px;
+            height: 36px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .peer-name {
+            font-weight: 500;
+        }
+
+        .remove-peer {
+            background: none;
+            border: none;
+            color: var(--danger-color);
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .remove-peer:hover {
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        .meeting-controls {
+            display: flex;
+            gap: 12px;
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .control-button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .control-button.primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .control-button.primary:hover {
+            background-color: #1557b0;
+        }
+
+        .control-button.danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .control-button.danger:hover {
+            background-color: #bd2130;
+        }
+
+        .audio-toggle {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: var(--shadow);
+        }
+
+        .audio-toggle.active {
+            background-color: var(--secondary-color);
+        }
+
+        .audio-toggle:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-hover);
+        }
+
+        /* Chat Area Styles */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--chat-bg);
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .chat-info h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .chat-info p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .messages-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .welcome-message {
+            text-align: center;
+            margin-top: 100px;
+            color: var(--text-secondary);
+        }
+
+        .welcome-message h2 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            font-weight: 400;
+        }
+
+        .welcome-message p {
+            font-size: 16px;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .message.received {
+            background-color: #f1f3f4;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.sent {
+            background-color: var(--primary-color);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.system {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            align-self: center;
+            font-style: italic;
+            font-size: 14px;
+            padding: 8px 16px;
+        }
+
+        .message-input-container {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .message-input-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 14px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .send-button {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .send-button:hover {
+            background-color: #1557b0;
+            transform: scale(1.05);
+        }
+
+        .send-button:disabled {
+            background-color: var(--text-secondary);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Collapsed Sidebar Styles */
+        .sidebar.collapsed .hide-on-collapse {
+            display: none;
+        }
+
+        .sidebar.collapsed .section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .sidebar.collapsed .action-button,
+        .sidebar.collapsed .control-button {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            padding: 15px;
+        }
+
+        .sidebar.collapsed .action-button span,
+        .sidebar.collapsed .control-button span {
+            display: none;
+        }
+
+        .sidebar.collapsed .peer-item {
+            justify-content: center;
+            padding: 12px;
+        }
+
+        .sidebar.collapsed .peer-info span {
+            display: none;
+        }
+
+        .sidebar.collapsed .meeting-controls {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                z-index: 100;
+                transform: translateX(0);
+            }
+
+            .sidebar.collapsed {
+                transform: translateX(-100%);
+            }
+
+            .mobile-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 99;
+            }
+
+            .mobile-overlay.active {
+                display: block;
+            }
+
+            .mobile-menu-button {
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                background: var(--primary-color);
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 50px;
+                height: 50px;
+                z-index: 98;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: var(--shadow);
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu-button,
+            .mobile-overlay {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="mobile-menu-button" onclick="toggleMobileSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+    <div class="mobile-overlay" onclick="toggleMobileSidebar()"></div>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="app-logo">
+                    <i class="fas fa-video"></i>
+                    <h1 class="hide-on-collapse">Meeting Room</h1>
+                </div>
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+
+            <div class="sidebar-content">
+                <div class="section">
+                    <button class="action-button" onclick="createNewMeeting()">
+                        <i class="fas fa-plus"></i>
+                        <span class="hide-on-collapse">Create New Meeting</span>
+                    </button>
+                </div>
+
+                <div class="section">
+                    <div class="input-group">
+                        <label class="input-label hide-on-collapse">Your Meeting ID</label>
+                        <input type="text" id="peer-id" class="text-input" placeholder="Enter 4-character ID">
+                    </div>
+                    <button class="action-button secondary" onclick="initializePeer()">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span class="hide-on-collapse">Join / Start Meeting</span>
+                    </button>
+                </div>
+
+                <div class="section">
+                    <div class="input-group">
+                        <label class="input-label hide-on-collapse">Join Existing Meeting</label>
+                        <input type="text" id="manual-peer-id" class="text-input" placeholder="Enter meeting ID" maxlength="4" style="text-transform: uppercase;">
+                    </div>
+                    <button class="action-button secondary" onclick="connectToPeerManual()">
+                        <i class="fas fa-user-plus"></i>
+                        <span class="hide-on-collapse">Join Meeting</span>
+                    </button>
+                </div>
+
+                <div id="share-url" class="share-section hide-on-collapse" style="display: none;">
+                    <div class="share-title">
+                        <i class="fas fa-share-alt share-btn"></i>
+                        <span>Share this meeting</span>
+                    </div>
+                    <div class="share-input-group">
+                        <input type="text" id="share-url-input" class="share-input" readonly>
+                        <button class="icon-button" onclick="copyShareLink()">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="peers-section hide-on-collapse">
+                    <div class="peers-header">
+                        <div class="peers-title">Connected Users</div>
+                        <div class="peer-count" id="peer-count">0</div>
+                    </div>
+                    <div id="peers-list" class="peers-list">
+                        <div class="system-message">No users connected</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="meeting-controls">
+                <button class="audio-toggle" id="audio-toggle" onclick="toggleAudio()" title="Toggle Audio">
+                    <i class="fas fa-microphone-slash"></i>
+                </button>
+                <button class="control-button primary" id="screen-share-btn" onclick="toggleScreenShare()" title="Share Screen">
+                    <i class="fas fa-desktop"></i>
+                    <span class="hide-on-collapse">Share Screen</span>
+                </button>
+                <button class="control-button danger" onclick="leaveMeeting()">
+                    <i class="fas fa-phone-slash"></i>
+                    <span class="hide-on-collapse">Leave Meeting</span>
+                </button>
+            </div>
+            <!-- Screen share container -->
+            <div id="screen-share-container" style="display: none;">
+                <video id="shared-screen" autoplay playsinline style="width: 100%; max-height: 300px; object-fit: contain;"></video>
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="chat-avatar" id="chat-avatar">MR</div>
+                <div class="chat-info">
+                    <h2>Meeting Room</h2>
+                    <p id="connection-status">Not connected</p>
+                </div>
+            </div>
+
+            <div id="messages" class="messages-container">
+                <div class="welcome-message">
+                    <h2>Select a conversation to display messages</h2>
+                    <p>or</p>
+                    <h2>Start a new conversation</h2>
+                </div>
+            </div>
+
+            <div class="message-input-container">
+                <div class="message-input-group">
+                    <input type="text" id="message-input" class="message-input" placeholder="Type your message..." disabled>
+                    <button onclick="sendMessage()" id="send-button" class="send-button" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let peer = null;
+        let connections = new Map();
+        let myPeerId = null;
+        const peers = new Set();
+        const channel = new BroadcastChannel('peer-discovery');
+        let audioStream = null;
+        let isAudioEnabled = false;
+        let screenStream = null;
+        let isScreenSharing = false;
+        
+document.addEventListener('DOMContentLoaded', () => {
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.querySelector('.mobile-overlay');
+  const chatAvatar = document.getElementById('chat-avatar');
+
+  const isMobile = () => window.innerWidth <= 768;
+
+  const setState = (open) => {
+    sidebar.classList.toggle('collapsed', !open);
+    overlay?.classList.toggle('active', open);
+  };
+
+  window.toggleSidebar = () => {
+    isMobile() ? window.toggleMobileSidebar() : sidebar.classList.toggle('collapsed');
+  };
+
+  window.toggleMobileSidebar = () => {
+    const open = sidebar.classList.contains('collapsed');
+    setState(open);
+  };
+
+  overlay?.addEventListener('click', () => setState(false));
+  window.addEventListener('resize', () => setState(!isMobile()));
+
+  // Start collapsed on mobile
+  setState(!isMobile());
+
+  // Optional avatar setup (remove if not needed)
+  const peerId = localStorage.getItem('peerId');
+  if (peerId && chatAvatar) chatAvatar.textContent = peerId[0];
+});
+
+
+        // Function to generate short random ID
+        function generateShortId() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < 4; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+        
+        // Check URL for peer ID parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const connectToPeerId = urlParams.get('p');
+        
+        // Check for stored peer ID or generate new one
+        let storedPeerId = localStorage.getItem('peerId');
+        if (!storedPeerId) {
+            storedPeerId = generateShortId();
+            localStorage.setItem('peerId', storedPeerId);
+        }
+        document.getElementById('peer-id').value = storedPeerId;
+        
+        // Broadcast peer presence every 5 seconds
+        function broadcastPresence() {
+            if (myPeerId) {
+                channel.postMessage({ type: 'peer-alive', peerId: myPeerId });
+            }
+        }
+        
+        // Handle peer timeouts
+        const peerTimestamps = new Map();
+
+        function createNewMeeting() {
+            const newId = generateShortId();
+            document.getElementById('peer-id').value = newId;
+            initializePeer();
+        }
+
+        function copyShareLink() {
+            const shareInput = document.getElementById('share-url-input');
+            shareInput.select();
+            document.execCommand('copy');
+            
+            // Show temporary feedback
+            const copyButton = document.querySelector('.icon-button');
+            const originalIcon = copyButton.innerHTML;
+            copyButton.innerHTML = '<i class="fas fa-check"></i>';
+            setTimeout(() => {
+                copyButton.innerHTML = originalIcon;
+            }, 2000);
+        }
+
+        function initializePeer() {
+            let peerId = document.getElementById('peer-id').value.toUpperCase();
+            
+            // If no ID is entered, generate one
+            if (!peerId) {
+                peerId = generateShortId();
+                document.getElementById('peer-id').value = peerId;
+            }
+
+            // Validate ID format (4 characters)
+            if (peerId.length !== 4) {
+                alert('Please enter a 4-character meeting ID');
+                return;
+            }
+            
+            // Store peer ID in localStorage
+            localStorage.setItem('peerId', peerId);
+            document.getElementById('chat-avatar').textContent = peerId.charAt(0);
+            
+            // Close existing peer connection if any
+            if (peer) {
+                peer.destroy();
+            }
+            
+            peer = new Peer(peerId);
+
+            peer.on('open', function(id) {
+                console.log('My peer ID is: ' + id);
+                myPeerId = id;
+                document.getElementById('peer-id').value = id;
+                
+                // Show and update share URL with room information
+                const shareUrl = new URL(window.location.href);
+                // Use the original connect-to peer as the room ID
+                const roomId = connectToPeerId || id;
+                shareUrl.searchParams.set('p', roomId);
+                document.getElementById('share-url-input').value = shareUrl.toString();
+                document.getElementById('share-url').style.display = 'block';
+                
+                // If joining an existing room
+                if (connectToPeerId && connectToPeerId !== id) {
+                    connectToPeer(connectToPeerId, true);
+                }
+                
+            // Start broadcasting presence
+            broadcastPresence();
+            setInterval(broadcastPresence, 5000);
+            
+            // Initial broadcast to announce presence
+            channel.postMessage({ 
+                type: 'peer-alive',
+                peerId: id,
+                initial: true
+            });
+
+            displayMessage('Your peer ID is: ' + id, 'system');
+            updatePeersList();
+            updateConnectionStatus();
+        });
+
+        peer.on('connection', function(conn) {
+            setupConnection(conn);
+            if (isScreenSharing && screenStream) {
+                // If we're already sharing screen, share it with the new peer
+                const screenCall = peer.call(`${conn.peer}-screen`, screenStream);
+                conn.screenCall = screenCall;
+                conn.send({
+                    type: 'screen-share-started',
+                    fromPeerId: myPeerId
+                });
+            }
+        });
+
+        // Listen for active peers
+        listenForActivePeers();            peer.on('error', function(err) {
+                console.error(err);
+                alert('An error occurred: ' + err);
+            });
+        }
+
+        function listenForActivePeers() {
+            // Listen for broadcast messages
+            channel.onmessage = (event) => {
+                const { type, peerId, initial } = event.data;
+                
+                if (type === 'peer-alive' && peerId !== myPeerId) {
+                    // Update peer's last seen timestamp
+                    peerTimestamps.set(peerId, Date.now());
+                    
+                    // Add new peer if not already in the set
+                    if (!peers.has(peerId)) {
+                        peers.add(peerId);
+                        updatePeersList();
+                        
+                        // If this is an initial broadcast, respond with our presence
+                        if (initial && myPeerId) {
+                            channel.postMessage({
+                                type: 'peer-alive',
+                                peerId: myPeerId
+                            });
+                        }
+                    }
+                }
+            };
+
+            // Check for peer timeouts every 10 seconds
+            setInterval(() => {
+                const now = Date.now();
+                let changed = false;
+                
+                peerTimestamps.forEach((timestamp, peerId) => {
+                    // Remove peers that haven't been seen for 15 seconds
+                    if (now - timestamp > 15000) {
+                        peers.delete(peerId);
+                        peerTimestamps.delete(peerId);
+                        changed = true;
+                    }
+                });
+                
+                if (changed) {
+                    updatePeersList();
+                }
+            }, 10000);
+        }
+
+        function updateConnectionStatus() {
+            const statusElement = document.getElementById('connection-status');
+            if (connections.size > 0) {
+                statusElement.textContent = `${connections.size} user${connections.size > 1 ? 's' : ''} connected`;
+                statusElement.style.color = 'var(--secondary-color)';
+            } else {
+                statusElement.textContent = 'Not connected';
+                statusElement.style.color = 'var(--text-secondary)';
+            }
+        }
+
+        function updatePeersList() {
+            const peersList = document.getElementById('peers-list');
+            const peerCount = document.getElementById('peer-count');
+            
+            if (connections.size === 0) {
+                peersList.innerHTML = '<div class="system-message">No users connected</div>';
+            } else {
+                peersList.innerHTML = '';
+                connections.forEach((conn, peerId) => {
+                    const peerElement = document.createElement('div');
+                    peerElement.className = 'peer-item';
+                    
+                    const peerInfo = document.createElement('div');
+                    peerInfo.className = 'peer-info';
+                    
+                    const avatar = document.createElement('div');
+                    avatar.className = 'peer-avatar';
+                    avatar.textContent = peerId.charAt(0);
+                    
+                    const peerName = document.createElement('span');
+                    peerName.className = 'peer-name';
+                    peerName.textContent = peerId;
+                    
+                    peerInfo.appendChild(avatar);
+                    peerInfo.appendChild(peerName);
+                    
+                    const removeButton = document.createElement('button');
+                    removeButton.className = 'remove-peer';
+                    removeButton.innerHTML = '<i class="fas fa-times"></i>';
+                    removeButton.onclick = () => removePeer(peerId);
+                    
+                    peerElement.appendChild(peerInfo);
+                    peerElement.appendChild(removeButton);
+                    peersList.appendChild(peerElement);
+                });
+            }
+
+            peerCount.textContent = connections.size.toString();
+            updateConnectionStatus();
+        }
+
+        function connectToPeerManual() {
+            const peerId = document.getElementById('manual-peer-id').value;
+            if (!peerId) {
+                alert('Please enter a peer ID to connect to');
+                return;
+            }
+            connectToPeer(peerId);
+        }
+
+        function connectToPeer(peerId) {
+            if (!peer) {
+                alert('Please initialize your connection first!');
+                return;
+            }
+
+            if (connections.has(peerId)) {
+                console.log('Already connected to this peer');
+                return;
+            }
+
+            const conn = peer.connect(peerId);
+            setupConnection(conn);
+        }
+
+        function setupConnection(conn) {
+            connections.set(conn.peer, conn);
+            
+            conn.on('open', function() {
+                console.log('Connected to peer:', conn.peer);
+                document.getElementById('message-input').disabled = false;
+                document.getElementById('send-button').disabled = false;
+                displayMessage('Connected to peer: ' + conn.peer, 'system');
+                
+                // Share current connections with the new peer
+                const peerList = Array.from(connections.keys()).filter(id => id !== conn.peer);
+                conn.send({
+                    type: 'peer-list',
+                    peers: peerList,
+                    roomId: connectToPeerId || myPeerId // Share the room ID
+                });
+                
+                // Hide welcome message if it's visible
+                const welcomeMessage = document.querySelector('.welcome-message');
+                if (welcomeMessage) {
+                    welcomeMessage.style.display = 'none';
+                }
+                
+                updatePeersList();
+            });
+
+            conn.on('data', function(data) {
+                if (typeof data === 'object') {
+                    if (data.type === 'peer-list') {
+                        // Update the room ID in URL if we're joining
+                        if (data.roomId && !connectToPeerId) {
+                            const shareUrl = new URL(window.location.href);
+                            shareUrl.searchParams.set('p', data.roomId);
+                            document.getElementById('share-url-input').value = shareUrl.toString();
+                            history.pushState({}, '', shareUrl.toString());
+                        }
+                        
+                        // Connect to all peers in the received list
+                        data.peers.forEach(peerId => {
+                            if (!connections.has(peerId) && peerId !== myPeerId) {
+                                connectToPeer(peerId, false);
+                            }
+                        });
+                    } else if (data.type === 'screen-share-started') {
+                        console.log('Peer started screen sharing:', data.fromPeerId);
+                    } else if (data.type === 'screen-share-stopped') {
+                        console.log('Peer stopped screen sharing:', data.fromPeerId);
+                        const screenContainer = document.getElementById('screen-share-container');
+                        const sharedScreenVideo = document.getElementById('shared-screen');
+                        screenContainer.style.display = 'none';
+                        sharedScreenVideo.srcObject = null;
+                    }
+                } else {
+                    displayMessage(data, 'received');
+                }
+            });
+
+            conn.on('close', function() {
+                connections.delete(conn.peer);
+                updatePeersList();
+                if (connections.size === 0) {
+                    document.getElementById('message-input').disabled = true;
+                    document.getElementById('send-button').disabled = true;
+                    
+                    // Show welcome message again if no connections
+                    const welcomeMessage = document.querySelector('.welcome-message');
+                    if (welcomeMessage) {
+                        welcomeMessage.style.display = 'block';
+                    }
+                }
+                displayMessage('Connection with ' + conn.peer + ' closed', 'system');
+            });
+        }
+
+        function sendMessage() {
+            const messageInput = document.getElementById('message-input');
+            const message = messageInput.value;
+
+            if (message && connections.size > 0) {
+                // Send to all connected peers
+                connections.forEach(conn => {
+                    if (conn.open) {
+                        conn.send(message);
+                    }
+                });
+                displayMessage(message, 'sent');
+                messageInput.value = '';
+            }
+        }
+
+        function displayMessage(message, type) {
+            const messagesDiv = document.getElementById('messages');
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.classList.add(type);
+            messageElement.textContent = message;
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Handle Enter key in message input
+        document.getElementById('message-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Auto-initialize if URL contains peer ID
+        if (connectToPeerId) {
+            // Generate a random ID for the joining peer
+            const joinerId = generateShortId();
+            document.getElementById('peer-id').value = joinerId;
+            initializePeer();
+        }
+
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden && myPeerId) {
+                // Rebroadcast presence when page becomes visible
+                channel.postMessage({
+                    type: 'peer-alive',
+                    peerId: myPeerId,
+                    initial: true
+                });
+            }
+        });
+
+        async function toggleAudio() {
+            const audioToggle = document.getElementById('audio-toggle');
+            
+            try {
+                if (!audioStream) {
+                    audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    isAudioEnabled = true;
+                    audioToggle.innerHTML = '<i class="fas fa-microphone"></i>';
+                    audioToggle.classList.add('active');
+                    
+                    // Send audio stream to all connected peers
+                    connections.forEach((conn, peerId) => {
+                        const call = peer.call(peerId, audioStream);
+                        setupCallEvents(call);
+                    });
+                } else {
+                    if (isAudioEnabled) {
+                        audioStream.getAudioTracks().forEach(track => track.enabled = false);
+                        audioToggle.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+                        audioToggle.classList.remove('active');
+                    } else {
+                        audioStream.getAudioTracks().forEach(track => track.enabled = true);
+                        audioToggle.innerHTML = '<i class="fas fa-microphone"></i>';
+                        audioToggle.classList.add('active');
+                    }
+                    isAudioEnabled = !isAudioEnabled;
+                }
+            } catch (err) {
+                console.error('Error accessing microphone:', err);
+                alert('Could not access microphone. Please check permissions.');
+            }
+        }
+
+        function setupCallEvents(call) {
+            call.on('stream', function(remoteStream) {
+                // Create audio element for remote stream
+                const audio = document.createElement('audio');
+                audio.srcObject = remoteStream;
+                audio.id = 'audio-' + call.peer;
+                audio.play();
+            });
+        }
+
+        function removePeer(peerId) {
+            const conn = connections.get(peerId);
+            if (conn) {
+                conn.close();
+                connections.delete(peerId);
+                updatePeersList();
+                
+                // Remove audio element if exists
+                const audio = document.getElementById('audio-' + peerId);
+                if (audio) {
+                    audio.remove();
+                }
+            }
+        }
+
+        function leaveMeeting() {
+            if (confirm('Are you sure you want to leave the meeting?')) {
+                // Close all connections
+                connections.forEach((conn, peerId) => {
+                    removePeer(peerId);
+                });
+                
+                // Stop audio stream
+                if (audioStream) {
+                    audioStream.getTracks().forEach(track => track.stop());
+                    audioStream = null;
+                }
+                
+                // Stop screen sharing
+                if (screenStream) {
+                    screenStream.getTracks().forEach(track => track.stop());
+                    screenStream = null;
+                    document.getElementById('screen-share-container').style.display = 'none';
+                }
+                
+                // Reset UI
+                document.getElementById('message-input').disabled = true;
+                document.getElementById('send-button').disabled = true;
+                document.getElementById('share-url').style.display = 'none';
+                
+                // Destroy peer connection
+                if (peer) {
+                    peer.destroy();
+                    peer = null;
+                }
+                
+                // Show welcome message
+                const welcomeMessage = document.querySelector('.welcome-message');
+                if (welcomeMessage) {
+                    welcomeMessage.style.display = 'block';
+                }
+                
+                displayMessage('You have left the meeting', 'system');
+                updateConnectionStatus();
+            }
+        }
+
+        async function toggleScreenShare() {
+            const screenShareBtn = document.getElementById('screen-share-btn');
+            const screenContainer = document.getElementById('screen-share-container');
+            const sharedScreenVideo = document.getElementById('shared-screen');
+
+            try {
+                if (!isScreenSharing) {
+                    // Start screen sharing
+                    screenStream = await navigator.mediaDevices.getDisplayMedia({
+                        video: {
+                            cursor: "always"
+                        },
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            sampleRate: 44100
+                        }
+                    });
+
+                    // Display local screen share
+                    sharedScreenVideo.srcObject = screenStream;
+                    screenContainer.style.display = 'block';
+                    
+                    // Notify all peers about screen sharing
+                    connections.forEach((conn, peerId) => {
+                        try {
+                            // Create a new peer connection for screen sharing
+                            const screenCall = peer.call(peerId, screenStream, { metadata: { type: 'screen' } });
+                            
+                            // Store the screen sharing call
+                            conn.screenCall = screenCall;
+                            
+                            // Send message to notify about screen sharing
+                            conn.send({
+                                type: 'screen-share-started',
+                                fromPeerId: myPeerId
+                            });
+                        } catch (err) {
+                            console.error('Error setting up screen share with peer:', peerId, err);
+                        }
+                    });
+
+                    // Update button state
+                    screenShareBtn.innerHTML = '<i class="fas fa-stop"></i><span class="hide-on-collapse">Stop Sharing</span>';
+                    screenShareBtn.classList.add('active');
+                    isScreenSharing = true;
+
+                    // Handle screen share stop from browser
+                    screenStream.getVideoTracks()[0].onended = function() {
+                        stopScreenShare(true);
+                    };
+                } else {
+                    stopScreenShare(true);
+                }
+            } catch (err) {
+                console.error('Error sharing screen:', err);
+                alert('Could not share screen. Please check permissions.');
+            }
+        }
+
+        function stopScreenShare(notifyPeers = false) {
+            if (screenStream) {
+                screenStream.getTracks().forEach(track => track.stop());
+                screenStream = null;
+            }
+            
+            // Close all screen share connections
+            connections.forEach((conn, peerId) => {
+                if (conn.screenCall) {
+                    conn.screenCall.close();
+                    conn.screenCall = null;
+                }
+                
+                if (notifyPeers) {
+                    // Notify peers that screen sharing has stopped
+                    conn.send({
+                        type: 'screen-share-stopped',
+                        fromPeerId: myPeerId
+                    });
+                }
+            });
+            
+            const screenContainer = document.getElementById('screen-share-container');
+            const screenShareBtn = document.getElementById('screen-share-btn');
+            const sharedScreenVideo = document.getElementById('shared-screen');
+            
+            screenContainer.style.display = 'none';
+            sharedScreenVideo.srcObject = null;
+            screenShareBtn.innerHTML = '<i class="fas fa-desktop"></i><span class="hide-on-collapse">Share Screen</span>';
+            screenShareBtn.classList.remove('active');
+            isScreenSharing = false;
+        }
+
+        function setupScreenShareEvents(call) {
+            call.on('stream', function(remoteStream) {
+                console.log('Received screen share stream from:', call.peer);
+                const screenContainer = document.getElementById('screen-share-container');
+                const sharedScreenVideo = document.getElementById('shared-screen');
+                
+                // Set the remote stream as the video source
+                sharedScreenVideo.srcObject = remoteStream;
+                sharedScreenVideo.play().catch(e => console.log('Video play error:', e));
+                screenContainer.style.display = 'block';
+
+                // Handle remote stream ending
+                remoteStream.getVideoTracks()[0].onended = function() {
+                    screenContainer.style.display = 'none';
+                    sharedScreenVideo.srcObject = null;
+                };
+            });
+
+            call.on('error', function(err) {
+                console.error('Screen share call error:', err);
+            });
+
+            call.on('close', function() {
+                console.log('Screen share call closed');
+                const screenContainer = document.getElementById('screen-share-container');
+                const sharedScreenVideo = document.getElementById('shared-screen');
+                screenContainer.style.display = 'none';
+                sharedScreenVideo.srcObject = null;
+            });
+        }
+
+        // Handle incoming calls
+        peer?.on('call', function(call) {
+            // Check if it's a screen share call
+            if (call.peer.endsWith('-screen')) {
+                call.answer(null);
+                setupScreenShareEvents(call);
+            } else {
+                // Regular audio call
+                if (audioStream) {
+                    call.answer(audioStream);
+                } else {
+                    call.answer(null);
+                }
+                setupCallEvents(call);
+            }
+        });
+
+        // Clean up when leaving the page
+        window.onbeforeunload = function() {
+            if (myPeerId) {
+                peers.delete(myPeerId);
+                channel.close();
+                
+                if (audioStream) {
+                    audioStream.getTracks().forEach(track => track.stop());
+                }
+            }
+        };
+    </script>
+</body>
+</html>
