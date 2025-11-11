@@ -122,7 +122,7 @@ section.page-hero::after {
     color: white;
     padding: 3rem var(--spacing-unit);
     text-align: center;
-    background-image: url('/raj-auto/images/raj-garage-2.png');
+    background-image: url('/raj-auto/images/raj-garage-6.png');
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center top;
@@ -1480,6 +1480,7 @@ section.hero.container {
         left: auto;
     }
 }
+
 
 
 
