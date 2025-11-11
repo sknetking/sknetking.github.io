@@ -258,13 +258,14 @@ section.page-hero::after {
 /* ============================================
    HERO SECTION
    ============================================ */
+
 .hero {
-    display: flex;
+    display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 3rem;
     align-items: center;
     padding: 4rem var(--spacing-unit);
-    flex-direction: column-reverse;
+    /* background: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 100%); */
 }
 
 .hero-content {
@@ -1312,6 +1313,15 @@ section.hero.container {
         font-size: 13px;
     }
 
+   .hero {
+    display: flex;
+       grid-template-columns: 1fr 1fr;
+       gap: 3rem;
+       align-items: center;
+       padding: 4rem var(--spacing-unit);
+       flex-direction: column-reverse;
+   }
+   
     .header-content {
         gap: 0.5rem;
     }
@@ -1484,6 +1494,7 @@ section.hero.container {
         left: auto;
     }
 }
+
 
 
 
