@@ -258,14 +258,13 @@ section.page-hero::after {
 /* ============================================
    HERO SECTION
    ============================================ */
-
 .hero {
-    display: grid;
+    display: flex;
     grid-template-columns: 1fr 1fr;
     gap: 3rem;
     align-items: center;
     padding: 4rem var(--spacing-unit);
-    /* background: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 100%); */
+    flex-direction: column-reverse;
 }
 
 .hero-content {
@@ -1485,6 +1484,7 @@ section.hero.container {
         left: auto;
     }
 }
+
 
 
 
