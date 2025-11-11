@@ -89,15 +89,20 @@ a.whatsapp-float .fa-whatsapp {
             background-color: #128C7E;
         }
 
+section.page-hero {
+  position: relative;
+  overflow: hidden; /* ensures the ::after doesn't bleed outside */
+}
+
 section.page-hero::after {
-    content: "";
-    background: #00000087;
-    position: absolute;
-    width: 100%;
-    height:100vh;
-    left: 0;
-    right: 0;
-    bottom:0;
+  content: "";
+  background: rgba(0, 0, 0, 0.53); /* same as #00000087 */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%; /* full coverage */
+  z-index: 1; /* adjust if needed */
 }
 
 .page-hero .container {
@@ -1480,6 +1485,7 @@ section.hero.container {
         left: auto;
     }
 }
+
 
 
 
