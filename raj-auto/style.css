@@ -61,6 +61,30 @@ img {
     display: block;
 }
 
+/* whatsapp fix button css  */
+ .whatsapp-float {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 60px;
+            height: 60px;
+            background-color: #25D366;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8rem;
+            box-shadow: var(--shadow);
+            z-index: 100;
+            transition: var(--transition);
+        }
+
+        .whatsapp-float:hover {
+            transform: scale(1.1);
+            background-color: #128C7E;
+        }
+
 /* ============================================
    CONTAINER & LAYOUT
    ============================================ */
@@ -1422,4 +1446,5 @@ section.hero.container {
         left: auto;
     }
 }
+
 
