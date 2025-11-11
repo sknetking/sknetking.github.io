@@ -351,7 +351,7 @@ a.whatsapp-float .fa-whatsapp {
 }
 
 .page-hero {
-    background: linear-gradient(135deg, #ff6b35 0%, #ff5a1f 100%);
+    /* background: linear-gradient(135deg, #ff6b35 0%, #ff5a1f 100%); */
     color: white;
     padding: 3rem var(--spacing-unit);
     text-align: center;
@@ -1465,6 +1465,7 @@ section.hero.container {
         left: auto;
     }
 }
+
 
 
 
