@@ -1126,6 +1126,19 @@ img {
    ============================================ */
 
 @media (max-width: 768px) {
+
+  .footer-section {
+    text-align: center;
+}
+.footer-content {
+        justify-items: center;
+}
+section.hero.container {
+    margin-top: 3rem;
+    padding: 20px;
+}
+
+   
     :root {
         font-size: 14px;
     }
@@ -1409,3 +1422,4 @@ img {
         left: auto;
     }
 }
+
