@@ -102,6 +102,21 @@ a.whatsapp-float .fa-whatsapp {
 /* ============================================
    HEADER & NAVIGATION
    ============================================ */
+.page-hero {
+    display: flex;
+    color: white;
+    padding: 3rem var(--spacing-unit);
+    text-align: center;
+    background-image: url('/raj-auto/images/raj-garage-2.png');
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center top;
+    min-height: 80vh;
+    vertical-align: middle;
+    flex-direction: column;
+    justify-content: space-around;
+}
+
 
 .header {
     background-color: #0d0d0d;
@@ -1450,5 +1465,6 @@ section.hero.container {
         left: auto;
     }
 }
+
 
 
