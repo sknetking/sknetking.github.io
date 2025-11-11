@@ -1379,14 +1379,14 @@ section.hero.container {
         padding: 2rem var(--spacing-unit);
     }
 
-    .cta-section h2 {
-        font-size: 1.5rem;
+     .page-hero h1 {
+        font-size: 2.6rem;
     }
 
-    .cta-section p {
-        font-size: 0.95rem;
+    .page-hero p {
+        font-size: 1.4rem;
     }
-
+   
     .footer-section h4 {
         font-size: 1rem;
     }
@@ -1480,6 +1480,7 @@ section.hero.container {
         left: auto;
     }
 }
+
 
 
 
