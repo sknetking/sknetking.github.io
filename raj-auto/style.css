@@ -1254,10 +1254,10 @@ section.hero.container {
         font-size: 1rem;
     }
 
-    .hero-image {
-        min-height: 300px;
+     .hero-image {
+        min-height: 100%;
     }
-
+   
     .placeholder-image {
         height: 300px;
     }
@@ -1410,14 +1410,13 @@ section.hero.container {
         font-size: 0.85rem;
     }
 
-    .page-hero h1 {
-        font-size: 1.6rem;
+       .page-hero h1 {
+        font-size: 2.6rem;
     }
 
-    .page-hero p {
-        font-size: 0.9rem;
+     .page-hero p {
+        font-size:1.3rem;
     }
-
     .about-text h2,
     .service-area h2,
     .why-choose-us h2,
@@ -1494,6 +1493,7 @@ section.hero.container {
         left: auto;
     }
 }
+
 
 
 
