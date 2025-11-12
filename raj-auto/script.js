@@ -3,7 +3,62 @@
 // Mobile Menu Toggle & Interactivity
 // ============================================
 
-// Mobile Menu Toggle
+// ========== FIXED ACTION BUTTONS ==========
+// WhatsApp Button Handler
+const whatsappBtn = document.getElementById('whatsappBtn');
+if (whatsappBtn) {
+    whatsappBtn.addEventListener('click', () => {
+        const whatsappURL = 'https://wa.me/918957514343?text=Hello%20Raj%20Auto%20Garage%2C%20I%20would%20like%20to%20inquire%20about%20your%20services.';
+        window.open(whatsappURL, '_blank');
+    });
+}
+
+// Share Button Handler (Web Share API)
+const shareBtn = document.getElementById('shareBtn');
+if (shareBtn) {
+    shareBtn.addEventListener('click', async () => {
+        const shareData = {
+            title: 'Raj Auto Garage',
+            text: 'Expert Bike Repair & Maintenance - Quality Service at Transparent Prices with Free Doorstep Pickup & Drop!',
+            url: window.location.href
+        };
+
+        // Check if Web Share API is supported
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+                console.log('Share successful');
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('Share error:', err);
+                }
+            }
+        } else {
+            // Fallback: Copy URL to clipboard
+            fallbackShare(shareData.url);
+        }
+    });
+}
+
+// Fallback share function (copy to clipboard)
+function fallbackShare(url) {
+    const textArea = document.createElement('textarea');
+    textArea.value = url;
+    document.body.appendChild(textArea);
+    textArea.select();
+    
+    try {
+        document.execCommand('copy');
+        alert('Link copied to clipboard! You can share it now.');
+    } catch (err) {
+        console.error('Copy failed:', err);
+        alert('Unable to copy. Please try again.');
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+// ========== MOBILE MENU TOGGLE ==========
 const hamburger = document.getElementById('hamburger');
 const navList = document.getElementById('navList');
 

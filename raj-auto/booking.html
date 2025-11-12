@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Service - Raj Auto Garage</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="booking.css">
+    <style>
+        .pac-container {
+            z-index: 1050;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <a href="index.html"><h1>Raj Auto</h1></a>
+                </div>
+                <nav class="nav-menu">
+                    <button class="hamburger" id="hamburger">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                    <ul class="nav-list" id="navList">
+                        <li><a href="index.html" class="nav-link">Home</a></li>
+                        <li><a href="services.html" class="nav-link">Services</a></li>
+                        <li><a href="about.html" class="nav-link">About Us</a></li>
+                        <li><a href="contact.html" class="nav-link">Contact</a></li>
+                    </ul>
+                </nav>
+                <a href="booking.html" class="cta-btn">Book Service</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Booking Container -->
+    <div class="booking-container">
+        <div class="booking-content">
+            <!-- Left Panel: Service Selection & Location -->
+            <div class="booking-form-section">
+                <!-- Close Button -->
+                <button class="close-booking" onclick="window.location.href='index.html'">
+                    <i class="fas fa-times"></i>
+                </button>
+
+                <!-- Progress Tracker -->
+                <div class="progress-tracker">
+                    <div class="progress-item active" data-step="1">
+                        <div class="progress-number">1</div>
+                        <span>Service</span>
+                    </div>
+                    <div class="progress-connector"></div>
+                    <div class="progress-item" data-step="2">
+                        <div class="progress-number">2</div>
+                        <span>Location</span>
+                    </div>
+                    <div class="progress-connector"></div>
+                    <div class="progress-item" data-step="3">
+                        <div class="progress-number">3</div>
+                        <span>Confirm</span>
+                    </div>
+                </div>
+
+                <!-- Step 1: Service Selection -->
+                <div class="booking-step active" id="step-1">
+                    <h2>Select Service Type</h2>
+                    <div class="service-options">
+                        <div class="service-option" data-service="standard" data-price="199">
+                            <div class="service-icon"><i class="fas fa-wrench"></i></div>
+                            <h4>Standard Service</h4>
+                            <p class="service-time"><i class="fas fa-clock"></i> 2-3 hours</p>
+                            <p class="service-desc">Routine maintenance and basic diagnostics for smooth, reliable performance.<br><span class="service-note">*Final cost may vary based on bike condition and required work.</span></p>
+                            <div class="service-price">₹<span>199</span> + travel <span class="service-note">(Standard estimate)</span></div>
+                        </div>
+
+                        <div class="service-option" data-service="express" data-price="299">
+                            <div class="service-icon"><i class="fas fa-bolt"></i></div>
+                            <h4>Express Service</h4>
+                            <p class="service-time"><i class="fas fa-clock"></i> 1-2 hours</p>
+                            <p class="service-desc">Fast-track repairs and diagnostics for urgent needs.<br><span class="service-note">*Pricing is an estimate; actual charges depend on inspection.</span></p>
+                            <div class="service-price">₹<span>299</span> + travel <span class="service-note">(Standard estimate)</span></div>
+                        </div>
+
+                        <div class="service-option" data-service="repair" data-price="699">
+                            <div class="service-icon"><i class="fas fa-tools"></i></div>
+                            <h4>Major Repair</h4>
+                            <p class="service-time"><i class="fas fa-clock"></i> 4-6 hours</p>
+                            <p class="service-desc">Comprehensive engine work and major repairs for performance restoration.<br><span class="service-note">*Final quote after detailed inspection.</span></p>
+                            <div class="service-price">₹<span>699</span> + travel <span class="service-note">(Standard estimate)</span></div>
+                        </div>
+
+                        <div class="service-option" data-service="premium" data-price="999">
+                            <div class="service-icon"><i class="fas fa-crown"></i></div>
+                            <h4>Premium Service</h4>
+                            <p class="service-time"><i class="fas fa-clock"></i> Full Day</p>
+                            <p class="service-desc">Complete bike overhaul, deep inspection, and premium care.<br><span class="service-note">*Estimate shown; actual cost based on assessment.</span></p>
+                            <div class="service-price">₹<span>999</span> + travel <span class="service-note">(Standard estimate)</span></div>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.95em; color: #7f8c8d; margin-top: 10px; text-align: left;">
+                        <i class="fas fa-info-circle"></i> Prices shown are standard estimates for Surat region. Final charges will be confirmed after inspection and depend on your bike's condition and service needs.
+                    </div>
+                    <button class="btn btn-primary" id="next-step-1" disabled>Continue to Location</button>
+                </div>
+
+                <!-- Step 2: Location Selection -->
+                <div class="booking-step" id="step-2">
+                    <h2>Select Locations</h2>
+                    <div class="location-inputs">
+                        <div class="input-group">
+                            <label><i class="fas fa-map-marker-alt"></i> Pickup Location</label>
+                            <input type="text" id="pickup-location" class="location-input" placeholder="Enter pickup address or use current location">
+                            <button class="btn-location-icon" id="use-current-location">
+                                <i class="fas fa-location-dot"></i> Current
+                            </button>
+                        </div>
+
+                        <div class="input-group">
+                            <label><i class="fas fa-building"></i> Garage Location</label>
+                            <input type="text" id="garage-location" class="location-input" placeholder="Raj Auto Garage, Main Market Street" value="Raj Auto Garage, Bardoli, Gujarat" readonly>
+                        </div>
+
+                        <div class="location-suggestions" id="location-suggestions"></div>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-secondary" id="back-step-2">Back</button>
+                        <button class="btn btn-primary" id="next-step-2" disabled>Continue to Confirm</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Confirm Order -->
+                <div class="booking-step" id="step-3">
+                    <h2>Confirm Your Order</h2>
+                    <div class="order-summary">
+                        <div class="summary-item">
+                            <label>Service Type:</label>
+                            <span id="summary-service"></span>
+                        </div>
+                        <div class="summary-item">
+                            <label>Pickup Location:</label>
+                            <span id="summary-pickup"></span>
+                        </div>
+                        <div class="summary-item">
+                            <label>Garage Location:</label>
+                            <span id="summary-garage"></span>
+                        </div>
+                        <div class="summary-item">
+                            <label>Distance:</label>
+                            <span id="summary-distance"></span>
+                        </div>
+                        <div class="summary-divider"></div>
+                        <div class="summary-item total">
+                            <label>Estimated Total:</label>
+                            <span id="summary-total"></span>
+                        </div>
+                    </div>
+
+                    <div class="terms-checkbox">
+                        <input type="checkbox" id="agree-terms">
+                        <label for="agree-terms">I agree to the terms and conditions</label>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-secondary" id="back-step-3">Back</button>
+                        <button class="btn btn-primary btn-large" id="confirm-order" disabled>Book Service Now</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Map -->
+            <div class="booking-map-section">
+                <div id="booking-map" class="booking-map"></div>
+                <div class="map-controls">
+                    <button class="map-control-btn" id="map-zoom-in" title="Zoom In">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <button class="map-control-btn" id="map-zoom-out" title="Zoom Out">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <button class="map-control-btn" id="map-center" title="Center Map">
+                        <i class="fas fa-crosshairs"></i>
+                    </button>
+                </div>
+
+                <!-- Distance & Pricing Display -->
+                <div class="map-info-box">
+                    <div class="info-row">
+                        <span class="info-label">Distance:</span>
+                        <span class="info-value" id="distance-display">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Travel Charge:</span>
+                        <span class="info-value" id="travel-charge-display">-</span>
+                    </div>
+                    <div class="info-row total">
+                        <span class="info-label">Total Estimate:</span>
+                        <span class="info-value" id="total-estimate-display">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Tracking Modal (shown after confirmation) -->
+    <div class="modal" id="tracking-modal">
+        <div class="modal-content tracking-modal">
+            <button class="modal-close" onclick="closeTrackingModal()">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <div class="tracking-header">
+                <h2>Order Confirmed ✅</h2>
+                <p class="order-id">Order ID: <span id="order-id-display">#RAJ001</span></p>
+                <p style="font-size: 12px; color: #7f8c8d; margin-top: 8px; font-style: italic;">Click "Send Details to Admin" to notify Raj Auto about your booking</p>
+            </div>
+
+            <div class="tracking-timeline">
+                <div class="timeline-item completed">
+                    <div class="timeline-icon"><i class="fas fa-check"></i></div>
+                    <div class="timeline-content">
+                        <h4>Order Placed</h4>
+                        <p id="timeline-ordered"></p>
+                    </div>
+                </div>
+
+                <div class="timeline-item" id="timeline-pickup">
+                    <div class="timeline-icon"><i class="fas fa-car"></i></div>
+                    <div class="timeline-content">
+                        <h4>Picking Up Your Vehicle</h4>
+                        <p>Expected in <span id="pickup-eta">15-20 minutes</span></p>
+                    </div>
+                </div>
+
+                <div class="timeline-item" id="timeline-service">
+                    <div class="timeline-icon"><i class="fas fa-wrench"></i></div>
+                    <div class="timeline-content">
+                        <h4>In Service</h4>
+                        <p>Expected duration: <span id="service-duration">2-3 hours</span></p>
+                    </div>
+                </div>
+
+                <div class="timeline-item" id="timeline-deliver">
+                    <div class="timeline-icon"><i class="fas fa-truck"></i></div>
+                    <div class="timeline-content">
+                        <h4>Delivering Your Vehicle</h4>
+                        <p>Completing in <span id="deliver-eta">20-25 minutes</span></p>
+                    </div>
+                </div>
+
+                <div class="timeline-item" id="timeline-delivered">
+                    <div class="timeline-icon"><i class="fas fa-home"></i></div>
+                    <div class="timeline-content">
+                        <h4>Delivered</h4>
+                        <p id="timeline-delivered-time"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- <div class="tracking-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <p class="progress-text" id="progress-text">Picking up your vehicle...</p>
+            </div> -->
+
+            <div class="tracking-details">
+                <h3>Order Details</h3>
+                <div class="detail-row">
+                    <span>Service:</span>
+                    <span id="tracking-service"></span>
+                </div>
+                <div class="detail-row">
+                    <span>Pickup:</span>
+                    <span id="tracking-pickup"></span>
+                </div>
+                <div class="detail-row">
+                    <span>Travel Charge:</span>
+                    <span id="tracking-amount"></span>
+                </div>
+                <p style="font-size: 11px; color: #7f8c8d; margin-top: 8px; font-style: italic;">*Repair cost will be determined after vehicle inspection</p>
+            </div>
+
+            <div class="tracking-actions">
+                <button class="btn btn-primary" onclick="sendBookingDetailsToAdmin()">
+                    <i class="fab fa-whatsapp"></i> Send Details to Admin
+                </button>
+                <button class="btn btn-secondary" onclick="contactSupport()">
+                    <i class="fas fa-phone"></i> Contact Support
+                </button>
+                <button class="btn btn-secondary" onclick="closeTrackingModal()">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+     <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-top">
+                    <div class="footer-logo-section">
+                        <img src="images/raaj-auto-logo.png" alt="logo" class="footer-logo">
+                        <p class="footer-tagline">Expert Bike Repair & Maintenance Services</p>
+                        <a href="tel:+918957514343" class="footer-phone">
+                            <i class="fas fa-phone"></i> +91 8957514343
+                        </a>
+                    </div>
+                    
+                    <nav class="footer-links-section">
+                        <a href="index.html" class="footer-link">Home</a>
+                        <div class="footer-divider">|</div>
+                        <a href="services.html" class="footer-link">Services</a>
+                        <div class="footer-divider">|</div>
+                        <a href="about.html" class="footer-link">About Us</a>
+                        <div class="footer-divider">|</div>
+                        <a href="contact.html" class="footer-link">Contact</a>
+                    </nav>
+                      <div class="footer-social-section">
+                        <a href="#" class="footer-social-icon" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="footer-social-icon" title="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="https://wa.me/918957514343" class="footer-social-icon" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Raj Auto Garage. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Fixed Action Buttons -->
+    <div class="fixed-actions">
+        <button class="fixed-btn whatsapp-btn" id="whatsappBtn" title="Chat with us on WhatsApp">
+            <i class="fab fa-whatsapp"></i>
+        </button>
+        <button class="fixed-btn share-btn" id="shareBtn" title="Share this site">
+            <i class="fas fa-share-alt"></i>
+        </button>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJlXcXv_Y-u4sHfd-t_kVavI2oJvNXZOM&libraries=places,routes"></script>
+    <script src="script.js"></script>
+    <script src="booking.js"></script>
+</body>
+</html>

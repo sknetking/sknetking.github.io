@@ -61,17 +61,13 @@ img {
     display: block;
 }
 
-a.whatsapp-float .fa-whatsapp {
-    font-size: 35px !important;
-}
-
 /* whatsapp fix button css  */
  .whatsapp-float {
             position: fixed;
             bottom: 25px;
             right: 25px;
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             background-color: #25D366;
             color: white;
             border-radius: 50%;
@@ -89,26 +85,6 @@ a.whatsapp-float .fa-whatsapp {
             background-color: #128C7E;
         }
 
-section.page-hero {
-  position: relative;
-  overflow: hidden; /* ensures the ::after doesn't bleed outside */
-}
-
-section.page-hero::after {
-  content: "";
-  background: rgba(0, 0, 0, 0.53); /* same as #00000087 */
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%; /* full coverage */
-  z-index: 1; /* adjust if needed */
-}
-
-.page-hero .container {
-    z-index: 99;
-}
-
 /* ============================================
    CONTAINER & LAYOUT
    ============================================ */
@@ -122,21 +98,6 @@ section.page-hero::after {
 /* ============================================
    HEADER & NAVIGATION
    ============================================ */
-.page-hero {
-    display: flex;
-    color: white;
-    padding: 3rem var(--spacing-unit);
-    text-align: center;
-    background-image: url('/raj-auto/images/raj-garage-6.png');
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center top;
-    min-height: 80vh;
-    vertical-align: middle;
-    flex-direction: column;
-    justify-content: space-around;
-}
-
 
 .header {
     background-color: #0d0d0d;
@@ -295,8 +256,6 @@ section.page-hero::after {
 }
 
 .placeholder-image {
-    width: 100%;
-    height: 400px;
     background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
     border: 2px dashed var(--primary-color);
     border-radius: 0.5rem;
@@ -371,10 +330,18 @@ section.page-hero::after {
 }
 
 .page-hero {
-    /* background: linear-gradient(135deg, #ff6b35 0%, #ff5a1f 100%); */
+    display: flex;
     color: white;
     padding: 3rem var(--spacing-unit);
     text-align: center;
+    background-image: url('/raj-auto/images/raj-garage-2.png');
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center top;
+    min-height: 80vh;
+    vertical-align: middle;
+    flex-direction: column;
+    justify-content: space-around;
 }
 
 .page-hero h1 {
@@ -1098,90 +1065,167 @@ section.page-hero::after {
 .footer {
     background-color: #0d0d0d;
     border-top: 2px solid var(--primary-color);
-    padding: 3rem var(--spacing-unit) 1rem;
+    padding: 2.5rem var(--spacing-unit) 1rem;
 }
 
 .footer-content {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 2rem;
-    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
-.footer-section h4 {
-    font-size: 1.2rem;
-    margin-bottom: 1rem;
-    color: var(--primary-color);
+.footer-top {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 107, 53, 0.2);
 }
 
-.footer-section p {
+.footer-logo-section {
+    text-align: left;
+    flex: 1;
+    min-width: 200px;
+}
+
+.footer-logo {
+    width: 150px;
+    height: auto;
+    margin-bottom: 0.75rem;
+}
+
+.footer-tagline {
     color: #b0b0b0;
     font-size: 0.95rem;
     line-height: 1.6;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
 }
 
-.footer-section ul {
-    list-style: none;
+.footer-phone {
+    font-weight: bold;
+    color: var(--primary-color);
+    font-size: 1rem;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.footer-section ul li {
-    margin-bottom: 0.5rem;
+.footer-phone:hover {
+    opacity: 0.8;
 }
 
-.footer-section ul a {
+.footer-divider {
+    color: var(--primary-color);
+    opacity: 0.5;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.footer-links-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.footer-link {
     color: #b0b0b0;
     font-size: 0.95rem;
     transition: var(--transition);
+    padding: 0.5rem 0.75rem;
 }
 
-.footer-section ul a:hover {
+.footer-link:hover {
     color: var(--primary-color);
 }
 
-.phone {
-    font-weight: bold;
-    color: var(--primary-color);
-}
-
-.social-icons {
+.footer-social-section {
     display: flex;
-    gap: 1rem;
+    align-items: center;
+    gap: 1.25rem;
+    justify-content: center;
 }
 
-.social-icon {
+.footer-social-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
     background-color: #262626;
     border-radius: 50%;
-    font-size: 1.2rem;
+    font-size: 1rem;
     transition: var(--transition);
     border: 2px solid var(--primary-color);
     color: var(--primary-color);
 }
 
-.social-icon i {
-    color: var(--primary-color);
-}
-
-.social-icon:hover {
+.footer-social-icon:hover {
     background-color: var(--primary-color);
     color: #0d0d0d;
-}
-
-.social-icon:hover i {
-    color: #0d0d0d;
+    transform: scale(1.1);
 }
 
 .footer-bottom {
     text-align: center;
-    padding-top: 2rem;
+    padding-top: 1.5rem;
     border-top: 1px solid var(--border-color);
     color: #808080;
     font-size: 0.9rem;
+}
+
+/* ============================================
+   FIXED ACTION BUTTONS
+   ============================================ */
+
+.fixed-actions {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    z-index: 999;
+}
+
+.fixed-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.fixed-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.whatsapp-btn {
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+}
+
+.whatsapp-btn:hover {
+    background: linear-gradient(135deg, #20ba5e 0%, #0e7c6e 100%);
+}
+
+.share-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.share-btn:hover {
+    background: linear-gradient(135deg, #5568d3 0%, #653a8a 100%);
 }
 
 /* ============================================
@@ -1190,20 +1234,71 @@ section.page-hero::after {
 
 @media (max-width: 768px) {
 
-  .footer-section {
-    text-align: center;
-}
-.footer-content {
-        justify-items: center;
-}
-section.hero.container {
-    margin-top: 3rem;
-    padding: 20px;
-}
-
-   
     :root {
-        font-size: 14px;
+        font-size: 15px;
+    }
+    
+    body {
+        line-height: 1.7;
+    }
+    
+    /* Footer Mobile Styles */
+    .footer-top {
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+    
+    .footer-logo-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .footer-logo {
+        width: 140px;
+    }
+    
+    .footer-tagline {
+        font-size: 0.95rem;
+    }
+    
+    .footer-phone {
+        font-size: 1rem;
+    }
+    
+    .footer-links-section {
+        gap: 0.75rem;
+    }
+    
+    .footer-link {
+        font-size: 0.95rem;
+    }
+    
+    .footer-divider {
+        font-size: 1.2rem;
+    }
+    
+    .footer-social-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 0.95rem;
+    }
+    
+    .footer-bottom {
+        font-size: 0.9rem;
+    }
+    
+    /* Fixed Buttons Mobile */
+    .fixed-actions {
+        bottom: 20px;
+        right: 20px;
+        gap: 12px;
+    }
+    
+    .fixed-btn {
+        width: 52px;
+        height: 52px;
+        font-size: 22px;
     }
 
     .header-content {
@@ -1247,23 +1342,60 @@ section.hero.container {
     }
 
     .hero-headline {
-        font-size: 1.8rem;
+        font-size: 1.9rem;
+        line-height: 1.3;
     }
 
     .hero-subheadline {
-        font-size: 1rem;
+        font-size: 1.1rem;
+        line-height: 1.6;
     }
 
-     .hero-image {
-        min-height: 100%;
+    .hero-image {
+        min-height: 300px;
     }
-   
+
     .placeholder-image {
         height: 300px;
     }
 
     .section-title {
-        font-size: 1.6rem;
+        font-size: 1.7rem;
+        line-height: 1.3;
+    }
+    
+    .service-card h3,
+    .value-item h3,
+    .service-item h3 {
+        font-size: 1.25rem;
+    }
+    
+    .service-card p,
+    .value-item p,
+    .service-item > p {
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+    
+    .btn {
+        padding: 1rem 1.75rem;
+        font-size: 1.05rem;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .btn-large {
+        padding: 1.25rem 2.25rem;
+        font-size: 1.15rem;
+        min-height: 48px;
+    }
+    
+    .cta-btn {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.95rem;
+        min-height: 44px;
     }
 
     .services-grid,
@@ -1296,11 +1428,41 @@ section.hero.container {
     }
 
     .page-hero h1 {
-        font-size: 2rem;
+        font-size: 2.1rem;
+        line-height: 1.3;
     }
 
     .page-hero p {
-        font-size: 1rem;
+        font-size: 1.05rem;
+        line-height: 1.6;
+    }
+    
+    .about-text h2,
+    .why-choose-us h2,
+    .expertise-section h2,
+    .mission-item h3,
+    .info-item h3 {
+        line-height: 1.3;
+    }
+    
+    .choose-item h4,
+    .expertise-item h4,
+    .detail-item h4,
+    .faq-item h4 {
+        font-size: 1.1rem;
+    }
+    
+    .choose-item p,
+    .expertise-item p,
+    .detail-item p,
+    .faq-item p {
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+    
+    .testimonial-text {
+        font-size: 1.05rem;
+        line-height: 1.7;
     }
 }
 
@@ -1309,19 +1471,22 @@ section.hero.container {
    ============================================ */
 
 @media (max-width: 480px) {
+
+    section.hero.container {
+    display: flex;
+    flex-direction: column-reverse;
+}
+    
+
+    
     :root {
-        font-size: 13px;
+        font-size: 14px;
+    }
+    
+    body {
+        line-height: 1.7;
     }
 
-   .hero {
-    display: flex;
-       grid-template-columns: 1fr 1fr;
-       gap: 3rem;
-       align-items: center;
-       padding: 4rem var(--spacing-unit);
-       flex-direction: column-reverse;
-   }
-   
     .header-content {
         gap: 0.5rem;
     }
@@ -1331,54 +1496,96 @@ section.hero.container {
     }
 
     .cta-btn {
-        padding: 0.5rem 0.8rem;
-        font-size: 0.7rem;
+        padding: 0.7rem 1rem;
+        font-size: 0.8rem;
+        min-height: 40px;
     }
 
     .hero-headline {
-        font-size: 1.4rem;
+        font-size: 1.6rem;
+        line-height: 1.3;
     }
 
     .hero-subheadline {
-        font-size: 0.9rem;
+        font-size: 1rem;
+        line-height: 1.6;
     }
 
     .btn {
-        padding: 0.75rem 1.5rem;
-        font-size: 0.9rem;
+        padding: 0.9rem 1.5rem;
+        font-size: 0.95rem;
+        min-height: 44px;
     }
 
     .btn-large {
         padding: 1rem 2rem;
         font-size: 1rem;
+        min-height: 44px;
     }
 
     .section-title {
-        font-size: 1.4rem;
+        font-size: 1.5rem;
         margin-bottom: 1.5rem;
+        line-height: 1.3;
     }
 
     .service-card,
     .value-item,
     .service-item,
     .mission-item {
-        padding: 1.5rem;
+        padding: 1.75rem;
+    }
+    
+    .service-card h3,
+    .service-card h4 {
+        font-size: 1.15rem;
+        line-height: 1.3;
+    }
+    
+    .service-card p {
+        font-size: 0.95rem;
+        line-height: 1.6;
     }
 
     .testimonial-card {
-        padding: 1.5rem;
+        padding: 1.75rem;
     }
 
     .testimonial-text {
-        font-size: 1rem;
+        font-size: 1.05rem;
+        line-height: 1.7;
+    }
+    
+    .testimonial-info h4 {
+        font-size: 1.05rem;
     }
 
     .contact-main {
-        padding: 1.5rem;
+        padding: 1.75rem;
+    }
+    
+    .contact-main h2 {
+        font-size: 1.5rem;
+        line-height: 1.3;
+    }
+    
+    .contact-main p {
+        font-size: 0.95rem;
+        line-height: 1.6;
     }
 
     .info-item {
         padding: 1.5rem;
+    }
+    
+    .info-item h3 {
+        font-size: 1.15rem;
+        line-height: 1.3;
+    }
+    
+    .info-item p {
+        font-size: 0.95rem;
+        line-height: 1.6;
     }
 
     .faq-item {
@@ -1386,62 +1593,163 @@ section.hero.container {
     }
 
     .faq-item h4 {
-        font-size: 1rem;
+        font-size: 1.05rem;
+        line-height: 1.3;
+    }
+    
+    .faq-item p {
+        font-size: 0.9rem;
+        line-height: 1.6;
     }
 
     .cta-section {
-        padding: 2rem var(--spacing-unit);
+        padding: 2.5rem var(--spacing-unit);
     }
 
-     .page-hero h1 {
-        font-size: 2.6rem;
+    .cta-section h2 {
+        font-size: 1.6rem;
+        line-height: 1.3;
     }
 
-    .page-hero p {
-        font-size: 1.4rem;
+    .cta-section p {
+        font-size: 0.95rem;
+        line-height: 1.6;
     }
-   
-    .footer-section h4 {
+
+    /* Footer Mobile Styles (Small Screens) */
+    .footer-top {
+        flex-direction: column;
+        gap: 1rem;
+        padding-bottom: 1.25rem;
+    }
+    
+    .footer-logo-section {
+        width: 100%;
+    }
+    
+    .footer-logo {
+        width: 130px;
+    }
+    
+    .footer-tagline {
         font-size: 1rem;
+        line-height: 1.6;
+    }
+    
+    .footer-phone {
+        font-size: 1.05rem;
+    }
+    
+    .footer-links-section {
+        width: 100%;
+        gap: 0rem;
+    }
+
+    .footer-link {
+        font-size: 1rem;
+        padding: 0.5rem 0.5rem;
+    }
+    
+    .footer-divider {
+        font-size: 1rem;
+        opacity: 0.6;
+    }
+    
+    .footer-social-section {
+        width: 100%;
+        gap: 1rem;
+    }
+    
+    .footer-social-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 1rem;
+    }
+    
+    .footer-bottom {
+        font-size: 0.9rem;
+        padding-top: 1rem;
+    }
+    
+    /* Fixed Buttons Mobile (Small Screens) */
+    .fixed-actions {
+        bottom: 15px;
+        right: 15px;
+        gap: 10px;
+    }
+    
+   .fixed-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 24px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+        padding: 0px;
+    }
+
+    .footer-section h4 {
+        font-size: 1.1rem;
     }
 
     .footer-section p,
     .footer-section ul a {
-        font-size: 0.85rem;
+        font-size: 0.9rem;
+        line-height: 1.6;
     }
 
-       .page-hero h1 {
-        font-size: 2.6rem;
+    .page-hero h1 {
+        font-size: 1.8rem;
+        line-height: 1.3;
     }
 
-     .page-hero p {
-        font-size:1.3rem;
+    .page-hero p {
+        font-size: 0.95rem;
+        line-height: 1.6;
     }
+
     .about-text h2,
     .service-area h2,
     .why-choose-us h2,
     .expertise-section h2 {
-        font-size: 1.4rem;
+        font-size: 1.5rem;
+        line-height: 1.3;
+    }
+    
+    .about-text p {
+        font-size: 0.95rem;
+        line-height: 1.7;
     }
 
     .mission-item h3 {
-        font-size: 1.2rem;
+        font-size: 1.15rem;
+        line-height: 1.3;
+    }
+    
+    .mission-item p {
+        font-size: 0.9rem;
+        line-height: 1.6;
     }
 
     .expertise-item h4,
     .choose-item h4,
     .detail-item h4 {
-        font-size: 1rem;
+        font-size: 1.05rem;
+        line-height: 1.3;
     }
 
     .expertise-item p,
     .choose-item p,
     .detail-item p {
-        font-size: 0.85rem;
+        font-size: 0.9rem;
+        line-height: 1.6;
     }
 
     .pricing-info {
         padding: 1.5rem;
+    }
+    
+    .pricing-info p {
+        font-size: 0.95rem;
+        line-height: 1.6;
     }
 
     .service-details-grid {
@@ -1493,14 +1801,3 @@ section.hero.container {
         left: auto;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

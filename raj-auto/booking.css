@@ -1,0 +1,1122 @@
+/* ===== BOOKING CONTAINER & LAYOUT ===== */
+.booking-container {
+    min-height: calc(100vh - 120px);
+    background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+    padding: 30px 20px;
+}
+
+.booking-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    max-width: 1400px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.booking-form-section {
+    padding: 40px;
+    overflow-y: auto;
+    max-height: calc(100vh - 150px);
+    position: relative;
+}
+
+.booking-map-section {
+    position: relative;
+    height: 100%;
+    min-height: 600px;
+}
+
+.close-booking {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: #f0f0f0;
+    color: #333;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.close-booking:hover {
+    background: #e74c3c;
+    color: white;
+    transform: rotate(90deg);
+}
+
+/* ===== PROGRESS TRACKER ===== */
+.progress-tracker {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #ecf0f1;
+}
+
+.progress-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+}
+
+.progress-item.active {
+    opacity: 1;
+}
+
+.progress-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ecf0f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #333;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.progress-item.active .progress-number {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: #667eea;
+}
+
+.progress-item.active span {
+    font-weight: 600;
+    color: #667eea;
+}
+
+.progress-connector {
+    flex: 1;
+    height: 2px;
+    background: #ecf0f1;
+    margin: 0 15px;
+    margin-top: -28px;
+    position: relative;
+    z-index: -1;
+}
+
+/* ===== BOOKING STEPS ===== */
+.booking-step {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.booking-step.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.booking-step h2 {
+    font-size: 24px;
+    margin-bottom: 25px;
+    color: #333;
+}
+
+/* ===== SERVICE OPTIONS ===== */
+.service-options {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.service-option {
+    border: 2px solid #ecf0f1;
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.service-option:hover {
+    border-color: #667eea;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+}
+
+.service-option.selected {
+    border-color: #667eea;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+}
+
+.service-option .service-icon {
+    font-size: 32px;
+    color: #667eea;
+    margin-bottom: 10px;
+}
+
+.service-option h4 {
+    font-size: 16px;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.service-option .service-time {
+    font-size: 12px;
+    color: #7f8c8d;
+    margin-bottom: 5px;
+}
+
+.service-option .service-desc {
+    font-size: 13px;
+    color: #95a5a6;
+    margin-bottom: 12px;
+}
+
+.service-option .service-price {
+    font-size: 18px;
+    font-weight: bold;
+    color: #667eea;
+}
+
+.service-option .service-price span {
+    font-size: 22px;
+}
+
+/* ===== LOCATION INPUTS ===== */
+.location-inputs {
+    margin-bottom: 30px;
+}
+
+.input-group {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.input-group label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.location-input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #ecf0f1;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.location-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.location-input:read-only {
+    background: #f8f9fa;
+    color: #7f8c8d;
+}
+
+.btn-location-icon {
+    position: absolute;
+    right: 12px;
+    top: 38px;
+    border: none;
+    background: none;
+    color: #667eea;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.btn-location-icon:hover {
+    transform: scale(1.2);
+}
+
+.location-suggestions {
+    background: white;
+    border: 1px solid #ecf0f1;
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: -10px;
+    position: absolute;
+    width: 100%;
+    z-index: 100;
+    display: none;
+}
+
+.location-suggestions.active {
+    display: block;
+}
+
+.suggestion-item {
+    padding: 12px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #ecf0f1;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover {
+    background: #f8f9fa;
+    padding-left: 20px;
+}
+
+/* ===== ORDER SUMMARY ===== */
+.order-summary {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    font-size: 14px;
+}
+
+.summary-item label {
+    color: #7f8c8d;
+    font-weight: 500;
+}
+
+.summary-item span {
+    color: #333;
+    font-weight: 600;
+}
+
+.summary-item.total {
+    border-top: 2px solid #ecf0f1;
+    padding-top: 15px;
+    font-size: 16px;
+}
+
+.summary-item.total span {
+    font-size: 20px;
+    color: #667eea;
+}
+
+.summary-divider {
+    height: 1px;
+    background: #ecf0f1;
+    margin: 0;
+}
+
+/* ===== TERMS CHECKBOX ===== */
+.terms-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: #7f8c8d;
+}
+
+.terms-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #667eea;
+}
+
+/* ===== BUTTONS ===== */
+.button-group {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+}
+
+.btn-secondary {
+    background: #ecf0f1;
+    color: #333;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: #d5dbde;
+}
+
+.btn-large {
+    width: 100%;
+    padding: 14px 24px;
+    font-size: 16px;
+}
+
+/* ===== MAP SECTION ===== */
+.booking-map {
+    width: 100%;
+    height: 100%;
+    min-height: 600px;
+    background: #e0e0e0;
+    border-radius: 0;
+}
+
+.map-controls {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 10;
+}
+
+.map-control-btn {
+    width: 45px;
+    height: 45px;
+    border-radius: 8px;
+    border: none;
+    background: white;
+    color: #333;
+    font-size: 18px;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.map-control-btn:hover {
+    background: #667eea;
+    color: white;
+    transform: scale(1.1);
+}
+
+/* ===== MAP INFO BOX ===== */
+.map-info-box {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: white;
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    min-width: 220px;
+    z-index: 10;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    font-size: 13px;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-row.total {
+    border-top: 2px solid #ecf0f1;
+    padding-top: 12px;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.info-label {
+    color: #7f8c8d;
+}
+
+.info-value {
+    color: #333;
+    font-weight: 600;
+}
+
+.info-row.total .info-value {
+    color: #667eea;
+    font-size: 16px;
+}
+
+/* ===== TRACKING MODAL ===== */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.tracking-modal {
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    border: none;
+    background: #f0f0f0;
+    color: #333;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+    background: #e74c3c;
+    color: white;
+}
+
+/* ===== TRACKING HEADER ===== */
+.tracking-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.tracking-header h2 {
+    font-size: 24px;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.order-id {
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+.order-id span {
+    font-weight: 600;
+    color: #667eea;
+}
+
+/* ===== TRACKING TIMELINE ===== */
+.tracking-timeline {
+    margin-bottom: 30px;
+}
+
+.timeline-item {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+}
+
+.timeline-item.completed,
+.timeline-item.active {
+    opacity: 1;
+}
+
+.timeline-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: #ecf0f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7f8c8d;
+    font-size: 18px;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.timeline-item.completed .timeline-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.timeline-item.active .timeline-icon {
+    background: #667eea;
+    color: white;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+    }
+}
+
+.timeline-content h4 {
+    margin: 0 0 5px 0;
+    color: #333;
+    font-size: 14px;
+}
+
+.timeline-content p {
+    margin: 0;
+    color: #7f8c8d;
+    font-size: 12px;
+}
+
+/* ===== TRACKING PROGRESS ===== */
+.tracking-progress {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #ecf0f1;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    width: 25%;
+    animation: progressAnimation 2s ease-in-out infinite;
+}
+
+@keyframes progressAnimation {
+    0% { width: 25%; }
+    50% { width: 50%; }
+    100% { width: 75%; }
+}
+
+.progress-text {
+    text-align: center;
+    font-size: 13px;
+    color: #7f8c8d;
+    margin: 0;
+}
+
+/* ===== TRACKING DETAILS ===== */
+.tracking-details {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.tracking-details h3 {
+    font-size: 14px;
+    margin: 0 0 15px 0;
+    color: #333;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 13px;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-row span:first-child {
+    color: #7f8c8d;
+}
+
+.detail-row span:last-child {
+    color: #333;
+    font-weight: 600;
+}
+
+/* ===== TRACKING ACTIONS ===== */
+.tracking-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tracking-actions .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 20px;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1024px) {
+    .booking-content {
+        grid-template-columns: 1fr;
+    }
+
+    .booking-map-section {
+        min-height: 400px;
+    }
+
+    .booking-form-section {
+        max-height: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .booking-container {
+        padding: 15px 10px;
+    }
+
+    .booking-content {
+        gap: 15px;
+        border-radius: 12px;
+    }
+
+    .booking-form-section {
+        padding: 30px;
+        max-height: 70vh;
+    }
+    
+    .booking-step h2 {
+        font-size: 1.4rem;
+        margin-bottom: 1.5rem;
+        line-height: 1.3;
+    }
+    
+    .booking-step p,
+    .booking-step label {
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    .service-options {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .service-option {
+        padding: 1.25rem;
+        min-height: auto;
+    }
+    
+    .service-option h4 {
+        font-size: 1.1rem;
+        line-height: 1.3;
+    }
+    
+    .service-option p {
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .location-input {
+        font-size: 1rem;
+        padding: 0.9rem;
+        min-height: 44px;
+    }
+    
+    .location-label {
+        font-size: 0.95rem;
+    }
+
+    .button-group {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .button-group .btn {
+        width: 100%;
+        padding: 1rem 1.5rem;
+        font-size: 1rem;
+        min-height: 48px;
+    }
+
+    .modal-content {
+        padding: 30px;
+        max-width: 90%;
+    }
+    
+    .modal-content h2 {
+        font-size: 1.4rem;
+        line-height: 1.3;
+    }
+    
+    .modal-content p {
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    .progress-tracker {
+        gap: 10px;
+        margin-bottom: 2rem;
+    }
+
+    .progress-item {
+        font-size: 0.95rem;
+    }
+    
+    .progress-item span {
+        line-height: 1.4;
+    }
+
+    .progress-connector {
+        margin: 0 8px;
+    }
+
+    .progress-number {
+        width: 38px;
+        height: 38px;
+        font-size: 14px;
+    }
+    
+    .summary-item {
+        padding: 1rem 0;
+        font-size: 0.95rem;
+    }
+    
+    .summary-item.total {
+        font-size: 1.1rem;
+    }
+    
+    .summary-item.total span {
+        font-size: 1.2rem;
+    }
+    
+    .tracking-header h2 {
+        font-size: 1.3rem;
+        line-height: 1.3;
+    }
+    
+    .tracking-header p {
+        font-size: 0.9rem;
+    }
+    
+    .timeline-content h4 {
+        font-size: 0.95rem;
+        line-height: 1.3;
+    }
+    
+    .timeline-content p {
+        font-size: 0.9rem;
+    }
+    
+    .tracking-details {
+        padding: 1.5rem;
+    }
+    
+    .tracking-details h3 {
+        font-size: 0.95rem;
+    }
+    
+    .detail-row {
+        font-size: 0.9rem;
+        padding: 0.75rem 0;
+    }
+    
+    .tracking-actions .btn {
+        padding: 1rem 1.5rem;
+        font-size: 0.95rem;
+        min-height: 44px;
+    }
+}
+
+@media (max-width: 480px) {
+    .booking-content {
+        border-radius: 8px;
+    }
+
+    .booking-form-section {
+        padding: 25px;
+        max-height: calc(100vh - 100px);
+    }
+    
+    .booking-step {
+        margin-bottom: 1.5rem;
+    }
+
+    .booking-step h2 {
+        font-size: 1.2rem;
+        margin-bottom: 1.25rem;
+        line-height: 1.3;
+    }
+    
+    .booking-step p {
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+    
+    .booking-step label {
+        font-size: 0.9rem;
+    }
+
+     .progress-tracker {
+        flex-direction: row;
+        gap:0px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .progress-connector {
+        width: 2px;
+        height: 20px;
+        margin: 0;
+    }
+    
+    .progress-number {
+        width: 36px;
+        height: 36px;
+        font-size: 12px;
+    }
+    
+    .progress-item span {
+        font-size: 0.85rem;
+    }
+
+    .service-options {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .service-option {
+        padding: 1rem;
+        min-height: auto;
+    }
+    
+    .service-option h4 {
+        font-size: 1rem;
+        line-height: 1.3;
+    }
+    
+    .service-option p {
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+    
+    .service-option span {
+        font-size: 0.9rem;
+    }
+    
+    .location-input {
+        font-size: 1rem;
+        padding: 0.85rem;
+        min-height: 44px;
+        border-radius: 6px;
+    }
+    
+    .location-label {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .current-location-btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        min-height: 40px;
+    }
+
+    .button-group {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .button-group .btn {
+        width: 100%;
+        padding: 0.9rem 1.25rem;
+        font-size: 0.95rem;
+        min-height: 44px;
+    }
+
+    .modal-content {
+        padding: 25px;
+        max-width: 95%;
+        border-radius: 12px;
+    }
+    
+    .modal-close {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+    }
+    
+    .tracking-header h2 {
+        font-size: 1.25rem;
+        margin-bottom: 0.75rem;
+        line-height: 1.3;
+    }
+    
+    .order-id {
+        font-size: 0.85rem;
+    }
+
+    .tracking-timeline {
+        margin-bottom: 1.5rem;
+    }
+    
+    .timeline-item {
+        gap: 12px;
+        margin-bottom: 1rem;
+    }
+    
+    .timeline-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+    
+    .timeline-content h4 {
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+        line-height: 1.3;
+    }
+    
+    .timeline-content p {
+        font-size: 0.8rem;
+        line-height: 1.5;
+    }
+
+    .tracking-progress {
+        margin-bottom: 1.5rem;
+        padding: 1.25rem;
+        border-radius: 10px;
+    }
+    
+    .progress-text {
+        font-size: 0.85rem;
+    }
+
+    .tracking-details {
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+    
+    .tracking-details h3 {
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    
+    .detail-row {
+        font-size: 0.85rem;
+        padding: 0.7rem 0;
+    }
+    
+    .detail-row span:first-child {
+        flex: 1;
+    }
+    
+    .detail-row span:last-child {
+        text-align: right;
+        max-width: 50%;
+    }
+
+    .tracking-actions {
+        gap: 0.75rem;
+    }
+
+    .tracking-actions .btn {
+        width: 100%;
+        padding: 0.85rem 1.25rem;
+        font-size: 0.9rem;
+        min-height: 44px;
+    }
+    
+    .summary-item {
+        padding: 0.75rem 0;
+        font-size: 0.9rem;
+    }
+    
+    .summary-item.total {
+        font-size: 1rem;
+    }
+    
+    .summary-item.total span {
+        font-size: 1.1rem;
+    }
+    
+    .terms-checkbox {
+        font-size: 0.85rem;
+        gap: 8px;
+    }
+    
+    .terms-checkbox input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: #667eea;
+    }
+}
