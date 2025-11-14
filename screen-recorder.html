@@ -5,7 +5,36 @@
   <title>Enhanced Screen Recorder</title>
   <style>
     /* Your existing CSS remains the same */
-    /* RESET */
+    .on {
+    color: #fff;
+    background: green;
+    padding: 10px;
+    border-radius: 30px;
+}
+.off {
+    color: #d1d5db;
+    background: #fff;
+    padding: 10px;
+    border-radius: 30px;
+}
+
+#audioToggle:checked ~ .on {
+    color: #fff;
+    background: rgba(0,0,0,0.08);
+    padding: 10px;
+    border-radius: 30px;
+}
+
+#audioToggle:checked ~ .off {
+    color: #fff;
+    background: #ff0202;
+    padding: 10px;
+    border-radius: 30px;
+}
+
+    
+    
+    /* old css RESET */
 * {
   margin: 0;
   padding: 0;
@@ -37,17 +66,23 @@ body {
 .audio-check {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-around;
   font-size: 17px;
   color: #2d3748;
   margin-bottom: 20px;
   font-weight: 500;
+  border: solid green 1px;
+  padding: 0px;
+  width: 100px;
+  flex-direction: row;
+  border-radius: 30px;
 }
 
 .audio-check input {
   width: 18px;
   height: 18px;
   margin-right: 10px;
+  display: none;
 }
 
 .audio-check i {
@@ -133,16 +168,16 @@ video {
     justify-content: center;
   }
 }
-
   </style>
 </head>
   
 <body>
   <div class="recorder-container">
-    <label class="audio-check">
-      <input type="checkbox" id="audioToggle" checked>
-      <i class="fas fa-microphone"></i> Include Audio
-    </label>
+   <label class="audio-check">
+      <input type="checkbox" id="audioToggle" checked="">
+      <span class="on">On</span>
+      <span class="off">Off</span>
+   </label>
     <div class="controls">
       <button id="startRecording" class="btn start">
         <i class="fas fa-circle"></i> Start Recording
