@@ -5,106 +5,135 @@
   <title>Enhanced Screen Recorder</title>
   <style>
     /* Your existing CSS remains the same */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f5f5f5;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-    .recorder-container {
-      text-align: center;
-      background-color: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      width: 90%;
-      max-width: 600px;
-    }
-    .audio-check {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 20px;
-      font-size: 18px;
-      color: #2c3e50;
-    }
-    .audio-check input {
-      margin-right: 10px;
-    }
-    .audio-check i {
-      margin-right: 5px;
-      color: #1abc9c;
-    }
-    .controls {
-      margin: 10px 0;
-    }
-    .btn {
-      background-color: #3498db;
-      color: #fff;
-      border: none;
-      padding: 5px 10px;
-      margin: 5px;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      transition: background-color 0.3s ease;
-    }
-    .btn i {
-      font-size: 18px;
-    }
-    .btn:hover {
-      background-color: #1a9900;
-    }
-    .btn:disabled {
-      background-color: #bdc3c7;
-      cursor: not-allowed;
-    }
-    video {
-      width: 100%;
-      max-width: 600px;
-      margin: 15px 0;
-      border: 1px solid #2c3e50;
-      border-radius: 5px;
-    }
-    .download-link {
-      text-decoration: none;
-      font-size: 18px;
-      color: #1abc9c;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      transition: color 0.3s ease;
-      margin: 5px;
-    }
-    .download-link:hover {
-      color: #16a085;
-    }
-    .audio-check input:checked {
-      background: aqua;
-      margin-right: 10px;
-      height: 18px;
-      width: 18px;
-      border: solid black 2px;
-    }
-    .audio-check input {
-      margin-right: 10px;
-      height: 18px;
-      width: 18px;
-      border: solid black 2px;
-    }
-    .download-buttons {
-      margin-top: 10px;
-    }
+    /* RESET */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Inter", Arial, sans-serif;
+  background: #eef1f6;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* MAIN CARD */
+.recorder-container {
+  width: 100%;
+  max-width: 600px;
+  background: #ffffff;
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+  text-align: center;
+}
+
+/* AUDIO CHECK */
+.audio-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  color: #2d3748;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.audio-check input {
+  width: 18px;
+  height: 18px;
+  margin-right: 10px;
+}
+
+.audio-check i {
+  margin-right: 5px;
+  color: #2563eb;
+}
+
+/* BUTTON GROUP */
+.controls {
+  margin: 15px 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* BUTTON */
+.btn {
+  padding: 10px 18px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: 0.25s ease-in-out;
+}
+
+.btn:hover {
+  background: #1e4fc4;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  background: #a9b4c7 !important;
+  cursor: not-allowed;
+}
+
+/* VIDEO PREVIEW */
+video {
+  width: 100%;
+  margin-top: 15px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+}
+
+/* DOWNLOAD LINKS */
+.download-buttons {
+  margin-top: 15px;
+}
+
+.download-link {
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+  color: #2563eb;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #2563eb;
+  transition: 0.25s;
+  margin: 5px;
+}
+
+.download-link:hover {
+  background: #2563eb;
+  color: #fff;
+}
+
+/* RESPONSIVE FIXES */
+@media (max-width: 480px) {
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
   </style>
 </head>
   
