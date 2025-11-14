@@ -76,6 +76,7 @@ body {
   width: 100px;
   flex-direction: row;
   border-radius: 30px;
+      margin: 0px auto;
 }
 
 .audio-check input {
@@ -169,14 +170,15 @@ video {
   }
 }
   </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
   
 <body>
   <div class="recorder-container">
    <label class="audio-check">
       <input type="checkbox" id="audioToggle" checked="">
-      <span class="on">On</span>
-      <span class="off">Off</span>
+      <span class="on"> <i class="fa-solid fa-microphone"></i> </span>
+      <span class="off"><i class="fa-solid fa-microphone-lines-slash"></i></span>
    </label>
     <div class="controls">
       <button id="startRecording" class="btn start">
