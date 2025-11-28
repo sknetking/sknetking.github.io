@@ -377,22 +377,22 @@
     
     <div class="controls">
         <div class="filter-group">
-            <label for="language-filter">Language:</label>
-            <select id="language-filter">
-                <option value="" selected>All Languages</option>
-                <option value="hindi">Hindi</option>
-				<option value="bhojpuri">Bhojpuri</option>
-                <option value="english">English</option>
-                <option value="punjabi">Punjabi</option>
-                <option value="bengali">Bengali</option>
-                <option value="tamil">Tamil</option>
-                <option value="telugu">Telugu</option>
-                <option value="marathi">Marathi</option>
-                <option value="gujarati">Gujarati</option>
-                <option value="kannada">Kannada</option>
-                <option value="malayalam">Malayalam</option>
-            </select>
-        </div>
+    <label for="language-filter">Language:</label>
+    <select id="language-filter">
+        <option value="" selected>All Languages</option>
+        <option value="favorites">My Favorites ⭐</option> <option value="hindi">Hindi</option>
+        <option value="bhojpuri">Bhojpuri</option>
+        <option value="english">English</option>
+        <option value="punjabi">Punjabi</option>
+        <option value="bengali">Bengali</option>
+        <option value="tamil">Tamil</option>
+        <option value="telugu">Telugu</option>
+        <option value="marathi">Marathi</option>
+        <option value="gujarati">Gujarati</option>
+        <option value="kannada">Kannada</option>
+        <option value="malayalam">Malayalam</option>
+    </select>
+</div>
         
         <div class="filter-group">
             <label for="search">Search:</label>
@@ -417,321 +417,399 @@
     <div id="page-info" class="page-info"></div>
  </section> 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const audioPlayer = document.getElementById('audio-player');
-            const nowPlaying = document.getElementById('now-playing');
-            const stationContainer = document.getElementById('station-container');
-            const languageFilter = document.getElementById('language-filter');
-            const searchInput = document.getElementById('search');
-            const searchBtn = document.getElementById('search-btn');
-            const prevPageBtn = document.getElementById('prev-page');
-            const nextPageBtn = document.getElementById('next-page');
-            const pageInfo = document.getElementById('page-info');
-            
-            let currentPage = 1;
-            const stationsPerPage = 20;
-            let allStations = [];
-            let filteredStations = [];
-            let currentlyPlayingStation = null;
-            
-            // Initialize with smooth transitions
-            document.body.style.opacity = '0';
-            setTimeout(() => {
-                document.body.style.transition = 'opacity 0.5s ease';
-                document.body.style.opacity = '1';
-            }, 100);
-            
-            // Fetch stations from Radio Browser API
-           function fetchStations() {
-    stationContainer.innerHTML = '<div class="loading">Loading stations...</div>';
+  document.addEventListener('DOMContentLoaded', function() {
+    const audioPlayer = document.getElementById('audio-player');
+    const nowPlaying = document.getElementById('now-playing');
+    const stationContainer = document.getElementById('station-container');
+    const languageFilter = document.getElementById('language-filter');
+    const searchInput = document.getElementById('search');
+    const searchBtn = document.getElementById('search-btn');
+    const prevPageBtn = document.getElementById('prev-page');
+    const nextPageBtn = document.getElementById('next-page');
+    const pageInfo = document.getElementById('page-info');
     
-    fetch('https://de1.api.radio-browser.info/json/stations/search?countrycode=IN&hidebroken=true&order=clickcount')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(stations => {
-            allStations = stations.filter(station => 
-                station.url && (Array.isArray(station.url) ? station.url.length > 0 : true)
-            ).map(station => ({
-                ...station,
-                url: Array.isArray(station.url) ? station.url : [station.url]
-            }));
-            applyFilters();
-        })
-        .catch(error => {
-           
-            showError(`Error loading stations: ${error.message}`);
-        });
-}
-	
-            // Apply language filter and search
-            function applyFilters() {
-                const language = languageFilter.value.toLowerCase();
-                const searchTerm = searchInput.value.toLowerCase();
-                
-                filteredStations = allStations.filter(station => {
-                    // Filter by language
-                    const stationLanguage = station.language ? station.language.toLowerCase() : '';
-                    const languageMatch = !language || stationLanguage.includes(language);
-                    
-                    // Filter by search term
-                    const nameMatch = !searchTerm || 
-                        station.name.toLowerCase().includes(searchTerm) ||
-                        (station.tags && station.tags.toLowerCase().includes(searchTerm));
-                    
-                    return languageMatch && nameMatch;
-                });
-                
-                currentPage = 1;
-                renderStations();
-                updatePagination();
-            }
-            
-            // Render stations for current page
-            function renderStations() {
-                if (filteredStations.length === 0) {
-                    showError("No stations found matching your criteria");
-                    return;
-                }
-                
-                const startIdx = (currentPage - 1) * stationsPerPage;
-                const endIdx = startIdx + stationsPerPage;
-                const stationsToShow = filteredStations.slice(startIdx, endIdx);
-                
-                // Clear previous stations with fade out effect
-                if (stationContainer.children.length > 0) {
-                    stationContainer.style.opacity = '0';
-                    setTimeout(() => {
-                        stationContainer.innerHTML = '';
-                        stationContainer.style.opacity = '1';
-                        createStationGrid(stationsToShow);
-                    }, 300);
-                } else {
-                    createStationGrid(stationsToShow);
-                }
-            }
-            
-            function createStationGrid(stations) {
-                const grid = document.createElement('div');
-                grid.className = 'station-grid';
-                
-                stations.forEach((station, index) => {
-                    const card = document.createElement('div');
-                    card.className = 'station-card';
-                    if (currentlyPlayingStation && currentlyPlayingStation.id === station.id) {
-                        card.classList.add('playing');
-                    }
-                    
-                    card.addEventListener('click', () => playStation(station));
-                    
-                    // Station logo or placeholder
-                    const logo = document.createElement('img');
-                    logo.className = 'station-logo';
-                    logo.src = station.favicon || 'https://cdn.pixabay.com/photo/2019/08/10/23/04/casette-4397896_640.png';
-                    logo.alt = station.name;
-                    logo.loading = 'lazy';
-                    logo.onerror = function() {
-                        this.src = 'https://cdn.pixabay.com/photo/2019/08/10/23/04/casette-4397896_640.png';
-                    };
-                    
-                    // Station info
-                    const info = document.createElement('div');
-                    info.className = 'station-info';
-                    
-                    const name = document.createElement('div');
-                    name.className = 'station-name';
-                    name.textContent = station.name;
-                    
-                    const details = document.createElement('div');
-                    details.className = 'station-details';
-                    
-                    if (station.language) {
-                        const language = document.createElement('span');
-                        language.textContent = `Language: ${station.language}`;
-                        details.appendChild(language);
-                    }
-                    
-                    if (station.tags) {
-                        const tags = document.createElement('span');
-                        tags.textContent = `Tags: ${station.tags.split(',').slice(0, 3).join(', ')}`;
-                        details.appendChild(tags);
-                    }
-                    
-                    info.appendChild(name);
-                    info.appendChild(details);
-                    
-                    card.appendChild(logo);
-                    card.appendChild(info);
-                    grid.appendChild(card);
-                    
-                    // Staggered animation
-                    card.style.animationDelay = `${index * 0.05}s`;
-                });
-                
-                stationContainer.appendChild(grid);
-            }
-            
-            // Update pagination controls
-          function updatePagination() {
-    const totalPages = Math.ceil(filteredStations.length / stationsPerPage);
+    let currentPage = 1;
+    const stationsPerPage = 20;
+    let allStations = [];
+    let filteredStations = [];
+    let currentlyPlayingStation = null;
+    
+    // --- FAVORITES LOGIC START ---
+    
+    // Key for local storage
+    const FAVORITES_KEY = 'fmRadioFavorites';
 
-    prevPageBtn.disabled = currentPage <= 1;
-    nextPageBtn.disabled = currentPage >= totalPages;
-
-    // Generate page numbers: currentPage - 5 to currentPage + 5
-    let paginationHTML = `Page ${currentPage} of ${totalPages} | ${filteredStations.length} stations found <br><div class="pagination-links">`;
-
-    const startPage = Math.max(1, currentPage - 5);
-    const endPage = Math.min(totalPages, currentPage + 5);
-
-    for (let i = startPage; i <= endPage; i++) {
-        if (i === currentPage) {
-            paginationHTML += `<span class="current-page">${i}</span> `;
-        } else {
-            paginationHTML += `<a href="#" class="page-link" data-page="${i}">${i}</a> `;
+    // 1. Get favorites from Local Storage
+    function getFavorites() {
+        try {
+            const favorites = localStorage.getItem(FAVORITES_KEY);
+            // Returns an object of {id: name, id: name} or an empty object
+            return favorites ? JSON.parse(favorites) : {};
+        } catch (e) {
+            console.error("Error retrieving favorites from Local Storage", e);
+            return {};
         }
     }
 
-    paginationHTML += `</div>`;
-    pageInfo.innerHTML = paginationHTML;
+    // 2. Toggle a station as favorite
+    function toggleFavorite(stationId, stationName) {
+        const favorites = getFavorites();
+        const isFavorite = favorites.hasOwnProperty(stationId);
 
-    // Add click events to the page numbers
-    document.querySelectorAll('.page-link').forEach(link => {
-        link.addEventListener('click', function (e) {
-            e.preventDefault();
-            const selectedPage = parseInt(this.getAttribute('data-page'));
-            if (selectedPage !== currentPage) {
-                currentPage = selectedPage;
-                renderStations(); // Re-render your items
-                updatePagination(); // Update pagination
-            }
-        });
-    });
-}
+        if (isFavorite) {
+            delete favorites[stationId]; // Remove from favorites
+        } else {
+            favorites[stationId] = stationName; // Add to favorites
+        }
 
-            
-            // Play selected station
-            function playStation(station) {
-                // Remove playing class from all cards
-                document.querySelectorAll('.station-card').forEach(card => {
-                    card.classList.remove('playing');
-                });
-                
-                // Add playing class to current card
-                event.currentTarget.classList.add('playing');
-                
-                // Find a working URL
-                const workingUrl = station.url.find(url => 
-                    url && (url.startsWith('http') || url.startsWith('https')));
-                
-                if (workingUrl) {
-                    // Smooth transition for now playing info
-                    nowPlaying.style.opacity = '0';
-                    setTimeout(() => {
-                        nowPlaying.textContent = `Now Playing: ${station.name}`;
-                        if (station.language) {
-                            nowPlaying.textContent += ` (${station.language})`;
-                        }
-                        nowPlaying.style.opacity = '1';
-                    }, 200);
-                    
-                    // Smooth audio transition
-                    audioPlayer.style.opacity = '0';
-                    setTimeout(() => {
-                        audioPlayer.src = workingUrl;
-                        currentlyPlayingStation = station;
-                        
-                        audioPlayer.play()
-                            .then(() => {
-                                audioPlayer.style.opacity = '1';
-                            })
-                            .catch(error => {
-                                nowPlaying.textContent = `Error playing: ${station.name}`;
-                                audioPlayer.style.opacity = '1';
-                            });
-                    }, 200);
-                }
-            }
-            
-            function showError(message) {
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'error';
-                errorDiv.textContent = message;
-                stationContainer.innerHTML = '';
-                stationContainer.appendChild(errorDiv);
-                
-                // Reset pagination
-                prevPageBtn.disabled = true;
-                nextPageBtn.disabled = true;
-                pageInfo.textContent = '';
-            }
-            
-            // Event listeners
-            languageFilter.addEventListener('change', applyFilters);
-            searchBtn.addEventListener('click', applyFilters);
-            searchInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    applyFilters();
-                }
-            });
-            
-            prevPageBtn.addEventListener('click', function() {
-                if (currentPage > 1) {
-                    currentPage--;
-                    renderStations();
-                    updatePagination();
-                    window.scrollTo({top: 0, behavior: 'smooth'});
-                }
-            });
-            
-            nextPageBtn.addEventListener('click', function() {
-                const totalPages = Math.ceil(filteredStations.length / stationsPerPage);
-                if (currentPage < totalPages) {
-                    currentPage++;
-                    renderStations();
-                    updatePagination();
-                    window.scrollTo({top: 0, behavior: 'smooth'});
-                }
-            });
-            
-            // Audio player event listeners for better UX
-            audioPlayer.addEventListener('play', function() {
-                document.querySelector('.station-card.playing')?.classList.add('active');
-            });
-            
-            audioPlayer.addEventListener('pause', function() {
-                document.querySelector('.station-card.playing')?.classList.remove('active');
-            });
-            
-            audioPlayer.addEventListener('error', function() {
-                if (currentlyPlayingStation) {
-                    nowPlaying.textContent = `Error playing: ${currentlyPlayingStation.name}`;
-                    
-                }
-            });
-            
-            // Initial load
-            fetchStations();
-            
-            const audio = document.getElementById("audio-player");
-
-audio.addEventListener('loadedmetadata', () => {
-  const isLive = !isFinite(audio.duration) || audio.duration === Infinity;
-
-  if (isLive) {
-    document.body.classList.add("hide-seekbar");
-  } else {
-    document.body.classList.remove("hide-seekbar");
-  }
-});
-            
-        });
+        try {
+            localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+        } catch (e) {
+            console.error("Error saving favorites to Local Storage", e);
+        }
         
+        // Re-render the stations to update the favorite button state
+        renderStations();
+        
+        // If the user is on the 'Favorites' view, re-apply filters to refresh the list
+        if (languageFilter.value === 'favorites') {
+            applyFilters();
+        }
+    }
 
+    // --- FAVORITES LOGIC END ---
 
+    // Initialize with smooth transitions
+    document.body.style.opacity = '0';
+    setTimeout(() => {
+        document.body.style.transition = 'opacity 0.5s ease';
+        document.body.style.opacity = '1';
+    }, 100);
+
+    // Fetch stations from Radio Browser API
+    function fetchStations() {
+        stationContainer.innerHTML = '<div class="loading">Loading stations...</div>';
+
+        fetch('https://de1.api.radio-browser.info/json/stations/search?countrycode=IN&hidebroken=true&order=clickcount')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(stations => {
+                allStations = stations.filter(station =>
+                    station.url && (Array.isArray(station.url) ? station.url.length > 0 : true)
+                ).map(station => ({
+                    ...station,
+                    url: Array.isArray(station.url) ? station.url : [station.url]
+                }));
+                applyFilters();
+            })
+            .catch(error => {
+                showError(`Error loading stations: ${error.message}`);
+            });
+    }
+
+    // Apply language filter and search
+    function applyFilters() {
+        const selectedFilter = languageFilter.value.toLowerCase();
+        const searchTerm = searchInput.value.toLowerCase();
+        const favorites = getFavorites();
+
+        filteredStations = allStations.filter(station => {
+            const stationLanguage = station.language ? station.language.toLowerCase() : '';
+            const nameMatch = !searchTerm ||
+                station.name.toLowerCase().includes(searchTerm) ||
+                (station.tags && station.tags.toLowerCase().includes(searchTerm));
+
+            let languageMatch = true;
+
+            if (selectedFilter === 'favorites') {
+                // Special case: show only favorites
+                languageMatch = favorites.hasOwnProperty(station.stationuuid);
+            } else if (selectedFilter) {
+                // Filter by a specific language
+                languageMatch = stationLanguage.includes(selectedFilter);
+            }
+
+            return languageMatch && nameMatch;
+        });
+
+        currentPage = 1;
+        renderStations();
+        updatePagination();
+    }
+
+    // Render stations for current page
+    function renderStations() {
+        if (filteredStations.length === 0) {
+            showError("No stations found matching your criteria");
+            return;
+        }
+
+        const startIdx = (currentPage - 1) * stationsPerPage;
+        const endIdx = startIdx + stationsPerPage;
+        const stationsToShow = filteredStations.slice(startIdx, endIdx);
+
+        // Clear previous stations with fade out effect
+        if (stationContainer.children.length > 0) {
+            stationContainer.style.opacity = '0';
+            setTimeout(() => {
+                stationContainer.innerHTML = '';
+                stationContainer.style.opacity = '1';
+                createStationGrid(stationsToShow);
+            }, 300);
+        } else {
+            createStationGrid(stationsToShow);
+        }
+    }
+
+    function createStationGrid(stations) {
+        const grid = document.createElement('div');
+        grid.className = 'station-grid';
+        const favorites = getFavorites(); // Get current favorites
+
+        stations.forEach((station, index) => {
+            const stationId = station.stationuuid;
+            const isFavorite = favorites.hasOwnProperty(stationId);
+            
+            const card = document.createElement('div');
+            card.className = 'station-card';
+            if (currentlyPlayingStation && currentlyPlayingStation.stationuuid === stationId) {
+                card.classList.add('playing');
+            }
+
+            // Create container for non-button click (to play station)
+            const playArea = document.createElement('div');
+            playArea.className = 'station-play-area';
+            playArea.addEventListener('click', () => playStation(station));
+
+            // Station logo or placeholder
+            const logo = document.createElement('img');
+            logo.className = 'station-logo';
+            logo.src = station.favicon || 'https://cdn.pixabay.com/photo/2019/08/10/23/04/casette-4397896_640.png';
+            logo.alt = station.name;
+            logo.loading = 'lazy';
+            logo.onerror = function() {
+                this.src = 'https://cdn.pixabay.com/photo/2019/08/10/23/04/casette-4397896_640.png';
+            };
+
+            // Station info
+            const info = document.createElement('div');
+            info.className = 'station-info';
+
+            const name = document.createElement('div');
+            name.className = 'station-name';
+            name.textContent = station.name;
+
+            const details = document.createElement('div');
+            details.className = 'station-details';
+
+            if (station.language) {
+                const language = document.createElement('span');
+                language.textContent = `Language: ${station.language}`;
+                details.appendChild(language);
+            }
+
+            if (station.tags) {
+                const tags = document.createElement('span');
+                tags.textContent = `Tags: ${station.tags.split(',').slice(0, 3).join(', ')}`;
+                details.appendChild(tags);
+            }
+
+            info.appendChild(name);
+            info.appendChild(details);
+
+            playArea.appendChild(logo);
+            playArea.appendChild(info);
+            card.appendChild(playArea);
+            
+            // Favorite Button
+            const favButton = document.createElement('button');
+            favButton.className = 'fav-button';
+            favButton.innerHTML = isFavorite ? '&#9733; Favorite' : '&#9734; Add Fav'; // Star unicode
+            favButton.style.cssText = `
+                position: absolute; 
+                top: 5px; 
+                right: 5px; 
+                padding: 5px 8px;
+                font-size: 12px;
+                background-color: ${isFavorite ? 'gold' : 'rgba(0,0,0,0.5)'}; 
+                color: ${isFavorite ? 'black' : 'white'};
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                z-index: 10;
+            `;
+
+            favButton.onclick = (e) => {
+                e.stopPropagation(); // Prevent the card click/playStation from firing
+                toggleFavorite(stationId, station.name);
+            };
+
+            card.appendChild(favButton);
+
+            grid.appendChild(card);
+
+            // Staggered animation
+            card.style.animationDelay = `${index * 0.05}s`;
+        });
+
+        stationContainer.appendChild(grid);
+    }
+
+    // Update pagination controls (kept the original structure but updated for better readability)
+    function updatePagination() {
+        const totalPages = Math.ceil(filteredStations.length / stationsPerPage);
+
+        prevPageBtn.disabled = currentPage <= 1;
+        nextPageBtn.disabled = currentPage >= totalPages;
+
+        let paginationHTML = `Page ${currentPage} of ${totalPages} | ${filteredStations.length} stations found <br><div class="pagination-links">`;
+
+        const startPage = Math.max(1, currentPage - 5);
+        const endPage = Math.min(totalPages, currentPage + 5);
+
+        for (let i = startPage; i <= endPage; i++) {
+            if (i === currentPage) {
+                paginationHTML += `<span class="current-page">${i}</span> `;
+            } else {
+                paginationHTML += `<a href="#" class="page-link" data-page="${i}">${i}</a> `;
+            }
+        }
+
+        paginationHTML += `</div>`;
+        pageInfo.innerHTML = paginationHTML;
+
+        document.querySelectorAll('.page-link').forEach(link => {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                const selectedPage = parseInt(this.getAttribute('data-page'));
+                if (selectedPage !== currentPage) {
+                    currentPage = selectedPage;
+                    renderStations();
+                    updatePagination();
+                    window.scrollTo({top: 0, behavior: 'smooth'});
+                }
+            });
+        });
+    }
+
+    // Play selected station
+    function playStation(station) {
+        // Remove playing class from all cards
+        document.querySelectorAll('.station-card').forEach(card => {
+            card.classList.remove('playing');
+        });
+
+        // Add playing class to current card
+        // Note: The click event handler for the card is on a different element (playArea), 
+        // but we can find the parent card to add the class.
+        // This is a bit complex due to nested structure, so we'll re-run renderStations after updating currentlyPlayingStation to be simpler.
+        currentlyPlayingStation = station;
+        renderStations(); // Re-render to apply the 'playing' class to the correct card.
+        
+        const workingUrl = station.url.find(url =>
+            url && (url.startsWith('http') || url.startsWith('https')));
+
+        if (workingUrl) {
+            nowPlaying.style.opacity = '0';
+            setTimeout(() => {
+                nowPlaying.textContent = `Now Playing: ${station.name}`;
+                if (station.language) {
+                    nowPlaying.textContent += ` (${station.language})`;
+                }
+                nowPlaying.style.opacity = '1';
+            }, 200);
+
+            audioPlayer.style.opacity = '0';
+            setTimeout(() => {
+                audioPlayer.src = workingUrl;
+                
+                audioPlayer.play()
+                    .then(() => {
+                        audioPlayer.style.opacity = '1';
+                    })
+                    .catch(error => {
+                        nowPlaying.textContent = `Error playing: ${station.name} (Check console for details)`;
+                        console.error("Audio Play Error:", error);
+                        audioPlayer.style.opacity = '1';
+                    });
+            }, 200);
+        }
+    }
+
+    function showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error';
+        errorDiv.textContent = message;
+        stationContainer.innerHTML = '';
+        stationContainer.appendChild(errorDiv);
+
+        prevPageBtn.disabled = true;
+        nextPageBtn.disabled = true;
+        pageInfo.textContent = '';
+    }
+
+    // Event listeners
+    languageFilter.addEventListener('change', applyFilters);
+    searchBtn.addEventListener('click', applyFilters);
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            applyFilters();
+        }
+    });
+
+    prevPageBtn.addEventListener('click', function() {
+        if (currentPage > 1) {
+            currentPage--;
+            renderStations();
+            updatePagination();
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+    });
+
+    nextPageBtn.addEventListener('click', function() {
+        const totalPages = Math.ceil(filteredStations.length / stationsPerPage);
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderStations();
+            updatePagination();
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+    });
+
+    // Audio player event listeners for better UX
+    audioPlayer.addEventListener('play', function() {
+        document.querySelector('.station-card.playing')?.classList.add('active');
+    });
+
+    audioPlayer.addEventListener('pause', function() {
+        document.querySelector('.station-card.playing')?.classList.remove('active');
+    });
+
+    audioPlayer.addEventListener('error', function() {
+        if (currentlyPlayingStation) {
+            nowPlaying.textContent = `Error playing: ${currentlyPlayingStation.name}`;
+        }
+    });
+
+    // Audio player live stream logic
+    const audio = document.getElementById("audio-player");
+    audio.addEventListener('loadedmetadata', () => {
+        const isLive = !isFinite(audio.duration) || audio.duration === Infinity;
+
+        if (isLive) {
+            document.body.classList.add("hide-seekbar");
+        } else {
+            document.body.classList.remove("hide-seekbar");
+        }
+    });
+
+    // Initial load
+    fetchStations();
+});
     </script>
 
 		
