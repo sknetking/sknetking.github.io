@@ -420,10 +420,62 @@ child-theme/
             const authorEmail = document.getElementById('author-email').value;
             const authorName = document.getElementById('author-name').value;
 
-            const styleCssContent = `/*\nTheme Name:   ${childName}\nDescription:  Child theme for ${parentName}\nAuthor:       ${authorName}\nAuthor URI:   ${authorEmail}\nTemplate:     ${parentSlug}\nVersion:      1.0.0\n*/\n\n@import url("../${parentSlug}/style.css");\n`;
+           // const styleCssContent = `/*\nTheme Name:   ${childName}\nDescription:  Child theme for ${parentName}\nAuthor:       ${authorName}\nAuthor URI:   ${authorEmail}\nTemplate:     ${parentSlug}\nVersion:      1.0.0\n*/\n\n@import url("../${parentSlug}/style.css");\n`;
 
-            const functionsPhpContent = `<?php\nfunction ${childSlug}_enqueue_scripts() {\n    wp_enqueue_style( 'parent-style', get_template_directory_uri() . '/style.css' );\n    wp_enqueue_style( '${childSlug}-custom-style', get_stylesheet_directory_uri() . '/assets/custom.css', array('parent-style'), '1.0.0' );\n    wp_enqueue_script( '${childSlug}-custom-js', get_stylesheet_directory_uri() . '/assets/custom.js', array('jquery'), '1.0.0', true );\n}\nadd_action( 'wp_enqueue_scripts', '${childSlug}_enqueue_scripts' );\n`;
+            //const functionsPhpContent = `<?php\nfunction ${childSlug}_enqueue_scripts() {\n    wp_enqueue_style( 'parent-style', get_template_directory_uri() . '/style.css' );\n    wp_enqueue_style( '${childSlug}-custom-style', get_stylesheet_directory_uri() . '/assets/custom.css', array('parent-style'), '1.0.0' );\n    wp_enqueue_script( '${childSlug}-custom-js', get_stylesheet_directory_uri() . '/assets/custom.js', array('jquery'), '1.0.0', true );\n}\nadd_action( 'wp_enqueue_scripts', '${childSlug}_enqueue_scripts' );\n`;
+const styleCssContent = `/*
+Theme Name:   ${childName}
+Description:  Child theme for ${parentName}
+Author:       ${authorName}
+Author URI:   ${authorEmail}
+Template:     ${parentSlug}
+Version:      1.0.0
+Text Domain:  ${childSlug}
+*/
+`;
 
+const functionsPhpContent = `<?php
+/**
+ * Enqueue Parent and Child Theme Styles & Scripts
+ */
+
+function ${childSlug}_enqueue_scripts() {
+
+    // Parent Theme Style
+    wp_enqueue_style(
+        'parent-style',
+        get_template_directory_uri() . '/style.css'
+    );
+
+    // Child Theme Main Style
+    wp_enqueue_style(
+        '${childSlug}-style',
+        get_stylesheet_uri(),
+        array('parent-style'),
+        wp_get_theme()->get('Version')
+    );
+
+    // Custom CSS
+    wp_enqueue_style(
+        '${childSlug}-custom-style',
+        get_stylesheet_directory_uri() . '/assets/custom.css',
+        array('${childSlug}-style'),
+        '1.0.0'
+    );
+
+    // Custom JS
+    wp_enqueue_script(
+        '${childSlug}-custom-js',
+        get_stylesheet_directory_uri() . '/assets/custom.js',
+        array('jquery'),
+        '1.0.0',
+        true
+    );
+}
+
+add_action('wp_enqueue_scripts', '${childSlug}_enqueue_scripts');
+`;
+			
             try {
                 const zip = new JSZip();
                 zip.file("style.css", styleCssContent);
