@@ -1,132 +1,168 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Styled QR Code Generator</title>
+  <title>Enhanced QR Code Generator</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body {
+      background: #f8f9fa;
       font-family: 'Segoe UI', sans-serif;
-      background: #f4f4f4;
-      margin: 0;
-      padding: 20px;
     }
     .container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-top: 40px;
     }
-    .form-section, .preview-section {
-      flex: 1 1 300px;
+    .card {
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-    label {
+    #qrCanvas {
+      margin: 20px auto;
       display: block;
+      border: 2px dashed #dee2e6;
+      border-radius: 8px;
+      background: #fff;
+    }
+    #logoPreview {
+      margin-top: 10px;
+      max-width: 120px;
+      max-height: 120px;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 4px;
+      background: #fff;
+    }
+    .btn-custom {
       margin-top: 15px;
-      font-weight: bold;
-    }
-    input, select, textarea, button {
       width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-size: 14px;
-    }
-    textarea {
-      resize: vertical;
-      height: 100px;
-    }
-    button {
-      background-color: #0078D4;
-      color: white;
-      border: none;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-    button:hover {
-      background-color: #005a9e;
-    }
-    .preview-section {
-      text-align: center;
-    }
-    #qrImage {
-      margin-top: 20px;
-      max-width: 100%;
     }
   </style>
 </head>
 <body>
 
-  <h2>🎯 Dynamic QR Code Generator</h2>
-  <div class="container">
-    <div class="form-section">
-      <label for="qrContent">QR Content:</label>
-      <textarea id="qrContent">Hello</textarea>
+<div class="container">
+  <h1 class="text-center mb-4">🎨 Enhanced QR Code Generator</h1>
+  <div class="row">
+    
+    <!-- Left Column: Tools -->
+    <div class="col-md-6">
+      <div class="card p-4">
+        <div class="mb-3">
+          <label for="qrData" class="form-label fw-bold">Enter Data</label>
+          <textarea class="form-control" id="qrData" rows="3" placeholder="Type text or URL..."></textarea>
+        </div>
 
-      <label for="qrSize">Size (e.g., 200x200):</label>
-      <input type="text" id="qrSize" value="200x200">
+        <div class="row mb-3">
+          <div class="col">
+            <label for="foregroundColor" class="form-label fw-bold">Foreground</label>
+            <input type="color" id="foregroundColor" class="form-control form-control-color" value="#000000">
+          </div>
+          <div class="col">
+            <label for="backgroundColor" class="form-label fw-bold">Background</label>
+            <input type="color" id="backgroundColor" class="form-control form-control-color" value="#ffffff">
+          </div>
+        </div>
 
-      <label for="qrError">Error Correction:</label>
-      <select id="qrError">
-        <option value="L|1">L (Low)</option>
-        <option value="M|2">M (Medium)</option>
-        <option value="Q|3">Q (Quartile)</option>
-        <option value="H|4" selected>H (High)</option>
-      </select>
+        <div class="mb-3">
+          <label for="logoInput" class="form-label fw-bold">Upload Logo</label>
+          <input type="file" id="logoInput" class="form-control" accept="image/*">
+          <div class="text-center mt-3">
+            <img id="logoPreview" alt="Logo Preview" />
+          </div>
+        </div>
 
-      <label for="qrFg">Foreground Color:</label>
-      <input type="color" id="qrFg" value="#000000">
-
-      <label for="qrBg">Background Color:</label>
-      <input type="color" id="qrBg" value="#ffffff">
-
-      <label for="qrFormat">Image Format:</label>
-      <select id="qrFormat">
-        <option value=".png">PNG</option>
-        <option value=".svg">SVG</option>
-      </select>
-
-      <button onclick="generateQR()">Generate QR</button>
-      <button onclick="downloadQR()">Download QR</button>
+        <button id="generateBtn" class="btn btn-primary btn-custom">Generate QR</button>
+        <button id="downloadBtn" class="btn btn-success btn-custom" style="display: none;">Download QR Code</button>
+      </div>
     </div>
 
-    <div class="preview-section">
-      <h3>🔍 QR Preview</h3>
-      <img id="qrImage" src="" alt="QR Code" />
+    <!-- Right Column: Preview -->
+    <div class="col-md-6 text-center">
+      <div class="card p-4">
+        <h5 class="fw-bold">QR Code Preview</h5>
+        <canvas id="qrCanvas" width="300" height="300"></canvas>
+      </div>
     </div>
   </div>
+</div>
 
-  <script>
-    function generateQR() {
-      const content = encodeURIComponent(document.getElementById('qrContent').value);
-      const size = document.getElementById('qrSize').value;
-      const error = document.getElementById('qrError').value;
-      const fg = document.getElementById('qrFg').value.replace('#', '');
-      const bg = document.getElementById('qrBg').value.replace('#', '');
-      const format = document.getElementById('qrFormat').value;
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script>
+  const qrDataInput = document.getElementById('qrData');
+  const foregroundColorInput = document.getElementById('foregroundColor');
+  const backgroundColorInput = document.getElementById('backgroundColor');
+  const logoInput = document.getElementById('logoInput');
+  const logoPreview = document.getElementById('logoPreview');
+  const generateBtn = document.getElementById('generateBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const qrCanvas = document.getElementById('qrCanvas');
 
-      const url = `https://image-charts.com/chart?chs=${size}&cht=qr&chl=${content}&choe=UTF-8&chld=${error}&icqrf=${fg}&icqrb=${bg}&chof=${format}`;
-      const img = document.getElementById('qrImage');
-      img.src = url;
-      img.setAttribute('data-url', url);
+  let logoImage = null;
+
+  // Live Preview of Logo
+  logoInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        logoImage = new Image();
+        logoImage.src = reader.result;
+        logoPreview.src = reader.result;
+      };
+      reader.readAsDataURL(file);
     }
+  });
 
-    function downloadQR() {
-      const img = document.getElementById('qrImage');
-      const url = img.getAttribute('data-url');
-      const format = document.getElementById('qrFormat').value.replace('.', '');
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `qr-code.${format}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+  // Generate QR Code
+  const generateQRCode = () => {
+    const qrData = qrDataInput.value || 'Sample QR Code';
+    const foregroundColor = foregroundColorInput.value;
+    const backgroundColor = backgroundColorInput.value;
 
-    window.onload = generateQR;
-  </script>
+    QRCode.toCanvas(qrCanvas, qrData, {
+      width: 300,
+      margin: 1,
+      color: {
+        dark: foregroundColor,
+        light: backgroundColor,
+      },
+      errorCorrectionLevel: 'H',
+    }, (error) => {
+      if (error) {
+        console.error('Error generating QR Code:', error);
+      } else {
+        if (logoImage) {
+          const ctx = qrCanvas.getContext('2d');
+          const logoSize = qrCanvas.width * 0.2;
+          const x = (qrCanvas.width - logoSize) / 2;
+          const y = (qrCanvas.height - logoSize) / 2;
+
+          logoImage.onload = () => {
+            ctx.drawImage(logoImage, x, y, logoSize, logoSize);
+          };
+          if (logoImage.complete) {
+            ctx.drawImage(logoImage, x, y, logoSize, logoSize);
+          }
+        }
+        downloadBtn.style.display = 'block';
+      }
+    });
+  };
+
+  // Auto-update on color change
+  foregroundColorInput.addEventListener('input', generateQRCode);
+  backgroundColorInput.addEventListener('input', generateQRCode);
+
+  // Generate QR Button
+  generateBtn.addEventListener('click', generateQRCode);
+
+  // Download QR Code
+  downloadBtn.addEventListener('click', () => {
+    const link = document.createElement('a');
+    link.download = 'qrcode_with_logo.png';
+    link.href = qrCanvas.toDataURL('image/png');
+    link.click();
+  });
+</script>
 
 </body>
 </html>
