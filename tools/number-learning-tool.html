@@ -1,0 +1,344 @@
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Number Learning Game (1-100)</title>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<style>
+
+        body {
+
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+
+            text-align: center;
+
+            background-color: #f0fdf4; /* Light green background */
+
+            margin-bottom: 100px;
+
+        }
+
+        .game-area {
+
+            margin-top: 30px;
+
+            padding: 0 20px;
+
+        }
+
+        h1 {
+
+            font-size: 2.5em;
+
+            color: #2fb344;
+
+        }
+
+        .number-container {
+
+            display: grid;
+
+            /* Creates a responsive grid that fits as many boxes as possible */
+
+            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+
+            gap: 12px;
+
+            max-width: 900px;
+
+            margin: 30px auto;
+
+        }
+
+        .number-box {
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            height: 70px;
+
+            font-size: 1.8em;
+
+            font-weight: bold;
+
+            background-color: #2fb344;
+
+            color: white;
+
+            border-radius: 12px;
+
+            cursor: pointer;
+
+            transition: transform 0.2s, background-color 0.3s;
+
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+
+        }
+
+        .number-box:hover {
+
+            background-color: #258f36;
+
+            transform: scale(1.1);
+
+        }
+
+        .number-box.active {
+
+            background-color: #ff922b; /* Highlight color when autoplaying */
+
+            transform: scale(1.1);
+
+        }
+
+        .message {
+
+            margin-top: 10px;
+
+            font-size: 1.2em;
+
+            color: #555;
+
+        }
+
+        /* Control Buttons */
+
+        .controls {
+
+            position: fixed;
+
+            bottom: 20px;
+
+            left: 50%;
+
+            transform: translateX(-50%);
+
+            display: flex;
+
+            gap: 15px;
+
+            background: rgba(255, 255, 255, 0.9);
+
+            padding: 15px 25px;
+
+            border-radius: 50px;
+
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+
+        }
+
+        .btn {
+
+            width: 60px;
+
+            height: 60px;
+
+            border-radius: 50%;
+
+            border: none;
+
+            color: white;
+
+            font-size: 1.5em;
+
+            cursor: pointer;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            transition: opacity 0.3s;
+
+        }
+
+        #play-btn { background-color: #2fb344; }
+
+        #pause-btn { background-color: #fab005; display: none; }
+
+        #stop-btn { background-color: #fa5252; display: none; }
+
+        .btn:hover { opacity: 0.8; }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="game-area">
+
+        <h1>Number Learning 1-100</h1>
+
+        <p class="message">Click a number to hear it!</p>
+
+        
+
+        <div class="number-container" id="number-container">
+
+            </div>
+
+    </div>
+
+    <div class="controls">
+
+        <button class="btn" id="stop-btn" title="Stop">■</button>
+
+        <button class="btn" id="play-btn" title="Play All">▶</button>
+
+        <button class="btn" id="pause-btn" title="Pause">Ⅱ</button>
+
+    </div>
+
+    <script>
+
+        $(document).ready(function() {
+
+            const container = $("#number-container");
+
+            let autoplayInterval;
+
+            let currentIndex = 1;
+
+            let isPaused = false;
+
+            // 1. Generate Numbers 1 to 100
+
+            for (let i = 1; i <= 100; i++) {
+
+                const box = $("<div>")
+
+                    .addClass("number-box")
+
+                    .text(i)
+
+                    .attr("id", "num-" + i)
+
+                    .click(function() {
+
+                        speakNumber(i);
+
+                    });
+
+                container.append(box);
+
+            }
+
+            // 2. Speech Function
+
+            function speakNumber(num) {
+
+                // Cancel previous speech so they don't overlap if clicked fast
+
+                window.speechSynthesis.cancel(); 
+
+                const msg = new SpeechSynthesisUtterance(num.toString());
+
+                msg.lang = 'en-US';
+
+                msg.rate = 0.9; // Slightly slower for clarity
+
+                window.speechSynthesis.speak(msg);
+
+            }
+
+            // 3. Autoplay Logic
+
+            function startAutoplay() {
+
+                clearInterval(autoplayInterval);
+
+                autoplayInterval = setInterval(() => {
+
+                    if (currentIndex <= 100 && !isPaused) {
+
+                        // Remove highlight from previous
+
+                        $(".number-box").removeClass("active");
+
+                        
+
+                        // Highlight and Speak current
+
+                        const currentBox = $("#num-" + currentIndex);
+
+                        currentBox.addClass("active");
+
+                        
+
+                        // Scroll to the number so it stays visible
+
+                        currentBox[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                        
+
+                        speakNumber(currentIndex);
+
+                        currentIndex++;
+
+                    } else if (currentIndex > 100) {
+
+                        stopAutoplay();
+
+                    }
+
+                }, 1500); // 1.5 seconds per number
+
+            }
+
+            function stopAutoplay() {
+
+                clearInterval(autoplayInterval);
+
+                isPaused = false;
+
+                currentIndex = 1;
+
+                $(".number-box").removeClass("active");
+
+                $("#play-btn").show();
+
+                $("#pause-btn, #stop-btn").hide();
+
+            }
+
+            // 4. Button Event Listeners
+
+            $('#play-btn').click(function() {
+
+                isPaused = false;
+
+                $(this).hide();
+
+                $('#pause-btn, #stop-btn').show();
+
+                startAutoplay();
+
+            });
+
+            $('#pause-btn').click(function() {
+
+                isPaused = !isPaused;
+
+                $(this).text(isPaused ? "▶" : "Ⅱ"); // Toggle icon between Play/Pause
+
+            });
+
+            $('#stop-btn').click(function() {
+
+                stopAutoplay();
+
+            });
+
+        });
+
+    </script>
+
+</body>
+
+</html>
+
