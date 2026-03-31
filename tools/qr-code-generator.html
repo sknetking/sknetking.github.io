@@ -1,0 +1,132 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Styled QR Code Generator</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .form-section, .preview-section {
+      flex: 1 1 300px;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    textarea {
+      resize: vertical;
+      height: 100px;
+    }
+    button {
+      background-color: #0078D4;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    button:hover {
+      background-color: #005a9e;
+    }
+    .preview-section {
+      text-align: center;
+    }
+    #qrImage {
+      margin-top: 20px;
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🎯 Dynamic QR Code Generator</h2>
+  <div class="container">
+    <div class="form-section">
+      <label for="qrContent">QR Content:</label>
+      <textarea id="qrContent">Hello</textarea>
+
+      <label for="qrSize">Size (e.g., 200x200):</label>
+      <input type="text" id="qrSize" value="200x200">
+
+      <label for="qrError">Error Correction:</label>
+      <select id="qrError">
+        <option value="L|1">L (Low)</option>
+        <option value="M|2">M (Medium)</option>
+        <option value="Q|3">Q (Quartile)</option>
+        <option value="H|4" selected>H (High)</option>
+      </select>
+
+      <label for="qrFg">Foreground Color:</label>
+      <input type="color" id="qrFg" value="#000000">
+
+      <label for="qrBg">Background Color:</label>
+      <input type="color" id="qrBg" value="#ffffff">
+
+      <label for="qrFormat">Image Format:</label>
+      <select id="qrFormat">
+        <option value=".png">PNG</option>
+        <option value=".svg">SVG</option>
+      </select>
+
+      <button onclick="generateQR()">Generate QR</button>
+      <button onclick="downloadQR()">Download QR</button>
+    </div>
+
+    <div class="preview-section">
+      <h3>🔍 QR Preview</h3>
+      <img id="qrImage" src="" alt="QR Code" />
+    </div>
+  </div>
+
+  <script>
+    function generateQR() {
+      const content = encodeURIComponent(document.getElementById('qrContent').value);
+      const size = document.getElementById('qrSize').value;
+      const error = document.getElementById('qrError').value;
+      const fg = document.getElementById('qrFg').value.replace('#', '');
+      const bg = document.getElementById('qrBg').value.replace('#', '');
+      const format = document.getElementById('qrFormat').value;
+
+      const url = `https://image-charts.com/chart?chs=${size}&cht=qr&chl=${content}&choe=UTF-8&chld=${error}&icqrf=${fg}&icqrb=${bg}&chof=${format}`;
+      const img = document.getElementById('qrImage');
+      img.src = url;
+      img.setAttribute('data-url', url);
+    }
+
+    function downloadQR() {
+      const img = document.getElementById('qrImage');
+      const url = img.getAttribute('data-url');
+      const format = document.getElementById('qrFormat').value.replace('.', '');
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `qr-code.${format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    window.onload = generateQR;
+  </script>
+
+</body>
+</html>
