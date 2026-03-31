@@ -1,92 +1,169 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>WhatsApp Link Generator</title>
+  <title>Advanced QR Code Generator</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f2f2f2;
-    }
-    .container {
-      max-width: 500px;
-      margin: auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    input, textarea, button {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-    button {
-      background: #25D366;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    #result {
-      word-break: break-all;
-      background: #e8f5e9;
-      padding: 10px;
-      border-radius: 5px;
-      margin-top: 10px;
-    }
-    .copy-btn {
-      background: #007bff;
-    }
+    body { background: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
+    .container { margin-top: 40px; }
+    .card { border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    #qrCanvas { margin: 20px auto; display: block; border: 2px dashed #dee2e6; border-radius: 8px; background: #fff; }
+    #logoPreview { margin-top: 10px; max-width: 120px; max-height: 120px; border: 1px solid #dee2e6; border-radius: 8px; padding: 4px; background: #fff; }
+    .btn-custom { margin-top: 15px; width: 100%; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>WhatsApp Link Generator</h2>
-    <label>Phone Number (with country code):</label>
-    <input type="text" id="phone" placeholder="e.g. 919876543210">
 
-    <label>Message (use *bold*, _italic_, ~strikethrough~):</label>
-    <textarea id="message" rows="5" placeholder="Hello *bold text* and _italic text_"></textarea>
+<div class="container">
+  <h1 class="text-center mb-4">🎨 Free Advanced QR Code Generator</h1>
+  <div class="row">
+    
+    <!-- Left Column: Controls -->
+    <div class="col-md-6">
+      <div class="card p-4">
+        <div class="mb-3">
+          <label for="qrData" class="form-label fw-bold">QR Content</label>
+          <textarea class="form-control" id="qrData" rows="3" placeholder="Enter text or URL">Hello World</textarea>
+        </div>
 
-    <button onclick="generateLink()">Generate Link</button>
+        <div class="mb-3">
+          <label for="qrSize" class="form-label fw-bold">Size (px)</label>
+          <input type="number" id="qrSize" class="form-control" value="300">
+        </div>
 
-    <div id="result" style="display: none;">
-      <strong>Generated Link:</strong><br>
-      <a id="wa-link" href="#" target="_blank"></a><br>
-      <button class="copy-btn" onclick="copyLink()">Copy Link</button>
+        <div class="mb-3">
+          <label for="qrMargin" class="form-label fw-bold">Margin</label>
+          <input type="number" id="qrMargin" class="form-control" value="2">
+        </div>
+
+        <div class="row mb-3">
+          <div class="col">
+            <label for="foregroundColor" class="form-label fw-bold">Foreground</label>
+            <input type="color" id="foregroundColor" class="form-control form-control-color" value="#000000">
+          </div>
+          <div class="col">
+            <label for="backgroundColor" class="form-label fw-bold">Background</label>
+            <input type="color" id="backgroundColor" class="form-control form-control-color" value="#ffffff">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="errorLevel" class="form-label fw-bold">Error Correction</label>
+          <select id="errorLevel" class="form-select">
+            <option value="L">L (Low)</option>
+            <option value="M">M (Medium)</option>
+            <option value="Q">Q (Quartile)</option>
+            <option value="H" selected>H (High)</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="logoInput" class="form-label fw-bold">Upload Logo</label>
+          <input type="file" id="logoInput" class="form-control" accept="image/*">
+          <div class="text-center mt-3">
+            <img id="logoPreview" alt="Logo Preview" />
+																				
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="formatSelect" class="form-label fw-bold">Image Format</label>
+          <select id="formatSelect" class="form-select">
+            <option value="png" selected>PNG</option>
+            <option value="jpeg">JPEG</option>
+          </select>
+        </div>
+
+        <button id="generateBtn" class="btn btn-primary btn-custom">Generate QR</button>
+        <button id="downloadBtn" class="btn btn-success btn-custom" style="display: none;">Download QR Code</button>
+      </div>
+    </div>
+
+    <!-- Right Column: Preview -->
+    <div class="col-md-6 text-center">
+      <div class="card p-4">
+        <h5 class="fw-bold">QR Code Preview</h5>
+        <canvas id="qrCanvas"></canvas>
+      </div>
+					<a href='https://codepen.io/sknetking/pen/QwjbyBG' target='_blank'>Create Your whatsapp chat link for QR</a>
+					<img src="https://cdn.pixabay.com/photo/2015/08/03/13/58/whatsapp-873316_1280.png" alt="dowload logo"  width="64" height="64" title='For whatsapp link right click on it and save it.' > 
     </div>
   </div>
+</div>
 
-  <script>
-    function generateLink() {
-      const phone = document.getElementById("phone").value.trim();
-      let message = document.getElementById("message").value.trim();
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script>
+  const qrDataInput = document.getElementById('qrData');
+  const qrSizeInput = document.getElementById('qrSize');
+  const qrMarginInput = document.getElementById('qrMargin');
+  const foregroundColorInput = document.getElementById('foregroundColor');
+  const backgroundColorInput = document.getElementById('backgroundColor');
+  const errorLevelInput = document.getElementById('errorLevel');
+  const logoInput = document.getElementById('logoInput');
+  const logoPreview = document.getElementById('logoPreview');
+  const generateBtn = document.getElementById('generateBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const qrCanvas = document.getElementById('qrCanvas');
+  const formatSelect = document.getElementById('formatSelect');
 
-      if (!phone || !message) {
-        alert("Please enter both phone number and message.");
-        return;
+  let logoImage = null;
+
+  // Logo preview
+  logoInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        logoImage = new Image();
+        logoImage.src = reader.result;
+        logoPreview.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Generate QR
+  const generateQRCode = () => {
+    const qrData = qrDataInput.value || 'Sample QR Code';
+    const size = parseInt(qrSizeInput.value) || 300;
+    const margin = parseInt(qrMarginInput.value) || 2;
+    const foregroundColor = foregroundColorInput.value;
+    const backgroundColor = backgroundColorInput.value;
+    const errorLevel = errorLevelInput.value;
+
+    QRCode.toCanvas(qrCanvas, qrData, {
+      width: size,
+      margin: margin,
+      color: { dark: foregroundColor, light: backgroundColor },
+      errorCorrectionLevel: errorLevel,
+    }, (error) => {
+      if (error) {
+        console.error('Error generating QR Code:', error);
+      } else {
+        if (logoImage) {
+          const ctx = qrCanvas.getContext('2d');
+          const logoSize = qrCanvas.width * 0.2;
+          const x = (qrCanvas.width - logoSize) / 2;
+          const y = (qrCanvas.height - logoSize) / 2;
+          ctx.drawImage(logoImage, x, y, logoSize, logoSize);
+        }
+        downloadBtn.style.display = 'block';
       }
+    });
+  };
 
-      // Encode the message
-      const encodedMessage = encodeURIComponent(message);
+  // Generate button
+  generateBtn.addEventListener('click', generateQRCode);
 
-      const waLink = `https://wa.me/${phone}?text=${encodedMessage}`;
+  // Download button
+  downloadBtn.addEventListener('click', () => {
+    const format = formatSelect.value;
+    const link = document.createElement('a');
+    link.download = `qrcode_with_logo.${format}`;
+    link.href = qrCanvas.toDataURL(`image/${format}`);
+    link.click();
+  });
+</script>
 
-      document.getElementById("wa-link").href = waLink;
-      document.getElementById("wa-link").textContent = waLink;
-      document.getElementById("result").style.display = "block";
-    }
-
-    function copyLink() {
-      const linkText = document.getElementById("wa-link").textContent;
-      navigator.clipboard.writeText(linkText).then(() => {
-        alert("Link copied to clipboard!");
-      }).catch(err => {
-        alert("Failed to copy: " + err);
-      });
-    }
-  </script>
 </body>
 </html>
