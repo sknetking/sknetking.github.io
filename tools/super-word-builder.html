@@ -7,6 +7,281 @@
     <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
      <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+    <style>
+       
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background-color: #f0f9ff;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        h1 {
+            color: #ff6b6b;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .game-area {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .control-group {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            background: #e3f2fd;
+            padding: 8px 12px;
+            border-radius: 20px;
+        }
+        
+        .letters-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #fff9e6;
+            border-radius: 10px;
+            min-height: 80px;
+        }
+        
+        .letter {
+            width: 60px;
+            height: 60px;
+            background-color: #ffd166;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            cursor: move;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+            user-select: none;
+        }
+        
+        .letter:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+        }
+        
+        .word-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 30px 0;
+            padding: 15px;
+            background-color: #e3f2fd;
+            border-radius: 10px;
+            min-height: 80px;
+        }
+        
+        .word-box {
+            width: 60px;
+            height: 60px;
+            background-color: white;
+            border: 3px dashed #4dabf7;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+            transition: all 0.3s;
+        }
+        
+        .word-box.highlight {
+            background-color: #d0ebff;
+            border-color: #228be6;
+        }
+        
+        .word-box.filled {
+            border-style: solid;
+            background-color: #fff;
+        }
+        
+        .buttons {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-new {
+            background-color: #51cf66;
+            color: white;
+        }
+        
+        .btn-new:hover {
+            background-color: #40c057;
+            transform: scale(1.05);
+        }
+        
+        .btn-reset {
+            background-color: #ff6b6b;
+            color: white;
+        }
+        
+        .btn-reset:hover {
+            background-color: #fa5252;
+            transform: scale(1.05);
+        }
+        
+        .btn-settings {
+            background-color: #7950f2;
+            color: white;
+        }
+        
+        .btn-settings:hover {
+            background-color: #6741d9;
+            transform: scale(1.05);
+        }
+        
+        .message {
+            margin: 20px 0;
+            padding: 15px;
+            font-size: 20px;
+            min-height: 30px;
+            color: #228be6;
+            font-weight: bold;
+        }
+        
+        .success {
+            color: #51cf66;
+            animation: bounce 0.5s;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .hint-area {
+            margin: 10px 0;
+            font-style: italic;
+            color: #666;
+            min-height: 20px;
+        }
+        
+        /* Popup styles */
+        .popup-overlay {
+               position:fixed;
+                left: 50%;
+                top: 50%;
+                -ms-transform: translate(-50%,-50%);
+                -moz-transform:translate(-50%,-50%);
+                -webkit-transform: translate(-50%,-50%);
+                 transform: translate(-50%,-50%);
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+        }
+.popup-content img{
+  max-width:80%;
+}
+        .popup-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            animation: popIn 0.4s;
+          max-width:100%;
+        }
+        
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+          .close-popup {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .close-popup:hover {
+            color:red;
+            transform: scale(1.2);
+        }
+        
+        select {
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: 2px solid #4dabf7;
+            font-family: 'Comic Sans MS', cursive;
+            background-color: white;
+        }
+        
+        .hint-btn {
+            background-color: #fcc419;
+            color: #333;
+        }
+        
+        .hint-btn:hover {
+            background-color: #fab005;
+        }
+        
+        /* Sound toggle */
+        .sound-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 100;
+        }
+     
+ </style>
   </head>
 <body>
     <div class="game-area">
