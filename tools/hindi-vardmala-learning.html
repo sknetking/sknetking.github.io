@@ -1,0 +1,350 @@
+<html lang="hi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Hindi Varnamala Learning Game</title>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <style>
+
+        body {
+
+            font-family: 'Arial', sans-serif;
+
+            text-align: center;
+
+            background-color: #fff9db; /* Soft yellow background */
+
+            margin-bottom: 100px;
+
+        }
+
+        .game-area {
+
+            margin-top: 20px;
+
+            padding: 0 15px;
+
+        }
+
+        h1 {
+
+            font-size: 2.8em;
+
+            color: #e67e22;
+
+            margin-bottom: 5px;
+
+        }
+
+        h2 {
+
+            color: #d35400;
+
+            border-bottom: 2px solid #ffec99;
+
+            display: inline-block;
+
+            margin-top: 30px;
+
+        }
+
+        .alphabet-container {
+
+            display: grid;
+
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+
+            gap: 15px;
+
+            max-width: 800px;
+
+            margin: 20px auto;
+
+        }
+
+        .letter-box {
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            height: 80px;
+
+            font-size: 2.5em;
+
+            font-weight: bold;
+
+            color: white;
+
+            border-radius: 15px;
+
+            cursor: pointer;
+
+            transition: all 0.2s ease;
+
+            box-shadow: 0 5px 0px rgba(0,0,0,0.1);
+
+        }
+
+        /* Vowel Styling (Swar) */
+
+        .swar { background-color: #ff6b6b; }
+
+        .swar:hover { background-color: #fa5252; }
+
+        
+
+        /* Consonant Styling (Vyanjan) */
+
+        .vyanjan { background-color: #4dadf7; }
+
+        .vyanjan:hover { background-color: #339af0; }
+
+        .letter-box:active {
+
+            transform: translateY(4px);
+
+            box-shadow: none;
+
+        }
+
+        .active-highlight {
+
+            border: 5px solid #51cf66;
+
+            transform: scale(1.1);
+
+        }
+
+        /* Control Panel */
+
+        .controls {
+
+            position: fixed;
+
+            bottom: 20px;
+
+            left: 50%;
+
+            transform: translateX(-50%);
+
+            display: flex;
+
+            gap: 15px;
+
+            background: white;
+
+            padding: 12px 25px;
+
+            border-radius: 50px;
+
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+
+        }
+
+        .btn {
+
+            width: 55px;
+
+            height: 55px;
+
+            border-radius: 50%;
+
+            border: none;
+
+            color: white;
+
+            font-size: 1.4em;
+
+            cursor: pointer;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+        }
+
+        #play-btn { background-color: #51cf66; }
+
+        #stop-btn { background-color: #ff6b6b; display: none; }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="game-area">
+
+        <h1>हिंदी वर्णमाला</h1>
+
+        <p>अक्षर छुएं और आवाज सुनें!</p>
+
+        <h2>स्वर (Vowels)</h2>
+
+        <div class="alphabet-container" id="swar-container"></div>
+
+        <h2>व्यंजन (Consonants)</h2>
+
+        <div class="alphabet-container" id="vyanjan-container"></div>
+
+    </div>
+
+    <div class="controls">
+
+        <button class="btn" id="stop-btn">Stop</button>
+
+        <button class="btn" id="play-btn">▶</button>
+
+    </div>
+
+    <script>
+
+        $(document).ready(function() {
+
+            const swar = ["अ", "आ", "इ", "ई", "उ", "ऊ", "ऋ", "ए", "ऐ", "ओ", "औ", "अं", "अः"];
+
+            const vyanjan = [
+
+                "क", "ख", "ग", "घ", "ङ", 
+
+                "च", "छ", "ज", "झ", "ञ", 
+
+                "ट", "ठ", "ड", "ढ", "ण", 
+
+                "त", "थ", "द", "ध", "न", 
+
+                "प", "फ", "ब", "भ", "म", 
+
+                "य", "र", "ल", "व", "श", 
+
+                "ष", "स", "ह", "क्ष", "त्र", "ज्ञ"
+
+            ];
+
+            let fullAlphabet = [...swar, ...vyanjan];
+
+            let playIndex = 0;
+
+            let playInterval;
+
+            // Generate Swar
+
+            swar.forEach(l => createBox(l, "#swar-container", "swar"));
+
+            // Generate Vyanjan
+
+            vyanjan.forEach(l => createBox(l, "#vyanjan-container", "vyanjan"));
+
+            function createBox(letter, containerSelector, typeClass) {
+
+                const box = $("<div>")
+
+                    .addClass("letter-box " + typeClass)
+
+                    .text(letter)
+
+                    .click(function() {
+
+                        speakHindi(letter);
+
+                    });
+
+                $(containerSelector).append(box);
+
+            }
+
+            function speakHindi(text) {
+
+                window.speechSynthesis.cancel();
+
+                const msg = new SpeechSynthesisUtterance(text);
+
+                msg.lang = 'hi-IN'; // Set to Hindi
+
+                msg.rate = 0.8;    // Slightly slower for learning
+
+                window.speechSynthesis.speak(msg);
+
+            }
+
+            // Autoplay Functionality
+
+            $("#play-btn").click(function() {
+
+                $(this).hide();
+
+                $("#stop-btn").show();
+
+                playIndex = 0;
+
+                
+
+                playInterval = setInterval(() => {
+
+                    if (playIndex < fullAlphabet.length) {
+
+                        const currentLetter = fullAlphabet[playIndex];
+
+                        speakHindi(currentLetter);
+
+                        
+
+                        // Visual feedback (find the box with the current letter)
+
+                        $(".letter-box").removeClass("active-highlight");
+
+                        $(`.letter-box:contains('${currentLetter}')`).addClass("active-highlight");
+
+                        
+
+                        playIndex++;
+
+                    } else {
+
+                        resetGame();
+
+                    }
+
+                }, 2000);
+
+            });
+
+            $("#stop-btn").click(function() {
+
+                resetGame();
+
+            });
+
+            function resetGame() {
+
+                clearInterval(playInterval);
+
+                window.speechSynthesis.cancel();
+
+                $(".letter-box").removeClass("active-highlight");
+
+                $("#play-btn").show();
+
+                $("#stop-btn").hide();
+
+            }
+
+        });
+
+    </script>
+
+</body>
+
+</html>
+
