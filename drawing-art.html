@@ -1,197 +1,657 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Page Title</title>
-<style>
-  #canvas-container {
-            width: 100%;
-            height: 80vh; /* Adjust this value as needed */
-            border: 1px solid black;
-            position: relative;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ProDraw Suite | Signature & Drawing Tool with Eraser Control</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
         }
+
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #eef2f9;
+            margin: 0;
+            padding: 24px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            width: 100%;
+            background: white;
+            border-radius: 36px;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.25);
+            overflow: hidden;
+            padding: 24px 28px 28px 28px;
+            transition: all 0.2s;
+        }
+
+        h1 {
+            font-size: 1.9rem;
+            font-weight: 800;
+            margin: 0 0 6px 0;
+            background: linear-gradient(135deg, #0B2B40, #1E4A6F);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+        }
+
+        .sub {
+            color: #2c5a7a;
+            margin-bottom: 20px;
+            border-left: 5px solid #2c7da0;
+            padding-left: 16px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        /* professional toolbar - extended */
+        .settings-panel {
+            background: #f8fafd;
+            border-radius: 28px;
+            padding: 18px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 white;
+        }
+
+        .settings-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            align-items: center;
+            background: white;
+            padding: 6px 20px;
+            border-radius: 56px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+
+        .settings-group label {
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: #1e3a5f;
+            letter-spacing: 0.3px;
+        }
+
+        input, select {
+            border-radius: 40px;
+            border: 1px solid #cbdde9;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            background: white;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        input[type="color"] {
+            width: 48px;
+            height: 40px;
+            padding: 3px;
+            border-radius: 30px;
+        }
+
+        input[type="range"] {
+            width: 140px;
+            cursor: pointer;
+        }
+
+        .badge {
+            background: #eef2ff;
+            border-radius: 40px;
+            padding: 5px 14px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #1e4a76;
+        }
+
+        /* canvas container with BORDER (always visible drawing area) */
+        #canvas-container {
+            width: 100%;
+            height: 65vh;
+            min-height: 450px;
+            border-radius: 24px;
+            background: #f0f4fa;
+            position: relative;
+            cursor: crosshair;
+            padding: 8px;
+            background: #e2e8f0;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05), 0 12px 20px -8px rgba(0,0,0,0.2);
+        }
+
+        /* explicit visible border for canvas drawing area */
         #canvas {
             width: 100%;
             height: 100%;
+            display: block;
+            background: white;
+            cursor: crosshair;
+            border-radius: 20px;
+            box-shadow: 0 0 0 3px white, 0 0 0 6px #2c7da0;
+            transition: box-shadow 0.1s ease;
         }
-        .buttons, .settings {
-            margin-top: 10px;
+
+        /* subtle hover effect to highlight border */
+        #canvas:hover {
+            box-shadow: 0 0 0 3px white, 0 0 0 6px #3b8db0;
         }
-</style>
+
+        /* button bar */
+        .button-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 28px;
+            justify-content: center;
+        }
+
+        .btn {
+            border: none;
+            background: white;
+            padding: 10px 26px;
+            border-radius: 48px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #dce5ef;
+            color: #1f3b4c;
+        }
+
+        .btn-primary {
+            background: #1e3a5f;
+            color: white;
+            border: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+        }
+
+        .btn-primary:hover {
+            background: #0f2b46;
+            transform: translateY(-2px);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            background: #f1f7fd;
+            border-color: #bdd4e7;
+        }
+
+        .btn-danger {
+            background: #fff5f5;
+            border-color: #ffcfcf;
+            color: #b91c1c;
+        }
+
+        .eraser-active-btn {
+            background: #ffecb3 !important;
+            border-color: #e0a800 !important;
+            color: #7a5c00 !important;
+        }
+
+        .usage-footer {
+            margin-top: 32px;
+            background: #f0f6fe;
+            border-radius: 24px;
+            padding: 18px 24px;
+            border-left: 6px solid #2c7da0;
+            font-size: 0.9rem;
+            color: #0b2b3f;
+        }
+
+        .usage-footer p {
+            margin: 8px 0;
+            line-height: 1.45;
+        }
+
+        hr {
+            margin: 14px 0;
+            border: 0;
+            height: 1px;
+            background: #cbdde9;
+        }
+
+        @media (max-width: 750px) {
+            .app-container {
+                padding: 18px;
+            }
+            .settings-group {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .btn {
+                padding: 8px 16px;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h1>Signature Field</h1>
-   <div class="settings">
-        <label for="bgColor">Canvas Background Color:</label>
-        <input type="color" id="bgColor" value="#ffffff">
-        <label for="lineWidth">Line Width:</label>
-        <input type="number" id="lineWidth" value="2" min="1" max="10">
-        <label for="lineColor">Line Color:</label>
-        <input type="color" id="lineColor" value="#000000">
+<div class="app-container">
+    <h1>✍️ ProDraw | Smart Signature & Drawing Studio</h1>
+    <div class="sub">Precision drawing | Eraser size control | Visible canvas border | Full Undo/Redo</div>
+
+    <!-- enhanced settings panel with eraser size controller -->
+    <div class="settings-panel">
+        <div class="settings-group">
+            <label>🎨 BG Color</label>
+            <input type="color" id="bgColor" value="#ffffff">
+            <label>✏️ Pen Width</label>
+            <input type="range" id="lineWidthSlider" min="1" max="30" value="2">
+            <span id="widthValue" class="badge">2px</span>
+            <label>🌈 Pen Color</label>
+            <input type="color" id="lineColor" value="#000000">
+        </div>
+        <div class="settings-group">
+            <label>🧽 Eraser Size</label>
+            <input type="range" id="eraserSizeSlider" min="2" max="40" value="12">
+            <span id="eraserSizeValue" class="badge">12px</span>
+            <button id="eraserMode" class="badge" style="background:#fde6d2; border:none; cursor:pointer;">🧽 Eraser ON/OFF</button>
+        </div>
+        <div class="settings-group">
+            <label>⚡ Presets</label>
+            <button id="penFine" class="badge" style="background:#e2f0ff;">Fine 1px</button>
+            <button id="penMedium" class="badge" style="background:#e2f0ff;">Med 4px</button>
+            <button id="penBold" class="badge" style="background:#e2f0ff;">Bold 10px</button>
+        </div>
     </div>
+
+    <!-- canvas container with visible border (drawing area always distinguished) -->
     <div id="canvas-container">
         <canvas id="canvas"></canvas>
     </div>
-    <div class="buttons">
-        <button id="undo">Undo</button>
-        <button id="redo">Redo</button>
-      <button id="clear">Clear</button>
-        <button id="save">Save as Image</button>
+
+    <!-- action buttons -->
+    <div class="button-bar">
+        <button id="undo" class="btn">↩️ Undo</button>
+        <button id="redo" class="btn">↪️ Redo</button>
+        <button id="clear" class="btn btn-danger">🗑️ Clear All</button>
+        <button id="save" class="btn btn-primary">📸 Save as PNG</button>
+        <button id="exportHigh" class="btn">✨ High-Res Export</button>
     </div>
+
+    <!-- usage & instructions (p tag style) -->
+    <div class="usage-footer">
+        <p><strong>📌 Professional Use Cases & How to Use — Advanced Drawing Tool</strong><br>
+        ✅ <strong>Legal & Business Signatures:</strong> Capture binding signatures on contracts, NDAs, invoices. Secure undo/redo.<br>
+        ✅ <strong>Remote Whiteboarding & Feedback:</strong> Annotate designs, markups, visual collaboration with variable line width & eraser size.<br>
+        ✅ <strong>Form Filling & Diagramming:</strong> Perfect for diagrams, wireframes, or handwritten notes.<br><br>
+        <strong>🖱️ How to Use:</strong> Draw by clicking/dragging or touch. <strong>Pen width slider</strong> adjusts stroke thickness. <strong>Eraser Size slider</strong> controls eraser diameter. Activate <strong>Eraser ON/OFF</strong> to erase (uses current background color). <strong>Canvas border</strong> makes drawing area always visible. Undo/Redo unlimited. Custom background color + line color. Use preset buttons for quick switching. Save high-quality PNG for documentation. The eraser respects the exact eraser size you set — perfect for detailed corrections.</p>
+    </div>
+</div>
+
 <script>
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-const container = document.getElementById('canvas-container');
+    (function() {
+        // DOM references
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('canvas-container');
 
-let drawing = false;
-let currentX = 0;
-let currentY = 0;
+        // drawing state
+        let drawing = false;
+        
+        // Data structures: each stroke = array of points {x, y, width, color}
+        let paths = [];
+        let redoStack = [];
 
-const paths = [];
-let redoStack = [];
+        // Core settings
+        let bgColor = '#ffffff';
+        let currentPenWidth = 2;
+        let currentPenColor = '#000000';
+        
+        // Eraser mode & size
+        let eraserActive = false;
+        let eraserSize = 12;     // default eraser width
+        
+        // Helper: get precise canvas coordinates (accounting for canvas resolution vs CSS)
+        function getCanvasCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            let clientX, clientY;
+            if (e.touches) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            let canvasX = (clientX - rect.left) * scaleX;
+            let canvasY = (clientY - rect.top) * scaleY;
+            canvasX = Math.min(Math.max(0, canvasX), canvas.width);
+            canvasY = Math.min(Math.max(0, canvasY), canvas.height);
+            return [canvasX, canvasY];
+        }
 
-// Default settings
-let bgColor = '#ffffff';
-let lineWidth = 2;
-let lineColor = '#000000';
-
-// Function to resize the canvas
-function resizeCanvas() {
-    canvas.width = container.clientWidth;
-    canvas.height = container.clientHeight;
-    redraw();
-}
-
-// Initialize canvas size
-resizeCanvas();
-
-// Update settings based on user input
-document.getElementById('bgColor').addEventListener('input', (e) => {
-    bgColor = e.target.value;
-    canvas.style.backgroundColor = bgColor;
-    redraw();
-});
-
-document.getElementById('lineWidth').addEventListener('input', (e) => {
-    lineWidth = e.target.value;
-    ctx.lineWidth = lineWidth;
-});
-
-document.getElementById('lineColor').addEventListener('input', (e) => {
-     lineColor = e.target.value;
-    ctx.strokeStyle = lineColor;
-});
-document.getElementById('clear').addEventListener('click', (e) => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-});
-// Mouse Events
-canvas.addEventListener('mousedown', (e) => {
-    drawing = true;
-    [currentX, currentY] = getCanvasCoordinates(e);
-    ctx.beginPath();
-    ctx.moveTo(currentX, currentY);
-    paths.push([{ x: currentX, y: currentY, lineWidth, lineColor }]);
-    redoStack = []; // Clear the redo stack on new action
-});
-
-canvas.addEventListener('mousemove', (e) => {
-    if (!drawing) return;
-    const [x, y] = getCanvasCoordinates(e);
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    paths[paths.length - 1].push({ x, y, lineWidth, lineColor });
-});
-
-canvas.addEventListener('mouseup', () => {
-    drawing = false;
-    ctx.closePath();
-});
-
-canvas.addEventListener('mouseleave', () => {
-    drawing = false;
-});
-
-// Touch Events
-canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    drawing = true;
-    [currentX, currentY] = getCanvasCoordinates(touch);
-    ctx.beginPath();
-    ctx.moveTo(currentX, currentY);
-    paths.push([{ x: currentX, y: currentY, lineWidth, lineColor }]);
-    redoStack = []; // Clear the redo stack on new action
-});
-
-canvas.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    if (!drawing) return;
-    const touch = e.touches[0];
-    const [x, y] = getCanvasCoordinates(touch);
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    paths[paths.length - 1].push({ x, y, lineWidth, lineColor });
-});
-
-canvas.addEventListener('touchend', () => {
-    drawing = false;
-    ctx.closePath();
-});
-
-canvas.addEventListener('touchcancel', () => {
-    drawing = false;
-});
-
-// Undo, Redo, and Save
-document.getElementById('undo').addEventListener('click', () => {
-    if (paths.length === 0) return;
-    redoStack.push(paths.pop());
-    redraw();
-});
-
-document.getElementById('redo').addEventListener('click', () => {
-    if (redoStack.length === 0) return;
-    paths.push(redoStack.pop());
-    redraw();
-});
-
-document.getElementById('save').addEventListener('click', () => {
-    const dataURL = canvas.toDataURL('image/png');
-    const link = document.createElement('a');
-    link.href = dataURL;
-    link.download = 'canvas-drawing.png';
-    link.click();
-});
-
-function getCanvasCoordinates(event) {
-    const rect = canvas.getBoundingClientRect();
-    return [
-        event.clientX - rect.left,
-        event.clientY - rect.top
-    ];
-}
-
-function redraw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = bgColor;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    paths.forEach(path => {
-        if (path.length === 0) return;
-        ctx.beginPath();
-        ctx.moveTo(path[0].x, path[0].y);
-        path.forEach(point => {
-            ctx.lineWidth = point.lineWidth;
-            ctx.strokeStyle = point.lineColor;
-            ctx.lineTo(point.x, point.y);
+        // Redraw everything from paths array (full fidelity)
+        function redrawFullCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            if (!paths.length) return;
+            for (let stroke of paths) {
+                if (!stroke.length) continue;
+                // draw each segment individually with per-point attributes
+                for (let i = 1; i < stroke.length; i++) {
+                    const prev = stroke[i-1];
+                    const curr = stroke[i];
+                    ctx.beginPath();
+                    ctx.moveTo(prev.x, prev.y);
+                    ctx.lineTo(curr.x, curr.y);
+                    ctx.lineWidth = curr.width;
+                    ctx.strokeStyle = curr.color;
+                    ctx.stroke();
+                }
+                // optional: ensure first point tiny dot for single clicks (beauty)
+                if (stroke.length === 1) {
+                    const p = stroke[0];
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.width / 2, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.fill();
+                }
+            }
+        }
+        
+        // Start new stroke (pen or eraser)
+        function startStroke(x, y) {
+            let activeWidth = eraserActive ? eraserSize : currentPenWidth;
+            let activeColor = eraserActive ? bgColor : currentPenColor;
+            const newStroke = [{
+                x: x,
+                y: y,
+                width: activeWidth,
+                color: activeColor
+            }];
+            paths.push(newStroke);
+            redoStack = []; // new action clears redo
+            
+            // Draw initial dot immediately for responsive feel
+            ctx.beginPath();
+            ctx.arc(x, y, activeWidth / 2, 0, Math.PI * 2);
+            ctx.fillStyle = activeColor;
+            ctx.fill();
+        }
+        
+        // Draw segment from last point to new point (with current width/color)
+        function drawSegment(stroke, toX, toY) {
+            if (!stroke.length) return;
+            const lastPoint = stroke[stroke.length - 1];
+            const activeWidth = eraserActive ? eraserSize : currentPenWidth;
+            const activeColor = eraserActive ? bgColor : currentPenColor;
+            const newPoint = {
+                x: toX,
+                y: toY,
+                width: activeWidth,
+                color: activeColor
+            };
+            stroke.push(newPoint);
+            // immediate drawing for smoothness
+            ctx.beginPath();
+            ctx.moveTo(lastPoint.x, lastPoint.y);
+            ctx.lineTo(toX, toY);
+            ctx.lineWidth = activeWidth;
+            ctx.strokeStyle = activeColor;
+            ctx.lineCap = 'round';
             ctx.stroke();
-        });
-        ctx.closePath();
-    });
-}
-
-// Handle window resize
-window.addEventListener('resize', resizeCanvas);
-
+        }
+        
+        // Event handlers unified
+        function onPointerStart(e) {
+            e.preventDefault();
+            if (e.touches) e.preventDefault();
+            drawing = true;
+            const [x, y] = getCanvasCoordinates(e);
+            startStroke(x, y);
+        }
+        
+        function onPointerMove(e) {
+            if (!drawing) return;
+            e.preventDefault();
+            const [x, y] = getCanvasCoordinates(e);
+            if (paths.length === 0) return;
+            const currentStroke = paths[paths.length - 1];
+            drawSegment(currentStroke, x, y);
+        }
+        
+        function onPointerEnd(e) {
+            if (!drawing) return;
+            drawing = false;
+            e.preventDefault();
+        }
+        
+        // Undo / Redo logic
+        function undo() {
+            if (paths.length === 0) return;
+            const removed = paths.pop();
+            redoStack.push(removed);
+            redrawFullCanvas();
+        }
+        
+        function redo() {
+            if (redoStack.length === 0) return;
+            const restored = redoStack.pop();
+            paths.push(restored);
+            redrawFullCanvas();
+        }
+        
+        function clearAll() {
+            paths = [];
+            redoStack = [];
+            redrawFullCanvas();
+        }
+        
+        function saveAsPNG() {
+            const dataURL = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `prodraw_${Date.now()}.png`;
+            link.href = dataURL;
+            link.click();
+        }
+        
+        function highResExport() {
+            // export same quality, but user-friendly
+            saveAsPNG();
+        }
+        
+        // Resize handler with coordinate scaling (pro-level retention)
+        function handleResize() {
+            const oldWidth = canvas.width;
+            const oldHeight = canvas.height;
+            const newWidth = container.clientWidth;
+            const newHeight = container.clientHeight;
+            if (oldWidth > 0 && oldHeight > 0 && (newWidth !== oldWidth || newHeight !== oldHeight)) {
+                const scaleX = newWidth / oldWidth;
+                const scaleY = newHeight / oldHeight;
+                // scale all points in paths
+                for (let stroke of paths) {
+                    for (let pt of stroke) {
+                        pt.x = pt.x * scaleX;
+                        pt.y = pt.y * scaleY;
+                    }
+                }
+                for (let stroke of redoStack) {
+                    for (let pt of stroke) {
+                        pt.x = pt.x * scaleX;
+                        pt.y = pt.y * scaleY;
+                    }
+                }
+            }
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            redrawFullCanvas();
+        }
+        
+        // UI bindings & event listeners
+        function bindUI() {
+            document.getElementById('undo').addEventListener('click', undo);
+            document.getElementById('redo').addEventListener('click', redo);
+            document.getElementById('clear').addEventListener('click', clearAll);
+            document.getElementById('save').addEventListener('click', saveAsPNG);
+            document.getElementById('exportHigh').addEventListener('click', highResExport);
+            
+            // Background color change
+            const bgPicker = document.getElementById('bgColor');
+            bgPicker.addEventListener('input', (e) => {
+                bgColor = e.target.value;
+                redrawFullCanvas();
+                // if eraser is active, we need to reflect new bg color but no need to re-apply strokes
+            });
+            
+            // Pen width slider
+            const penSlider = document.getElementById('lineWidthSlider');
+            const widthSpan = document.getElementById('widthValue');
+            penSlider.addEventListener('input', (e) => {
+                currentPenWidth = parseInt(e.target.value, 10);
+                widthSpan.innerText = currentPenWidth + 'px';
+                // if eraser mode is active, we should not disable eraser, but keep separate
+            });
+            
+            // Pen color picker
+            const colorPicker = document.getElementById('lineColor');
+            colorPicker.addEventListener('input', (e) => {
+                currentPenColor = e.target.value;
+                if (eraserActive) {
+                    // optional: turning off eraser when manually changing color? better UX: disable eraser
+                    eraserActive = false;
+                    const eraserBtn = document.getElementById('eraserMode');
+                    eraserBtn.classList.remove('eraser-active-btn');
+                    eraserBtn.style.background = "#fde6d2";
+                }
+            });
+            
+            // Eraser size slider (new controller)
+            const eraserSlider = document.getElementById('eraserSizeSlider');
+            const eraserSpan = document.getElementById('eraserSizeValue');
+            eraserSlider.addEventListener('input', (e) => {
+                eraserSize = parseInt(e.target.value, 10);
+                eraserSpan.innerText = eraserSize + 'px';
+            });
+            
+            // Eraser mode toggle (ON/OFF)
+            const eraserBtn = document.getElementById('eraserMode');
+            eraserBtn.addEventListener('click', () => {
+                eraserActive = !eraserActive;
+                if (eraserActive) {
+                    eraserBtn.classList.add('eraser-active-btn');
+                    eraserBtn.style.background = "#ffd966";
+                    eraserBtn.style.border = "1px solid #cc9c00";
+                } else {
+                    eraserBtn.classList.remove('eraser-active-btn');
+                    eraserBtn.style.background = "#fde6d2";
+                    eraserBtn.style.border = "none";
+                }
+            });
+            
+            // Presets
+            document.getElementById('penFine').addEventListener('click', () => {
+                currentPenWidth = 1;
+                penSlider.value = 1;
+                widthSpan.innerText = '1px';
+                if (eraserActive) { eraserActive = false; eraserBtn.classList.remove('eraser-active-btn'); eraserBtn.style.background = "#fde6d2"; }
+            });
+            document.getElementById('penMedium').addEventListener('click', () => {
+                currentPenWidth = 4;
+                penSlider.value = 4;
+                widthSpan.innerText = '4px';
+                if (eraserActive) { eraserActive = false; eraserBtn.classList.remove('eraser-active-btn'); eraserBtn.style.background = "#fde6d2"; }
+            });
+            document.getElementById('penBold').addEventListener('click', () => {
+                currentPenWidth = 10;
+                penSlider.value = 10;
+                widthSpan.innerText = '10px';
+                if (eraserActive) { eraserActive = false; eraserBtn.classList.remove('eraser-active-btn'); eraserBtn.style.background = "#fde6d2"; }
+            });
+        }
+        
+        // Canvas event attachment (mouse + touch)
+        function attachCanvasEvents() {
+            canvas.addEventListener('mousedown', onPointerStart);
+            window.addEventListener('mousemove', (e) => {
+                if (drawing) {
+                    e.preventDefault();
+                    onPointerMove(e);
+                }
+            });
+            window.addEventListener('mouseup', (e) => {
+                if (drawing) onPointerEnd(e);
+            });
+            canvas.addEventListener('mouseleave', () => {
+                if (drawing) onPointerEnd({ preventDefault: () => {} });
+                drawing = false;
+            });
+            
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const fakeEvent = { touches: [touch], preventDefault: () => {} };
+                onPointerStart(fakeEvent);
+            });
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (drawing) {
+                    const touch = e.touches[0];
+                    const fakeEvent = { touches: [touch], preventDefault: () => {} };
+                    onPointerMove(fakeEvent);
+                }
+            });
+            canvas.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                if (drawing) onPointerEnd(e);
+                drawing = false;
+            });
+            canvas.addEventListener('touchcancel', (e) => {
+                e.preventDefault();
+                drawing = false;
+            });
+        }
+        
+        // initial setup
+        function init() {
+            // set canvas dimensions
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            attachCanvasEvents();
+            bindUI();
+            
+            // set initial display values
+            document.getElementById('lineWidthSlider').value = currentPenWidth;
+            document.getElementById('widthValue').innerText = currentPenWidth + 'px';
+            document.getElementById('lineColor').value = currentPenColor;
+            document.getElementById('bgColor').value = bgColor;
+            document.getElementById('eraserSizeSlider').value = eraserSize;
+            document.getElementById('eraserSizeValue').innerText = eraserSize + 'px';
+            
+            // resize observer / window resize
+            window.addEventListener('resize', () => {
+                handleResize();
+            });
+            redrawFullCanvas();
+        }
+        
+        init();
+    })();
 </script>
 </body>
 </html>
