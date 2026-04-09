@@ -1,211 +1,252 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>NOVA CLOCK | Modern Digital Clock</title>
+  <title>CHRONO SYNC | Multicolor Digital Clock</title>
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      user-select: none; /* modern touch: avoid accidental selection */
+      user-select: none;
     }
 
     body {
       min-height: 100vh;
-      background: linear-gradient(145deg, #0a0f1e 0%, #0c1222 100%);
+      background: radial-gradient(circle at 20% 30%, #0B1120, #030712);
       display: flex;
       justify-content: center;
       align-items: center;
-      font-family: 'Inter', 'Segoe UI', 'SF Pro Text', system-ui, -apple-system, 'Poppins', monospace;
+      font-family: 'Inter', 'Segoe UI', 'SF Pro Display', system-ui, -apple-system, 'Poppins', monospace;
       padding: 1.5rem;
+      transition: background 0.3s ease;
     }
 
-    /* main card container */
+    /* main glassmorphic container */
     .clock-container {
-      background: rgba(18, 25, 45, 0.65);
-      backdrop-filter: blur(12px);
-      border-radius: 4rem;
-      padding: 2rem 2.5rem;
-      box-shadow: 0 30px 45px -20px rgba(0, 0, 0, 0.5), 
-                  inset 0 1px 1px rgba(255, 255, 255, 0.08),
-                  0 0 0 1px rgba(72, 187, 255, 0.12);
-      transition: all 0.2s ease;
-      border: 1px solid rgba(66, 153, 225, 0.25);
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(18px);
+      border-radius: 3.5rem;
+      padding: 2rem 2.8rem;
+      box-shadow: 0 35px 60px -20px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 0 1px rgba(56, 189, 248, 0.2);
+      transition: all 0.25s ease;
+      border: 1px solid rgba(56, 189, 248, 0.25);
     }
 
-    /* digital digits wrapper */
+    .clock-container:hover {
+      border-color: rgba(168, 85, 247, 0.4);
+      box-shadow: 0 40px 70px -18px black, 0 0 0 1.5px rgba(168, 85, 247, 0.3);
+    }
+
+    /* main digit row */
     .clock-face {
       display: flex;
       align-items: baseline;
       justify-content: center;
       gap: 0.25rem;
       flex-wrap: wrap;
-      background: radial-gradient(ellipse at 30% 40%, rgba(10, 20, 35, 0.4), transparent);
-      padding: 0.75rem 1rem;
-      border-radius: 2.5rem;
+      padding: 0.5rem 0.2rem;
     }
 
     .time-unit {
       display: inline-flex;
       align-items: baseline;
-      gap: 0.1rem;
+      justify-content: center;
     }
 
+    /* each digit group will have unique gradient + text color */
     .digits {
-      font-size: 8rem;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      background: linear-gradient(135deg, #F0F9FF 0%, #C4E0FF 45%, #A0D0FF 100%);
-      background-clip: text;
-      -webkit-background-clip: text;
-      color: transparent;
-      text-shadow: 0 2px 5px rgba(0, 20, 50, 0.4);
+      font-size: 7rem;
+      font-weight: 700;
       font-feature-settings: "tnum";
       font-variant-numeric: tabular-nums;
-      transition: all 0.1s ease;
+      letter-spacing: 0.02em;
+      transition: all 0.1s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     }
 
-    /* colon style: elegant and modern */
-    .colon {
-      font-size: 7rem;
-      font-weight: 500;
-      margin: 0 0.2rem;
-      background: linear-gradient(145deg, #BDD9FF, #7AA9E0);
+    /* ----- distinct color themes for HOUR, MINUTE, SECOND ----- */
+    /* HOURS: vibrant electric cyan + deep blue glow */
+    .hour-digits {
+      background: linear-gradient(135deg, #67E8F9 0%, #2DD4BF 40%, #06B6D4 100%);
       background-clip: text;
       -webkit-background-clip: text;
       color: transparent;
-      text-shadow: 0 0 6px rgba(100, 180, 255, 0.4);
-      animation: breathe 2.2s infinite ease-in-out;
+      text-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
     }
 
-    /* seconds unit specific (slightly smaller for hierarchy) */
-    .seconds-group {
-      margin-left: 0.25rem;
-    }
-    .seconds-group .digits {
-      font-size: 5.5rem;
-      font-weight: 500;
-      background: linear-gradient(145deg, #D9ECFF, #9BC0F0);
+    /* MINUTES: energetic purple to fuchsia gradient (bold and modern) */
+    .minute-digits {
+      background: linear-gradient(135deg, #C084FC 0%, #A855F7 45%, #D946EF 100%);
       background-clip: text;
       -webkit-background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
     }
 
-    /* am/pm indicator for 12h mode optional — but we use 24h mode (military style)
-       However we also add a subtle period indicator for modern style */
+    /* SECONDS: vivid amber to rose / warm sunset vibes */
+    .second-digits {
+      background: linear-gradient(145deg, #FBBF24 0%, #F97316 55%, #EF4444 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 12px rgba(249, 115, 22, 0.5);
+      font-weight: 650;
+    }
+
+    /* colon style: neutral but elegant with soft white pulse */
+    .colon {
+      font-size: 6.5rem;
+      font-weight: 500;
+      margin: 0 0.3rem;
+      background: linear-gradient(145deg, #E2E8F0, #94A3B8);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 5px rgba(148, 163, 184, 0.5);
+      animation: softPulse 1.8s infinite ease-in-out;
+    }
+
+    /* seconds group slightly smaller but dynamic */
+    .seconds-group .digits {
+      font-size: 5.8rem;
+      font-weight: 650;
+    }
+
+    /* bottom panel: date and status badges */
     .meta-panel {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-top: 1.5rem;
+      margin-top: 1.8rem;
       gap: 1.8rem;
       flex-wrap: wrap;
       justify-content: center;
     }
 
     .date-box {
-      background: rgba(12, 20, 32, 0.65);
-      backdrop-filter: blur(4px);
-      padding: 0.6rem 1.3rem;
-      border-radius: 2.2rem;
-      border: 1px solid rgba(72, 187, 255, 0.3);
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(8px);
+      padding: 0.6rem 1.5rem;
+      border-radius: 2.5rem;
+      border: 1px solid rgba(103, 232, 249, 0.4);
       font-weight: 500;
-      font-size: 1.1rem;
-      letter-spacing: 0.02em;
-      color: #BFDBFE;
+      font-size: 1.05rem;
+      letter-spacing: 0.3px;
+      color: #CBD5E1;
       font-family: 'Inter', monospace;
       display: flex;
       align-items: center;
-      gap: 0.6rem;
+      gap: 0.7rem;
     }
 
     .day-name {
-      background: #1E2A44;
-      padding: 0.2rem 1rem;
+      background: linear-gradient(110deg, #1E293B, #0F172A);
+      padding: 0.3rem 1rem;
       border-radius: 2rem;
       font-weight: 600;
-      font-size: 0.9rem;
-      color: #B8E1FF;
+      font-size: 0.85rem;
+      color: #A5F3FC;
       text-transform: uppercase;
       letter-spacing: 1px;
+      border: 0.5px solid #22D3EE40;
     }
 
     .date-num {
       font-weight: 600;
-      color: white;
+      background: linear-gradient(135deg, #F0F9FF, #BAE6FD);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
       font-feature-settings: "tnum";
     }
 
     .separator-dot {
       width: 5px;
       height: 5px;
-      background: #5F9DF0;
+      background: #38BDF8;
       border-radius: 50%;
       display: inline-block;
-      opacity: 0.8;
-      margin: 0 4px;
+      opacity: 0.7;
+      box-shadow: 0 0 4px #38BDF8;
     }
 
     .indicator {
       display: flex;
       gap: 1rem;
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(0, 0, 0, 0.4);
       padding: 0.4rem 1.2rem;
       border-radius: 3rem;
       backdrop-filter: blur(4px);
+      border: 0.5px solid rgba(168, 85, 247, 0.4);
     }
 
     .badge {
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: #9DC6FF;
+      font-size: 0.8rem;
+      font-weight: 600;
       letter-spacing: 0.5px;
       text-transform: uppercase;
     }
 
-    .badge.active {
-      color: #EFF9FF;
-      text-shadow: 0 0 5px #3B82F6;
+    .badge.period-badge {
+      background: linear-gradient(145deg, #FDE047, #FACC15);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      font-weight: 700;
+    }
+
+    .badge.live-badge {
+      color: #34D399;
+      text-shadow: 0 0 3px #059669;
       font-weight: 600;
+      animation: pulseLive 1.2s infinite;
     }
 
-    /* subtle animation for colon */
-    @keyframes breathe {
-      0% { opacity: 0.7; text-shadow: 0 0 2px rgba(100, 180, 255, 0.3);}
-      50% { opacity: 1; text-shadow: 0 0 12px rgba(100, 180, 255, 0.7);}
-      100% { opacity: 0.7; text-shadow: 0 0 2px rgba(100, 180, 255, 0.3);}
+    /* animations */
+    @keyframes softPulse {
+      0% { opacity: 0.6; text-shadow: 0 0 2px #94A3B8; }
+      50% { opacity: 1; text-shadow: 0 0 12px #A5F3FC; }
+      100% { opacity: 0.6; text-shadow: 0 0 2px #94A3B8; }
     }
 
-    /* responsive: adjust font sizes for tablets and phones */
-    @media (max-width: 720px) {
+    @keyframes pulseLive {
+      0% { opacity: 0.7; text-shadow: 0 0 0px #34D399; }
+      100% { opacity: 1; text-shadow: 0 0 5px #34D399; }
+    }
+
+    /* second flash effect custom */
+    .second-flash {
+      filter: brightness(1.3) drop-shadow(0 0 6px #F97316);
+      transition: filter 0.07s ease;
+    }
+
+    /* responsive adjustments */
+    @media (max-width: 780px) {
       .clock-container {
-        padding: 1.5rem 1.8rem;
-        border-radius: 2.8rem;
+        padding: 1.6rem 2rem;
       }
       .digits {
         font-size: 5rem;
       }
       .colon {
         font-size: 4.5rem;
-        margin: 0 0.1rem;
+        margin: 0 0.15rem;
       }
       .seconds-group .digits {
-        font-size: 3.8rem;
+        font-size: 4rem;
       }
       .date-box {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         padding: 0.4rem 1rem;
-      }
-      .badge {
-        font-size: 0.7rem;
       }
     }
 
-    @media (max-width: 540px) {
+    @media (max-width: 580px) {
       .clock-container {
-        padding: 1.2rem 1.2rem;
+        padding: 1.2rem 1.5rem;
+        border-radius: 2.5rem;
       }
       .digits {
         font-size: 3.8rem;
@@ -214,73 +255,65 @@
         font-size: 3.2rem;
       }
       .seconds-group .digits {
-        font-size: 2.9rem;
-      }
-      .clock-face {
-        gap: 0rem;
+        font-size: 3rem;
       }
       .meta-panel {
-        gap: 0.8rem;
+        gap: 0.9rem;
         margin-top: 1.2rem;
       }
-      .date-box {
-        font-size: 0.75rem;
-        padding: 0.3rem 0.8rem;
+      .badge {
+        font-size: 0.7rem;
+      }
+      .day-name {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.8rem;
       }
     }
 
-    /* extra glow effect on hover (optional) */
-    .clock-container:hover {
-      border-color: rgba(96, 165, 250, 0.5);
-      box-shadow: 0 35px 50px -22px rgba(0, 0, 0, 0.6), 0 0 0 2px rgba(96, 165, 250, 0.2);
-      transition: 0.2s;
-    }
-
-    /* loading or minimal flicker prevention */
-    .no-flicker {
-      -webkit-font-smoothing: antialiased;
+    /* additional small glow for hour/minute on hover? optional but nice */
+    .time-unit:hover .digits {
+      filter: brightness(1.05);
+      transition: 0.15s;
     }
   </style>
 </head>
 <body>
 <div class="clock-container">
   <div class="clock-face">
-    <!-- HOURS block -->
+    <!-- HOURS block with distinct class -->
     <div class="time-unit" id="hoursBlock">
-      <span class="digits" id="hours">00</span>
+      <span class="digits hour-digits" id="hours">00</span>
     </div>
-    <!-- COLON separator -->
+    <!-- COLON -->
     <span class="colon" id="colon1">:</span>
-    <!-- MINUTES block -->
+    <!-- MINUTES block distinct color -->
     <div class="time-unit" id="minutesBlock">
-      <span class="digits" id="minutes">00</span>
+      <span class="digits minute-digits" id="minutes">00</span>
     </div>
-    <!-- COLON separator for seconds -->
+    <!-- COLON -->
     <span class="colon" id="colon2">:</span>
-    <!-- SECONDS block with different style -->
+    <!-- SECONDS block with unique color -->
     <div class="time-unit seconds-group" id="secondsBlock">
-      <span class="digits" id="seconds">00</span>
+      <span class="digits second-digits" id="seconds">00</span>
     </div>
   </div>
   
   <div class="meta-panel">
-    <!-- modern date display with weekday and numeric date -->
     <div class="date-box" id="dateBox">
       <span class="day-name" id="weekday">MON</span>
       <span class="separator-dot"></span>
       <span class="date-num" id="fullDate">Jan 01, 2026</span>
     </div>
-    <!-- day period indicator (AM/PM) - although we use 24h format but many modern UI like to show a subtle session hint -->
     <div class="indicator" id="sessionIndicator">
-      <span class="badge" id="amPmLabel">24H</span>
-      <span class="badge" id="liveStatus">LIVE</span>
+      <span class="badge period-badge" id="amPmLabel">AM</span>
+      <span class="badge live-badge" id="liveStatus">● LIVE</span>
     </div>
   </div>
 </div>
 
 <script>
   (function() {
-    // get DOM elements
+    // DOM elements
     const hoursElem = document.getElementById('hours');
     const minutesElem = document.getElementById('minutes');
     const secondsElem = document.getElementById('seconds');
@@ -288,20 +321,18 @@
     const fullDateElem = document.getElementById('fullDate');
     const amPmLabel = document.getElementById('amPmLabel');
     
-    // optional: we can also add an elegant 'tick' effect but not needed
-
-    // helper: format numbers with leading zero (always two digits)
+    // Helper: two digits always
     function formatTwoDigits(num) {
       return num < 10 ? '0' + num : '' + num;
     }
     
-    // get day name (short uppercase style)
+    // weekday short (3 letters uppercase)
     function getWeekdayShort(date) {
       const weekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
       return weekdays[date.getDay()];
     }
     
-    // get formatted date: "MMM DD, YYYY" with proper ordinal? but we use clean modern style: "Jan 21, 2025"
+    // formatted date: "Mar 12, 2025"
     function getFormattedDate(date) {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       const month = months[date.getMonth()];
@@ -310,176 +341,143 @@
       return `${month} ${day}, ${year}`;
     }
     
-    // update AM/PM indicator based on 24h time? we still show "AM/PM" as a subtle context, but main digits are 24h style (00-23)
-    // many modern designs use 24h but also a small session ring. We'll show AM/PM as a dynamic badge.
+    // update AM/PM badge with modern flair (based on 24h)
     function updateAmPmIndicator(hours24) {
       const period = hours24 >= 12 ? 'PM' : 'AM';
-      // optional: show a small text, but we also show a modern design: "MORNING" / "AFTERNOON" ? but AM/PM is clean
       amPmLabel.textContent = period;
-      // little dynamic style: change badge subtle glow based on period
+      // subtle style change based on period
       if (period === 'AM') {
         amPmLabel.style.opacity = '0.9';
-        amPmLabel.style.textShadow = '0 0 2px #A8D0FF';
       } else {
         amPmLabel.style.opacity = '1';
-        amPmLabel.style.textShadow = '0 0 3px #F0B27A';
       }
     }
     
-    // core clock update logic
+    // Flash effect on seconds (extra life)
+    let lastSecondValue = -1;
+    function applySecondFlash(currentSecStr) {
+      if (lastSecondValue !== currentSecStr) {
+        lastSecondValue = currentSecStr;
+        // add temporary glow & scale effect on seconds digits
+        const secSpan = secondsElem;
+        if (secSpan) {
+          secSpan.classList.add('second-flash');
+          setTimeout(() => {
+            if (secSpan) secSpan.classList.remove('second-flash');
+          }, 120);
+        }
+        // subtle colon bounce pulse
+        const colon1 = document.getElementById('colon1');
+        const colon2 = document.getElementById('colon2');
+        if (colon1 && colon2) {
+          colon1.style.transform = 'scale(1.02)';
+          colon2.style.transform = 'scale(1.02)';
+          setTimeout(() => {
+            colon1.style.transform = '';
+            colon2.style.transform = '';
+          }, 100);
+        }
+      }
+    }
+    
+    // main clock update function with distinct color handling (already set by classes)
     function updateClock() {
       const now = new Date();
-      
-      // get time components (24h format for modern digital look)
       let hours24 = now.getHours();
       const minutes = now.getMinutes();
       const seconds = now.getSeconds();
       
-      // format hours, minutes, seconds with leading zero
       const hoursStr = formatTwoDigits(hours24);
       const minutesStr = formatTwoDigits(minutes);
       const secondsStr = formatTwoDigits(seconds);
       
-      // update DOM with smooth transition (no flickering)
       hoursElem.textContent = hoursStr;
       minutesElem.textContent = minutesStr;
       secondsElem.textContent = secondsStr;
       
-      // update AM/PM for side context
+      // update AM/PM
       updateAmPmIndicator(hours24);
       
-      // update date and weekday (only if date changes -> but we can update every second to be safe, lightweight)
-      const currentWeekday = getWeekdayShort(now);
-      const currentFullDate = getFormattedDate(now);
+      // update date and weekday
+      const weekdayStr = getWeekdayShort(now);
+      const fullDateStr = getFormattedDate(now);
+      if (weekdayElem.textContent !== weekdayStr) weekdayElem.textContent = weekdayStr;
+      if (fullDateElem.textContent !== fullDateStr) fullDateElem.textContent = fullDateStr;
       
-      // small optimization: only change if string differs? but every second is fine, modern JS handles
-      if (weekdayElem.textContent !== currentWeekday) {
-        weekdayElem.textContent = currentWeekday;
-      }
-      if (fullDateElem.textContent !== currentFullDate) {
-        fullDateElem.textContent = currentFullDate;
-      }
-      
-      // extra style: add a tiny pulse effect on seconds (optional, just for elegance)
-      // we add a classless animation by toggling a data attribute? not necessary but we can add a CSS flash? no, keep minimal.
+      // apply flash effect for seconds (modern micro-interaction)
+      applySecondFlash(secondsStr);
     }
     
-    // initialize the clock and set interval
-    updateClock(); // immediate first render
-    const intervalId = setInterval(updateClock, 1000);
-    
-    // Optional: Add a smooth 'glow' update for colon animation that already works via css.
-    // Also implement graceful cleanup on page unload (not mandatory but best practice)
-    window.addEventListener('beforeunload', function() {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    });
-    
-    // for any potential dynamic resize or color transition based on time (extra modern feel)
-    // We'll implement a subtle dynamic gradient shift for the container based on hour (sunrise / sunset vibe)
-    // Actually for super modern UI, we can apply a very subtle background tint change in body?
-    // This adds that extra "premium" touch without overcomplicating.
-    function updateAmbientGlow() {
+    // ambient dynamic gradient based on time to match colorful vibe (hour/minute/second synergy)
+    function updateDynamicBackground() {
       const now = new Date();
       const hour = now.getHours();
-      // compute a value 0..1 based on hour: deep night (0) to warm sunset (1)
-      let intensity = 0;
-      let hue = 220; // default cool blue
+      let gradientAngle = 135;
+      let color1, color2, color3;
+      // create shifting gradient that complements the clock colors (cyan, purple, amber)
       if (hour >= 6 && hour < 12) {
-        // morning fresh: light blue to soft cyan
-        intensity = (hour - 6) / 6; // 0..1
-        hue = 200 + Math.floor(intensity * 20);
-      } else if (hour >= 12 && hour < 18) {
-        // afternoon: crisp azure
-        intensity = (hour - 12) / 6;
-        hue = 205 + Math.floor(intensity * 10);
-      } else if (hour >= 18 && hour < 22) {
-        // evening: warm indigo
-        intensity = (hour - 18) / 4;
-        hue = 230 - Math.floor(intensity * 15);
+        // morning: fresh cyan to soft purple
+        color1 = '#0A1128';
+        color2 = '#142850';
+        color3 = '#0C1B33';
+        gradientAngle = 120;
+      } else if (hour >= 12 && hour < 17) {
+        // afternoon: energetic indigo + violet
+        color1 = '#0B132B';
+        color2 = '#1C2541';
+        color3 = '#2A1E3C';
+        gradientAngle = 145;
+      } else if (hour >= 17 && hour < 20) {
+        // evening: warm sunset blend
+        color1 = '#1E1B2F';
+        color2 = '#2A1E2F';
+        color3 = '#3A2436';
+        gradientAngle = 160;
       } else {
-        // night: deep navy
-        intensity = (hour >= 22 ? (hour - 22) / 2 : (hour + 2) / 2);
-        hue = 235 - Math.min(20, Math.floor(intensity * 8));
+        // night: deep cosmic
+        color1 = '#030712';
+        color2 = '#0A0F1F';
+        color3 = '#020617';
+        gradientAngle = 200;
       }
-      // apply gradient shift in body background very smoothly using CSS variable? 
-      // We'll modify the body's gradient subtly for modern dynamic mood.
-      const bodyEl = document.body;
-      const startColor = `hsl(${hue}, 55%, 8%)`;
-      const endColor = `hsl(${hue - 5}, 50%, 12%)`;
-      bodyEl.style.background = `linear-gradient(145deg, ${startColor}, ${endColor})`;
+      document.body.style.background = `radial-gradient(circle at 30% 40%, ${color1}, ${color2}, ${color3})`;
+      // smooth transition
+      document.body.style.transition = 'background 1.2s ease';
     }
     
-    // run ambient glow on interval (every minute enough) but call once now and on hour changes
-    updateAmbientGlow();
-    setInterval(() => {
-      updateAmbientGlow();
-    }, 60000); // update ambient every minute (smooth)
+    // initial call and set interval for background (every 5 minutes just for smooth shift)
+    updateDynamicBackground();
+    setInterval(updateDynamicBackground, 300000); // every 5 min
     
-    // additional micro interaction: sync seconds hand? also we could create a digital ripple but keep lightweight
+    // also add additional fun: subtle pulse to the active badge (already has pulseLive)
     
-    // Also add 'active' effect on colon via class? no, css already does breathing.
-    // For better precision, we synchronize the setInterval drift protection? not needed for clock style.
-    // But we can also add a fallback to requestAnimationFrame? but standard setInterval is robust.
+    // set interval for clock sync (every second)
+    let intervalId = setInterval(updateClock, 1000);
+    updateClock(); // immediate render
     
-    // optional: add a feature that displays leading zero fade? already done.
-    // Final: add an extra nice effect when seconds are even, minor highlight on seconds digits
-    // super small micro-interaction: when seconds change, we briefly brighten the seconds digits
-    let lastSecond = -1;
-    function addSecondFlash() {
-      const nowSec = new Date().getSeconds();
-      if (nowSec !== lastSecond) {
-        lastSecond = nowSec;
-        const secElement = secondsElem;
-        if (secElement) {
-          secElement.style.transition = 'text-shadow 0.08s ease, filter 0.08s';
-          secElement.style.filter = 'brightness(1.2)';
-          secElement.style.textShadow = '0 0 8px #7AB3FF';
-          setTimeout(() => {
-            if (secElement) {
-              secElement.style.filter = '';
-              secElement.style.textShadow = '';
-            }
-          }, 100);
-        }
-        // Also tiny colon pulse for fun? we add to first colon (optional)
-        const colon1 = document.getElementById('colon1');
-        const colon2 = document.getElementById('colon2');
-        if (colon1 && colon2) {
-          colon1.style.animation = 'none';
-          colon2.style.animation = 'none';
-          // force reflow
-          void colon1.offsetHeight;
-          void colon2.offsetHeight;
-          colon1.style.animation = 'breathe 2.2s infinite ease-in-out';
-          colon2.style.animation = 'breathe 2.2s infinite ease-in-out';
-        }
-      }
-    }
-    
-    // integrate second flash inside clock update? But better to attach a separate interval that triggers at every second after update
-    // we'll override original setinterval but we can call addSecondFlash inside updateClock as well
-    // to avoid double interval, we simply call addSecondFlash inside updateClock after DOM update.
-    const originalUpdate = updateClock;
-    window.updateClock = function() {
-      originalUpdate();
-      addSecondFlash();
-    };
-    // override the interval
-    clearInterval(intervalId);
-    const newInterval = setInterval(() => {
-      window.updateClock();
-    }, 1000);
-    window.updateClock(); // initial call
-    
-    // also store for cleanup
+    // cleanup event
     window.addEventListener('beforeunload', () => {
-      clearInterval(newInterval);
+      if (intervalId) clearInterval(intervalId);
     });
     
-    // ensure that 12/24h consistency is perfect, no extra changes
-    console.log('✨ Modern digital clock active — with seconds, date & ambient glow');
+    // extra smoothness: sync with system time instantly on visibility change
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        updateClock(); // re-sync immediately when tab becomes active
+      }
+    });
+    
+    // small customization: add a tooltip effect to indicate each color meaning? optional but adds modern vibe
+    const hourBlock = document.getElementById('hoursBlock');
+    const minuteBlock = document.getElementById('minutesBlock');
+    const secondBlock = document.getElementById('secondsBlock');
+    if (hourBlock) hourBlock.setAttribute('aria-label', 'Hours · Cyan Gradient');
+    if (minuteBlock) minuteBlock.setAttribute('aria-label', 'Minutes · Violet Fusion');
+    if (secondBlock) secondBlock.setAttribute('aria-label', 'Seconds · Amber Blaze');
+    
+    // we can also dynamically update the colon colors if we want but default elegant style works perfectly.
+    // Also ensure that the seconds group doesn't overflow and respects the vibrant colors.
+    console.log('🌈 Multicolor Digital Clock Active — Hours: Cyan, Minutes: Purple, Seconds: Amber/Rose');
   })();
 </script>
 </body>
