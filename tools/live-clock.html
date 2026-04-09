@@ -1,0 +1,486 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>NOVA CLOCK | Modern Digital Clock</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none; /* modern touch: avoid accidental selection */
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(145deg, #0a0f1e 0%, #0c1222 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Inter', 'Segoe UI', 'SF Pro Text', system-ui, -apple-system, 'Poppins', monospace;
+      padding: 1.5rem;
+    }
+
+    /* main card container */
+    .clock-container {
+      background: rgba(18, 25, 45, 0.65);
+      backdrop-filter: blur(12px);
+      border-radius: 4rem;
+      padding: 2rem 2.5rem;
+      box-shadow: 0 30px 45px -20px rgba(0, 0, 0, 0.5), 
+                  inset 0 1px 1px rgba(255, 255, 255, 0.08),
+                  0 0 0 1px rgba(72, 187, 255, 0.12);
+      transition: all 0.2s ease;
+      border: 1px solid rgba(66, 153, 225, 0.25);
+    }
+
+    /* digital digits wrapper */
+    .clock-face {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 0.25rem;
+      flex-wrap: wrap;
+      background: radial-gradient(ellipse at 30% 40%, rgba(10, 20, 35, 0.4), transparent);
+      padding: 0.75rem 1rem;
+      border-radius: 2.5rem;
+    }
+
+    .time-unit {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0.1rem;
+    }
+
+    .digits {
+      font-size: 8rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      background: linear-gradient(135deg, #F0F9FF 0%, #C4E0FF 45%, #A0D0FF 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      text-shadow: 0 2px 5px rgba(0, 20, 50, 0.4);
+      font-feature-settings: "tnum";
+      font-variant-numeric: tabular-nums;
+      transition: all 0.1s ease;
+    }
+
+    /* colon style: elegant and modern */
+    .colon {
+      font-size: 7rem;
+      font-weight: 500;
+      margin: 0 0.2rem;
+      background: linear-gradient(145deg, #BDD9FF, #7AA9E0);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 6px rgba(100, 180, 255, 0.4);
+      animation: breathe 2.2s infinite ease-in-out;
+    }
+
+    /* seconds unit specific (slightly smaller for hierarchy) */
+    .seconds-group {
+      margin-left: 0.25rem;
+    }
+    .seconds-group .digits {
+      font-size: 5.5rem;
+      font-weight: 500;
+      background: linear-gradient(145deg, #D9ECFF, #9BC0F0);
+      background-clip: text;
+      -webkit-background-clip: text;
+    }
+
+    /* am/pm indicator for 12h mode optional — but we use 24h mode (military style)
+       However we also add a subtle period indicator for modern style */
+    .meta-panel {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1.5rem;
+      gap: 1.8rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .date-box {
+      background: rgba(12, 20, 32, 0.65);
+      backdrop-filter: blur(4px);
+      padding: 0.6rem 1.3rem;
+      border-radius: 2.2rem;
+      border: 1px solid rgba(72, 187, 255, 0.3);
+      font-weight: 500;
+      font-size: 1.1rem;
+      letter-spacing: 0.02em;
+      color: #BFDBFE;
+      font-family: 'Inter', monospace;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .day-name {
+      background: #1E2A44;
+      padding: 0.2rem 1rem;
+      border-radius: 2rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #B8E1FF;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .date-num {
+      font-weight: 600;
+      color: white;
+      font-feature-settings: "tnum";
+    }
+
+    .separator-dot {
+      width: 5px;
+      height: 5px;
+      background: #5F9DF0;
+      border-radius: 50%;
+      display: inline-block;
+      opacity: 0.8;
+      margin: 0 4px;
+    }
+
+    .indicator {
+      display: flex;
+      gap: 1rem;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.4rem 1.2rem;
+      border-radius: 3rem;
+      backdrop-filter: blur(4px);
+    }
+
+    .badge {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #9DC6FF;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .badge.active {
+      color: #EFF9FF;
+      text-shadow: 0 0 5px #3B82F6;
+      font-weight: 600;
+    }
+
+    /* subtle animation for colon */
+    @keyframes breathe {
+      0% { opacity: 0.7; text-shadow: 0 0 2px rgba(100, 180, 255, 0.3);}
+      50% { opacity: 1; text-shadow: 0 0 12px rgba(100, 180, 255, 0.7);}
+      100% { opacity: 0.7; text-shadow: 0 0 2px rgba(100, 180, 255, 0.3);}
+    }
+
+    /* responsive: adjust font sizes for tablets and phones */
+    @media (max-width: 720px) {
+      .clock-container {
+        padding: 1.5rem 1.8rem;
+        border-radius: 2.8rem;
+      }
+      .digits {
+        font-size: 5rem;
+      }
+      .colon {
+        font-size: 4.5rem;
+        margin: 0 0.1rem;
+      }
+      .seconds-group .digits {
+        font-size: 3.8rem;
+      }
+      .date-box {
+        font-size: 0.9rem;
+        padding: 0.4rem 1rem;
+      }
+      .badge {
+        font-size: 0.7rem;
+      }
+    }
+
+    @media (max-width: 540px) {
+      .clock-container {
+        padding: 1.2rem 1.2rem;
+      }
+      .digits {
+        font-size: 3.8rem;
+      }
+      .colon {
+        font-size: 3.2rem;
+      }
+      .seconds-group .digits {
+        font-size: 2.9rem;
+      }
+      .clock-face {
+        gap: 0rem;
+      }
+      .meta-panel {
+        gap: 0.8rem;
+        margin-top: 1.2rem;
+      }
+      .date-box {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.8rem;
+      }
+    }
+
+    /* extra glow effect on hover (optional) */
+    .clock-container:hover {
+      border-color: rgba(96, 165, 250, 0.5);
+      box-shadow: 0 35px 50px -22px rgba(0, 0, 0, 0.6), 0 0 0 2px rgba(96, 165, 250, 0.2);
+      transition: 0.2s;
+    }
+
+    /* loading or minimal flicker prevention */
+    .no-flicker {
+      -webkit-font-smoothing: antialiased;
+    }
+  </style>
+</head>
+<body>
+<div class="clock-container">
+  <div class="clock-face">
+    <!-- HOURS block -->
+    <div class="time-unit" id="hoursBlock">
+      <span class="digits" id="hours">00</span>
+    </div>
+    <!-- COLON separator -->
+    <span class="colon" id="colon1">:</span>
+    <!-- MINUTES block -->
+    <div class="time-unit" id="minutesBlock">
+      <span class="digits" id="minutes">00</span>
+    </div>
+    <!-- COLON separator for seconds -->
+    <span class="colon" id="colon2">:</span>
+    <!-- SECONDS block with different style -->
+    <div class="time-unit seconds-group" id="secondsBlock">
+      <span class="digits" id="seconds">00</span>
+    </div>
+  </div>
+  
+  <div class="meta-panel">
+    <!-- modern date display with weekday and numeric date -->
+    <div class="date-box" id="dateBox">
+      <span class="day-name" id="weekday">MON</span>
+      <span class="separator-dot"></span>
+      <span class="date-num" id="fullDate">Jan 01, 2026</span>
+    </div>
+    <!-- day period indicator (AM/PM) - although we use 24h format but many modern UI like to show a subtle session hint -->
+    <div class="indicator" id="sessionIndicator">
+      <span class="badge" id="amPmLabel">24H</span>
+      <span class="badge" id="liveStatus">LIVE</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // get DOM elements
+    const hoursElem = document.getElementById('hours');
+    const minutesElem = document.getElementById('minutes');
+    const secondsElem = document.getElementById('seconds');
+    const weekdayElem = document.getElementById('weekday');
+    const fullDateElem = document.getElementById('fullDate');
+    const amPmLabel = document.getElementById('amPmLabel');
+    
+    // optional: we can also add an elegant 'tick' effect but not needed
+
+    // helper: format numbers with leading zero (always two digits)
+    function formatTwoDigits(num) {
+      return num < 10 ? '0' + num : '' + num;
+    }
+    
+    // get day name (short uppercase style)
+    function getWeekdayShort(date) {
+      const weekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+      return weekdays[date.getDay()];
+    }
+    
+    // get formatted date: "MMM DD, YYYY" with proper ordinal? but we use clean modern style: "Jan 21, 2025"
+    function getFormattedDate(date) {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const month = months[date.getMonth()];
+      const day = date.getDate();
+      const year = date.getFullYear();
+      return `${month} ${day}, ${year}`;
+    }
+    
+    // update AM/PM indicator based on 24h time? we still show "AM/PM" as a subtle context, but main digits are 24h style (00-23)
+    // many modern designs use 24h but also a small session ring. We'll show AM/PM as a dynamic badge.
+    function updateAmPmIndicator(hours24) {
+      const period = hours24 >= 12 ? 'PM' : 'AM';
+      // optional: show a small text, but we also show a modern design: "MORNING" / "AFTERNOON" ? but AM/PM is clean
+      amPmLabel.textContent = period;
+      // little dynamic style: change badge subtle glow based on period
+      if (period === 'AM') {
+        amPmLabel.style.opacity = '0.9';
+        amPmLabel.style.textShadow = '0 0 2px #A8D0FF';
+      } else {
+        amPmLabel.style.opacity = '1';
+        amPmLabel.style.textShadow = '0 0 3px #F0B27A';
+      }
+    }
+    
+    // core clock update logic
+    function updateClock() {
+      const now = new Date();
+      
+      // get time components (24h format for modern digital look)
+      let hours24 = now.getHours();
+      const minutes = now.getMinutes();
+      const seconds = now.getSeconds();
+      
+      // format hours, minutes, seconds with leading zero
+      const hoursStr = formatTwoDigits(hours24);
+      const minutesStr = formatTwoDigits(minutes);
+      const secondsStr = formatTwoDigits(seconds);
+      
+      // update DOM with smooth transition (no flickering)
+      hoursElem.textContent = hoursStr;
+      minutesElem.textContent = minutesStr;
+      secondsElem.textContent = secondsStr;
+      
+      // update AM/PM for side context
+      updateAmPmIndicator(hours24);
+      
+      // update date and weekday (only if date changes -> but we can update every second to be safe, lightweight)
+      const currentWeekday = getWeekdayShort(now);
+      const currentFullDate = getFormattedDate(now);
+      
+      // small optimization: only change if string differs? but every second is fine, modern JS handles
+      if (weekdayElem.textContent !== currentWeekday) {
+        weekdayElem.textContent = currentWeekday;
+      }
+      if (fullDateElem.textContent !== currentFullDate) {
+        fullDateElem.textContent = currentFullDate;
+      }
+      
+      // extra style: add a tiny pulse effect on seconds (optional, just for elegance)
+      // we add a classless animation by toggling a data attribute? not necessary but we can add a CSS flash? no, keep minimal.
+    }
+    
+    // initialize the clock and set interval
+    updateClock(); // immediate first render
+    const intervalId = setInterval(updateClock, 1000);
+    
+    // Optional: Add a smooth 'glow' update for colon animation that already works via css.
+    // Also implement graceful cleanup on page unload (not mandatory but best practice)
+    window.addEventListener('beforeunload', function() {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    });
+    
+    // for any potential dynamic resize or color transition based on time (extra modern feel)
+    // We'll implement a subtle dynamic gradient shift for the container based on hour (sunrise / sunset vibe)
+    // Actually for super modern UI, we can apply a very subtle background tint change in body?
+    // This adds that extra "premium" touch without overcomplicating.
+    function updateAmbientGlow() {
+      const now = new Date();
+      const hour = now.getHours();
+      // compute a value 0..1 based on hour: deep night (0) to warm sunset (1)
+      let intensity = 0;
+      let hue = 220; // default cool blue
+      if (hour >= 6 && hour < 12) {
+        // morning fresh: light blue to soft cyan
+        intensity = (hour - 6) / 6; // 0..1
+        hue = 200 + Math.floor(intensity * 20);
+      } else if (hour >= 12 && hour < 18) {
+        // afternoon: crisp azure
+        intensity = (hour - 12) / 6;
+        hue = 205 + Math.floor(intensity * 10);
+      } else if (hour >= 18 && hour < 22) {
+        // evening: warm indigo
+        intensity = (hour - 18) / 4;
+        hue = 230 - Math.floor(intensity * 15);
+      } else {
+        // night: deep navy
+        intensity = (hour >= 22 ? (hour - 22) / 2 : (hour + 2) / 2);
+        hue = 235 - Math.min(20, Math.floor(intensity * 8));
+      }
+      // apply gradient shift in body background very smoothly using CSS variable? 
+      // We'll modify the body's gradient subtly for modern dynamic mood.
+      const bodyEl = document.body;
+      const startColor = `hsl(${hue}, 55%, 8%)`;
+      const endColor = `hsl(${hue - 5}, 50%, 12%)`;
+      bodyEl.style.background = `linear-gradient(145deg, ${startColor}, ${endColor})`;
+    }
+    
+    // run ambient glow on interval (every minute enough) but call once now and on hour changes
+    updateAmbientGlow();
+    setInterval(() => {
+      updateAmbientGlow();
+    }, 60000); // update ambient every minute (smooth)
+    
+    // additional micro interaction: sync seconds hand? also we could create a digital ripple but keep lightweight
+    
+    // Also add 'active' effect on colon via class? no, css already does breathing.
+    // For better precision, we synchronize the setInterval drift protection? not needed for clock style.
+    // But we can also add a fallback to requestAnimationFrame? but standard setInterval is robust.
+    
+    // optional: add a feature that displays leading zero fade? already done.
+    // Final: add an extra nice effect when seconds are even, minor highlight on seconds digits
+    // super small micro-interaction: when seconds change, we briefly brighten the seconds digits
+    let lastSecond = -1;
+    function addSecondFlash() {
+      const nowSec = new Date().getSeconds();
+      if (nowSec !== lastSecond) {
+        lastSecond = nowSec;
+        const secElement = secondsElem;
+        if (secElement) {
+          secElement.style.transition = 'text-shadow 0.08s ease, filter 0.08s';
+          secElement.style.filter = 'brightness(1.2)';
+          secElement.style.textShadow = '0 0 8px #7AB3FF';
+          setTimeout(() => {
+            if (secElement) {
+              secElement.style.filter = '';
+              secElement.style.textShadow = '';
+            }
+          }, 100);
+        }
+        // Also tiny colon pulse for fun? we add to first colon (optional)
+        const colon1 = document.getElementById('colon1');
+        const colon2 = document.getElementById('colon2');
+        if (colon1 && colon2) {
+          colon1.style.animation = 'none';
+          colon2.style.animation = 'none';
+          // force reflow
+          void colon1.offsetHeight;
+          void colon2.offsetHeight;
+          colon1.style.animation = 'breathe 2.2s infinite ease-in-out';
+          colon2.style.animation = 'breathe 2.2s infinite ease-in-out';
+        }
+      }
+    }
+    
+    // integrate second flash inside clock update? But better to attach a separate interval that triggers at every second after update
+    // we'll override original setinterval but we can call addSecondFlash inside updateClock as well
+    // to avoid double interval, we simply call addSecondFlash inside updateClock after DOM update.
+    const originalUpdate = updateClock;
+    window.updateClock = function() {
+      originalUpdate();
+      addSecondFlash();
+    };
+    // override the interval
+    clearInterval(intervalId);
+    const newInterval = setInterval(() => {
+      window.updateClock();
+    }, 1000);
+    window.updateClock(); // initial call
+    
+    // also store for cleanup
+    window.addEventListener('beforeunload', () => {
+      clearInterval(newInterval);
+    });
+    
+    // ensure that 12/24h consistency is perfect, no extra changes
+    console.log('✨ Modern digital clock active — with seconds, date & ambient glow');
+  })();
+</script>
+</body>
+</html>
