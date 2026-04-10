@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>CHRONO SYNC | Multicolor Digital Clock</title>
+  <title>CHRONO SYNC | Multicolor Digital Clock with PiP Mode</title>
   <style>
     * {
       margin: 0;
@@ -20,7 +21,8 @@
       align-items: center;
       font-family: 'Inter', 'Segoe UI', 'SF Pro Display', system-ui, -apple-system, 'Poppins', monospace;
       padding: 1.5rem;
-      transition: background 0.3s ease;
+      transition: background 1.2s ease;
+      position: relative;
     }
 
     /* main glassmorphic container */
@@ -55,7 +57,6 @@
       justify-content: center;
     }
 
-    /* each digit group will have unique gradient + text color */
     .digits {
       font-size: 7rem;
       font-weight: 700;
@@ -66,8 +67,7 @@
       text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     }
 
-    /* ----- distinct color themes for HOUR, MINUTE, SECOND ----- */
-    /* HOURS: vibrant electric cyan + deep blue glow */
+    /* distinct color themes for HOUR, MINUTE, SECOND */
     .hour-digits {
       background: linear-gradient(135deg, #67E8F9 0%, #2DD4BF 40%, #06B6D4 100%);
       background-clip: text;
@@ -76,7 +76,6 @@
       text-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
     }
 
-    /* MINUTES: energetic purple to fuchsia gradient (bold and modern) */
     .minute-digits {
       background: linear-gradient(135deg, #C084FC 0%, #A855F7 45%, #D946EF 100%);
       background-clip: text;
@@ -85,7 +84,6 @@
       text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
     }
 
-    /* SECONDS: vivid amber to rose / warm sunset vibes */
     .second-digits {
       background: linear-gradient(145deg, #FBBF24 0%, #F97316 55%, #EF4444 100%);
       background-clip: text;
@@ -95,7 +93,6 @@
       font-weight: 650;
     }
 
-    /* colon style: neutral but elegant with soft white pulse */
     .colon {
       font-size: 6.5rem;
       font-weight: 500;
@@ -108,7 +105,6 @@
       animation: softPulse 1.8s infinite ease-in-out;
     }
 
-    /* seconds group slightly smaller but dynamic */
     .seconds-group .digits {
       font-size: 5.8rem;
       font-weight: 650;
@@ -204,7 +200,63 @@
       animation: pulseLive 1.2s infinite;
     }
 
-    /* animations */
+    /* PiP Button Style */
+    .pip-button-container {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 1000;
+    }
+
+    .pip-btn {
+      background: linear-gradient(105deg, #1e293b, #0f172a);
+      border: 1px solid rgba(56, 189, 248, 0.5);
+      backdrop-filter: blur(12px);
+      padding: 0.9rem 1.5rem;
+      border-radius: 3rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: white;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      transition: all 0.25s ease;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      font-family: 'Inter', system-ui;
+    }
+
+    .pip-btn:hover {
+      transform: translateY(-3px);
+      background: linear-gradient(105deg, #2d3a5e, #1e293b);
+      border-color: #a855f7;
+      box-shadow: 0 15px 30px -8px black;
+    }
+
+    .pip-btn:active {
+      transform: translateY(1px);
+    }
+
+    /* status toast message */
+    .toast-msg {
+      position: fixed;
+      bottom: 100px;
+      right: 28px;
+      background: #0f172ae0;
+      backdrop-filter: blur(16px);
+      padding: 0.6rem 1.2rem;
+      border-radius: 2rem;
+      font-size: 0.8rem;
+      color: #cbd5e6;
+      border-left: 3px solid #38bdf8;
+      pointer-events: none;
+      z-index: 1001;
+      font-family: monospace;
+      transition: opacity 0.2s;
+      opacity: 0;
+      white-space: nowrap;
+    }
+
     @keyframes softPulse {
       0% { opacity: 0.6; text-shadow: 0 0 2px #94A3B8; }
       50% { opacity: 1; text-shadow: 0 0 12px #A5F3FC; }
@@ -216,7 +268,6 @@
       100% { opacity: 1; text-shadow: 0 0 5px #34D399; }
     }
 
-    /* second flash effect custom */
     .second-flash {
       filter: brightness(1.3) drop-shadow(0 0 6px #F97316);
       transition: filter 0.07s ease;
@@ -224,53 +275,24 @@
 
     /* responsive adjustments */
     @media (max-width: 780px) {
-      .clock-container {
-        padding: 1.6rem 2rem;
-      }
-      .digits {
-        font-size: 5rem;
-      }
-      .colon {
-        font-size: 4.5rem;
-        margin: 0 0.15rem;
-      }
-      .seconds-group .digits {
-        font-size: 4rem;
-      }
-      .date-box {
-        font-size: 0.85rem;
-        padding: 0.4rem 1rem;
-      }
+      .clock-container { padding: 1.6rem 2rem; }
+      .digits { font-size: 5rem; }
+      .colon { font-size: 4.5rem; margin: 0 0.15rem; }
+      .seconds-group .digits { font-size: 4rem; }
+      .date-box { font-size: 0.85rem; padding: 0.4rem 1rem; }
+      .pip-btn { padding: 0.7rem 1.2rem; font-size: 0.85rem; }
+      .toast-msg { bottom: 90px; right: 20px; font-size: 0.7rem; }
     }
 
     @media (max-width: 580px) {
-      .clock-container {
-        padding: 1.2rem 1.5rem;
-        border-radius: 2.5rem;
-      }
-      .digits {
-        font-size: 3.8rem;
-      }
-      .colon {
-        font-size: 3.2rem;
-      }
-      .seconds-group .digits {
-        font-size: 3rem;
-      }
-      .meta-panel {
-        gap: 0.9rem;
-        margin-top: 1.2rem;
-      }
-      .badge {
-        font-size: 0.7rem;
-      }
-      .day-name {
-        font-size: 0.7rem;
-        padding: 0.2rem 0.8rem;
-      }
+      .clock-container { padding: 1.2rem 1.5rem; border-radius: 2.5rem; }
+      .digits { font-size: 3.8rem; }
+      .colon { font-size: 3.2rem; }
+      .seconds-group .digits { font-size: 3rem; }
+      .pip-btn { padding: 0.6rem 1rem; gap: 0.4rem; }
+      .toast-msg { bottom: 80px; }
     }
 
-    /* additional small glow for hour/minute on hover? optional but nice */
     .time-unit:hover .digits {
       filter: brightness(1.05);
       transition: 0.15s;
@@ -278,21 +300,16 @@
   </style>
 </head>
 <body>
-<div class="clock-container">
+<div class="clock-container" id="mainClockContainer">
   <div class="clock-face">
-    <!-- HOURS block with distinct class -->
     <div class="time-unit" id="hoursBlock">
       <span class="digits hour-digits" id="hours">00</span>
     </div>
-    <!-- COLON -->
     <span class="colon" id="colon1">:</span>
-    <!-- MINUTES block distinct color -->
     <div class="time-unit" id="minutesBlock">
       <span class="digits minute-digits" id="minutes">00</span>
     </div>
-    <!-- COLON -->
     <span class="colon" id="colon2">:</span>
-    <!-- SECONDS block with unique color -->
     <div class="time-unit seconds-group" id="secondsBlock">
       <span class="digits second-digits" id="seconds">00</span>
     </div>
@@ -311,9 +328,17 @@
   </div>
 </div>
 
+<!-- PiP Button + Toast -->
+<div class="pip-button-container">
+  <button class="pip-btn" id="pipLaunchBtn">
+    <span>🪟</span> <span>Clock in PiP</span>
+  </button>
+</div>
+<div id="pipToast" class="toast-msg">✨ PiP mode ready</div>
+
 <script>
   (function() {
-    // DOM elements
+    // DOM elements for clock
     const hoursElem = document.getElementById('hours');
     const minutesElem = document.getElementById('minutes');
     const secondsElem = document.getElementById('seconds');
@@ -321,18 +346,23 @@
     const fullDateElem = document.getElementById('fullDate');
     const amPmLabel = document.getElementById('amPmLabel');
     
-    // Helper: two digits always
+    // PiP elements
+    const pipBtn = document.getElementById('pipLaunchBtn');
+    const toastEl = document.getElementById('pipToast');
+    
+    let pipWindowRef = null;          // reference to PiP window
+    let pipClockInterval = null;      // interval inside PiP (to sync time)
+    
+    // Helper: format two digits
     function formatTwoDigits(num) {
       return num < 10 ? '0' + num : '' + num;
     }
     
-    // weekday short (3 letters uppercase)
     function getWeekdayShort(date) {
       const weekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
       return weekdays[date.getDay()];
     }
     
-    // formatted date: "Mar 12, 2025"
     function getFormattedDate(date) {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       const month = months[date.getMonth()];
@@ -341,133 +371,338 @@
       return `${month} ${day}, ${year}`;
     }
     
-    // update AM/PM badge with modern flair (based on 24h)
     function updateAmPmIndicator(hours24) {
       const period = hours24 >= 12 ? 'PM' : 'AM';
-      amPmLabel.textContent = period;
-      // subtle style change based on period
-      if (period === 'AM') {
-        amPmLabel.style.opacity = '0.9';
-      } else {
-        amPmLabel.style.opacity = '1';
-      }
+      if (amPmLabel) amPmLabel.textContent = period;
     }
     
-    // Flash effect on seconds (extra life)
     let lastSecondValue = -1;
-    function applySecondFlash(currentSecStr) {
-      if (lastSecondValue !== currentSecStr) {
-        lastSecondValue = currentSecStr;
-        // add temporary glow & scale effect on seconds digits
-        const secSpan = secondsElem;
-        if (secSpan) {
-          secSpan.classList.add('second-flash');
-          setTimeout(() => {
-            if (secSpan) secSpan.classList.remove('second-flash');
-          }, 120);
-        }
-        // subtle colon bounce pulse
-        const colon1 = document.getElementById('colon1');
-        const colon2 = document.getElementById('colon2');
-        if (colon1 && colon2) {
-          colon1.style.transform = 'scale(1.02)';
-          colon2.style.transform = 'scale(1.02)';
-          setTimeout(() => {
-            colon1.style.transform = '';
-            colon2.style.transform = '';
-          }, 100);
-        }
+    function applySecondFlash(secSpan) {
+      if (!secSpan) return;
+      secSpan.classList.add('second-flash');
+      setTimeout(() => {
+        if (secSpan) secSpan.classList.remove('second-flash');
+      }, 120);
+      const colon1 = document.getElementById('colon1');
+      const colon2 = document.getElementById('colon2');
+      if (colon1 && colon2) {
+        colon1.style.transform = 'scale(1.02)';
+        colon2.style.transform = 'scale(1.02)';
+        setTimeout(() => {
+          if (colon1) colon1.style.transform = '';
+          if (colon2) colon2.style.transform = '';
+        }, 100);
       }
     }
     
-    // main clock update function with distinct color handling (already set by classes)
+    // Main update for main page clock
     function updateClock() {
       const now = new Date();
       let hours24 = now.getHours();
       const minutes = now.getMinutes();
       const seconds = now.getSeconds();
       
-      const hoursStr = formatTwoDigits(hours24);
-      const minutesStr = formatTwoDigits(minutes);
-      const secondsStr = formatTwoDigits(seconds);
+      hoursElem.textContent = formatTwoDigits(hours24);
+      minutesElem.textContent = formatTwoDigits(minutes);
+      secondsElem.textContent = formatTwoDigits(seconds);
       
-      hoursElem.textContent = hoursStr;
-      minutesElem.textContent = minutesStr;
-      secondsElem.textContent = secondsStr;
-      
-      // update AM/PM
       updateAmPmIndicator(hours24);
       
-      // update date and weekday
       const weekdayStr = getWeekdayShort(now);
       const fullDateStr = getFormattedDate(now);
-      if (weekdayElem.textContent !== weekdayStr) weekdayElem.textContent = weekdayStr;
-      if (fullDateElem.textContent !== fullDateStr) fullDateElem.textContent = fullDateStr;
+      if (weekdayElem) weekdayElem.textContent = weekdayStr;
+      if (fullDateElem) fullDateElem.textContent = fullDateStr;
       
-      // apply flash effect for seconds (modern micro-interaction)
-      applySecondFlash(secondsStr);
+      applySecondFlash(secondsElem);
     }
     
-    // ambient dynamic gradient based on time to match colorful vibe (hour/minute/second synergy)
+    // Dynamic background shift (original)
     function updateDynamicBackground() {
       const now = new Date();
       const hour = now.getHours();
-      let gradientAngle = 135;
       let color1, color2, color3;
-      // create shifting gradient that complements the clock colors (cyan, purple, amber)
       if (hour >= 6 && hour < 12) {
-        // morning: fresh cyan to soft purple
-        color1 = '#0A1128';
-        color2 = '#142850';
-        color3 = '#0C1B33';
-        gradientAngle = 120;
+        color1 = '#0A1128'; color2 = '#142850'; color3 = '#0C1B33';
       } else if (hour >= 12 && hour < 17) {
-        // afternoon: energetic indigo + violet
-        color1 = '#0B132B';
-        color2 = '#1C2541';
-        color3 = '#2A1E3C';
-        gradientAngle = 145;
+        color1 = '#0B132B'; color2 = '#1C2541'; color3 = '#2A1E3C';
       } else if (hour >= 17 && hour < 20) {
-        // evening: warm sunset blend
-        color1 = '#1E1B2F';
-        color2 = '#2A1E2F';
-        color3 = '#3A2436';
-        gradientAngle = 160;
+        color1 = '#1E1B2F'; color2 = '#2A1E2F'; color3 = '#3A2436';
       } else {
-        // night: deep cosmic
-        color1 = '#030712';
-        color2 = '#0A0F1F';
-        color3 = '#020617';
-        gradientAngle = 200;
+        color1 = '#030712'; color2 = '#0A0F1F'; color3 = '#020617';
       }
       document.body.style.background = `radial-gradient(circle at 30% 40%, ${color1}, ${color2}, ${color3})`;
-      // smooth transition
       document.body.style.transition = 'background 1.2s ease';
     }
     
-    // initial call and set interval for background (every 5 minutes just for smooth shift)
-    updateDynamicBackground();
-    setInterval(updateDynamicBackground, 300000); // every 5 min
+    // Show toast message
+    function showToast(message, isError = false) {
+      if (!toastEl) return;
+      toastEl.textContent = message;
+      toastEl.style.opacity = '1';
+      toastEl.style.borderLeftColor = isError ? '#ef4444' : '#38bdf8';
+      setTimeout(() => {
+        if (toastEl) toastEl.style.opacity = '0';
+      }, 2800);
+    }
     
-    // also add additional fun: subtle pulse to the active badge (already has pulseLive)
+    // ---------- BUILD FULL PiP CLOCK HTML (independent + realtime) ----------
+    function getPipClockHTML() {
+      // This returns the full HTML/CSS/JS for the floating clock window.
+      // It replicates the multicolor design, but optimized for PiP (smaller, compact)
+      return `<!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Chrono Sync · Floating Clock</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+          body {
+            min-height: 100vh;
+            background: radial-gradient(circle at 30% 40%, #0B1120, #030712);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Inter', 'Segoe UI', system-ui, monospace;
+            padding: 1rem;
+            transition: background 1s;
+          }
+          .pip-clock-card {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(20px);
+            border-radius: 2.2rem;
+            padding: 1.2rem 1.8rem;
+            box-shadow: 0 20px 35px -12px black, inset 0 1px 0 rgba(255,255,255,0.05);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+          }
+          .clock-display {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 0.1rem;
+            flex-wrap: wrap;
+          }
+          .digits {
+            font-size: 4rem;
+            font-weight: 800;
+            font-feature-settings: "tnum";
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.02em;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+          }
+          .hour-digits {
+            background: linear-gradient(135deg, #67E8F9, #2DD4BF, #06B6D4);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+          }
+          .minute-digits {
+            background: linear-gradient(135deg, #C084FC, #A855F7, #D946EF);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+          }
+          .second-digits {
+            background: linear-gradient(145deg, #FBBF24, #F97316, #EF4444);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+          }
+          .colon {
+            font-size: 3.5rem;
+            font-weight: 500;
+            margin: 0 0.2rem;
+            background: linear-gradient(145deg, #E2E8F0, #94A3B8);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            animation: softPulse 1.5s infinite;
+          }
+          .meta-info {
+            margin-top: 1rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            background: rgba(0,0,0,0.4);
+            border-radius: 3rem;
+            padding: 0.4rem 1rem;
+            backdrop-filter: blur(4px);
+          }
+          .date-text {
+            font-size: 0.8rem;
+            color: #A5F3FC;
+            font-weight: 500;
+          }
+          .ampm-badge {
+            background: linear-gradient(145deg, #FDE047, #FACC15);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            font-weight: bold;
+            font-size: 0.8rem;
+          }
+          .close-pip-btn {
+            background: #1e293b;
+            border: 1px solid #ef444480;
+            margin-top: 1rem;
+            padding: 0.4rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.7rem;
+            color: #fca5a5;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 500;
+          }
+          .close-pip-btn:hover {
+            background: #2d1f2a;
+            border-color: #ef4444;
+            color: white;
+          }
+          @keyframes softPulse {
+            0% { opacity: 0.6; }
+            100% { opacity: 1; text-shadow: 0 0 5px #a5f3fc; }
+          }
+          @media (max-width: 450px) {
+            .digits { font-size: 2.8rem; }
+            .colon { font-size: 2.5rem; }
+            .pip-clock-card { padding: 1rem; }
+          }
+        </style>
+      </head>
+      <body>
+      <div class="pip-clock-card">
+        <div class="clock-display">
+          <span class="digits hour-digits" id="pipHours">00</span>
+          <span class="colon">:</span>
+          <span class="digits minute-digits" id="pipMinutes">00</span>
+          <span class="colon">:</span>
+          <span class="digits second-digits" id="pipSeconds">00</span>
+        </div>
+        <div class="meta-info">
+          <span class="date-text" id="pipDate">Loading...</span>
+          <span class="ampm-badge" id="pipAmPm">AM</span>
+        </div>
+        <button class="close-pip-btn" id="closePipBtn">✖ Close PiP Window</button>
+      </div>
+      <script>
+        // Clock update inside PiP window
+        function updatePipClock() {
+          const now = new Date();
+          let h = now.getHours();
+          const m = now.getMinutes();
+          const s = now.getSeconds();
+          const hoursStr = h < 10 ? '0' + h : '' + h;
+          const minutesStr = m < 10 ? '0' + m : '' + m;
+          const secondsStr = s < 10 ? '0' + s : '' + s;
+          const pipHours = document.getElementById('pipHours');
+          const pipMinutes = document.getElementById('pipMinutes');
+          const pipSeconds = document.getElementById('pipSeconds');
+          if (pipHours) pipHours.textContent = hoursStr;
+          if (pipMinutes) pipMinutes.textContent = minutesStr;
+          if (pipSeconds) pipSeconds.textContent = secondsStr;
+          // update AM/PM
+          const period = h >= 12 ? 'PM' : 'AM';
+          const ampmSpan = document.getElementById('pipAmPm');
+          if (ampmSpan) ampmSpan.textContent = period;
+          // update date
+          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          const weekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+          const dateStr = weekdays[now.getDay()] + ' ' + months[now.getMonth()] + ' ' + now.getDate();
+          const dateSpan = document.getElementById('pipDate');
+          if (dateSpan) dateSpan.textContent = dateStr;
+        }
+        updatePipClock();
+        const pipInterval = setInterval(updatePipClock, 1000);
+        // close button inside PiP
+        const closeBtn = document.getElementById('closePipBtn');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', () => {
+            window.close();
+          });
+        }
+        window.addEventListener('beforeunload', () => {
+          if (pipInterval) clearInterval(pipInterval);
+        });
+      <\/script>
+      </body>
+      </html>`;
+    }
     
-    // set interval for clock sync (every second)
-    let intervalId = setInterval(updateClock, 1000);
-    updateClock(); // immediate render
+    // ---------- LAUNCH PiP with Clock ----------
+    async function launchClockInPip() {
+      // Check support for Document Picture-in-Picture API
+      if (!('documentPictureInPicture' in window)) {
+        showToast('⚠️ PiP not supported in this browser (need Chrome/Edge 116+)', true);
+        return;
+      }
+      
+      // Close existing PiP if already open
+      if (pipWindowRef && !pipWindowRef.closed) {
+        pipWindowRef.close();
+        pipWindowRef = null;
+        if (pipClockInterval) {
+          clearInterval(pipClockInterval);
+          pipClockInterval = null;
+        }
+      }
+      
+      try {
+        // Request PiP window with compact size suitable for clock (mobile-friendly)
+        const pipWindow = await window.documentPictureInPicture.requestWindow({
+          width: 360,
+          height: 240,
+          preferInitialWindowPlacement: true,
+        });
+        pipWindowRef = pipWindow;
+        
+        // Write full clock HTML into PiP window
+        const pipHtml = getPipClockHTML();
+        pipWindow.document.open();
+        pipWindow.document.write(pipHtml);
+        pipWindow.document.close();
+        
+        // handle pagehide to cleanup reference
+        pipWindow.addEventListener('pagehide', () => {
+          if (pipWindowRef === pipWindow) {
+            pipWindowRef = null;
+          }
+          showToast('🪟 PiP clock closed');
+        });
+        
+        showToast('✨ Clock now floating! Drag & resize');
+      } catch (err) {
+        console.error('PiP error:', err);
+        showToast('❌ Failed to open PiP: ' + err.message, true);
+      }
+    }
     
-    // cleanup event
+    // Cleanup PiP when main page unloads
     window.addEventListener('beforeunload', () => {
-      if (intervalId) clearInterval(intervalId);
-    });
-    
-    // extra smoothness: sync with system time instantly on visibility change
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) {
-        updateClock(); // re-sync immediately when tab becomes active
+      if (pipWindowRef && !pipWindowRef.closed) {
+        pipWindowRef.close();
       }
     });
     
-    // small customization: add a tooltip effect to indicate each color meaning? optional but adds modern vibe
+    // Event listener for PiP button
+    if (pipBtn) {
+      pipBtn.addEventListener('click', launchClockInPip);
+    }
+    
+    // Initialize main clock and background updates
+    let mainInterval = setInterval(updateClock, 1000);
+    updateClock();
+    updateDynamicBackground();
+    setInterval(updateDynamicBackground, 300000);
+    
+    // Sync when page becomes visible again
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) updateClock();
+    });
+    
+    // additional tooltip attributes
     const hourBlock = document.getElementById('hoursBlock');
     const minuteBlock = document.getElementById('minutesBlock');
     const secondBlock = document.getElementById('secondsBlock');
@@ -475,9 +710,15 @@
     if (minuteBlock) minuteBlock.setAttribute('aria-label', 'Minutes · Violet Fusion');
     if (secondBlock) secondBlock.setAttribute('aria-label', 'Seconds · Amber Blaze');
     
-    // we can also dynamically update the colon colors if we want but default elegant style works perfectly.
-    // Also ensure that the seconds group doesn't overflow and respects the vibrant colors.
-    console.log('🌈 Multicolor Digital Clock Active — Hours: Cyan, Minutes: Purple, Seconds: Amber/Rose');
+    // display supported version
+    if ('documentPictureInPicture' in window) {
+      showToast('✅ PiP ready — click "Clock in PiP"', false);
+      setTimeout(() => {
+        if (toastEl) toastEl.style.opacity = '0';
+      }, 2000);
+    } else {
+      showToast('⚠️ Browser does not support Document PiP (Chrome 116+ required)', true);
+    }
   })();
 </script>
 </body>
