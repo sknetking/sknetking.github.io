@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Folder Architect • Structure to ZIP Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary: #8b5cf6;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --border: #334155;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --text-light: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #c084fc);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            margin-top: 8px;
+            font-size: 0.9rem;
+        }
+
+        /* Two Column Layout */
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .workspace {
+                grid-template-columns: 1fr;
+                gap: 1.2rem;
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border-radius: 1.2rem;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            backdrop-filter: blur(4px);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-header {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 1rem 1.2rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .card-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge {
+            background: var(--primary-dark);
+            padding: 4px 10px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: white;
+        }
+
+        /* Textarea Editor */
+        .editor {
+            width: 100%;
+            min-height: 500px;
+            background: #0f172a;
+            border: none;
+            padding: 1.2rem;
+            color: #e2e8f0;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            resize: vertical;
+            outline: none;
+            tab-size: 2;
+        }
+
+        .editor:focus {
+            background: #111827;
+        }
+
+        /* Tree Preview */
+        .tree-preview {
+            background: #0f172a;
+            padding: 1.2rem;
+            min-height: 500px;
+            max-height: 550px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.7;
+        }
+
+        .tree-preview::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .tree-preview::-webkit-scrollbar-track {
+            background: #1e293b;
+            border-radius: 10px;
+        }
+
+        .tree-preview::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+
+        /* Button Group */
+        .action-bar {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.8rem 1.8rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(105deg, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.05);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-light);
+        }
+
+        .btn-outline:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: var(--primary);
+        }
+
+        /* Example Presets */
+        .presets {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 1.2rem;
+            flex-wrap: wrap;
+        }
+
+        .preset-btn {
+            background: #334155;
+            border: none;
+            padding: 5px 14px;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            color: #cbd5e1;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .preset-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Stats & Info */
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(30, 41, 59, 0.6);
+            padding: 0.7rem 1.2rem;
+            border-radius: 1rem;
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .stats span i {
+            margin-right: 6px;
+            color: var(--primary);
+        }
+
+        .toast-message {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 60px;
+            font-size: 0.85rem;
+            z-index: 1000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            backdrop-filter: blur(8px);
+            border-left: 4px solid var(--primary);
+            pointer-events: none;
+            animation: fadeUp 0.2s ease-out;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .file-icon {
+            color: #60a5fa;
+        }
+        .folder-icon {
+            color: #fbbf24;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>
+            <i class="fas fa-folder-tree"></i> 
+            Folder Architect
+        </h1>
+        <p>Define folder structure as text → Generate tree → Download as ZIP (empty files/folders)</p>
+    </div>
+
+    <!-- Preset Examples -->
+    <div class="presets">
+        <button class="preset-btn" data-preset="wordpress"><i class="fab fa-wordpress"></i> WordPress Plugin</button>
+        <button class="preset-btn" data-preset="react"><i class="fab fa-react"></i> React App</button>
+        <button class="preset-btn" data-preset="laravel"><i class="fab fa-laravel"></i> Laravel Module</button>
+        <button class="preset-btn" data-preset="custom"><i class="fas fa-code-branch"></i> Custom (Default)</button>
+    </div>
+
+    <div class="workspace">
+        <!-- Editor Panel -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-code"></i> Structure Editor</h3>
+                <div class="badge"><i class="fas fa-keyboard"></i> Tab supported · Use indentation (2/4 spaces)</div>
+            </div>
+            <textarea id="structureInput" class="editor" placeholder="Enter folder/file structure using indentation (spaces)&#10;Example:&#10;my-project/&#10;  src/&#10;    index.js&#10;    style.css&#10;  readme.md"></textarea>
+        </div>
+
+        <!-- Tree Preview Panel -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-eye"></i> Visual Tree Preview</h3>
+                <div class="badge" id="nodeCountBadge">0 items</div>
+            </div>
+            <div id="treePreview" class="tree-preview">
+                <div class="empty-state">
+                    <i class="fas fa-folder-open" style="font-size: 2rem; opacity: 0.5;"></i>
+                    <p>Enter structure and click "Generate Preview"</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <button id="generateBtn" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Generate Preview</button>
+        <button id="downloadZipBtn" class="btn btn-success"><i class="fas fa-download"></i> Download as ZIP</button>
+        <button id="clearBtn" class="btn btn-outline"><i class="fas fa-eraser"></i> Clear</button>
+    </div>
+
+    <div class="stats" id="statsBar">
+        <span><i class="fas fa-layer-group"></i> <span id="folderCount">0</span> folders</span>
+        <span><i class="fas fa-file-alt"></i> <span id="fileCount">0</span> files</span>
+        <span><i class="fas fa-indent"></i> Supports indentation (spaces) & tree symbols └── ├──</span>
+    </div>
+</div>
+
+<script>
+    // Global structure store
+    let currentStructure = { name: "/", children: {}, isFile: false };
+    let structureValid = false;
+
+    // Helper: show toast notification
+    function showToast(message, type = "info") {
+        const existingToast = document.querySelector(".toast-message");
+        if (existingToast) existingToast.remove();
+        const toast = document.createElement("div");
+        toast.className = "toast-message";
+        toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i> ${message}`;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = "0";
+            setTimeout(() => toast.remove(), 300);
+        }, 2800);
+    }
+
+    // Parse indented text into nested object structure (supports spaces, tree chars like ├─ └─)
+    function parseIndentedStructure(text) {
+        const lines = text.split(/\r?\n/);
+        const root = { name: "/", children: {}, isFile: false };
+        const stack = [{ node: root, level: -1 }];
+        
+        for (let rawLine of lines) {
+            let line = rawLine;
+            // Remove common tree-drawing characters: ├── └── │ (for cleaner parsing)
+            let cleanedLine = line.replace(/^[│├└]──\s*/, '').replace(/^[│]\s*/, '');
+            // Also remove leading spaces that are part of tree formatting
+            let trimmedForLevel = line;
+            
+            // Calculate indentation level: count leading spaces (but also handle tree prefix)
+            let leadingSpaces = 0;
+            for (let i = 0; i < line.length; i++) {
+                if (line[i] === ' ' || line[i] === '│') continue;
+                break;
+            }
+            // better: count spaces only
+            leadingSpaces = line.search(/\S|$/);
+            if (leadingSpaces === -1) leadingSpaces = 0;
+            
+            const indentLevel = Math.floor(leadingSpaces / 2); // assume 2 spaces per level or 4, flexible
+            
+            let nodeName = cleanedLine.trim();
+            if (nodeName === "") continue;
+            
+            // Determine if it's a file: contains extension and not ending with slash
+            const isDirectory = nodeName.endsWith('/') || (!nodeName.includes('.') && !nodeName.includes('*'));
+            const isFile = !isDirectory && nodeName.length > 0;
+            
+            const node = {
+                name: nodeName,
+                children: {},
+                isFile: isFile && !nodeName.endsWith('/')
+            };
+            
+            // Adjust stack to correct parent level
+            while (stack.length > 0 && stack[stack.length - 1].level >= indentLevel) {
+                stack.pop();
+            }
+            const parent = stack[stack.length - 1].node;
+            if (parent && !parent.isFile) {
+                parent.children[nodeName] = node;
+            }
+            stack.push({ node, level: indentLevel });
+        }
+        
+        // Clean up any empty root children that are just placeholder
+        return root;
+    }
+    
+    // Alternative: parse classic indented structure (with spaces)
+    function parseClassicIndented(text) {
+        const lines = text.split(/\r?\n/);
+        const root = { name: "/", children: {}, isFile: false };
+        const stack = [{ node: root, indent: -1 }];
+        
+        for (let line of lines) {
+            if (line.trim() === "") continue;
+            // Count leading spaces (indentation)
+            const indent = line.search(/\S|$/);
+            if (indent === -1) continue;
+            const name = line.trim();
+            if (name === "") continue;
+            
+            const isFile = name.includes('.') && !name.endsWith('/');
+            const node = { name: name, children: {}, isFile: isFile };
+            
+            while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
+                stack.pop();
+            }
+            const parent = stack[stack.length - 1].node;
+            if (parent && !parent.isFile) {
+                parent.children[name] = node;
+            }
+            stack.push({ node, indent: indent });
+        }
+        return root;
+    }
+    
+    // Main parsing that handles both classic indentation and tree symbols
+    function buildStructureFromInput(inputText) {
+        if (!inputText.trim()) return { name: "/", children: {}, isFile: false };
+        // Try parsing with tree-symbols first (advanced), fallback to classic indent
+        let parsed = parseIndentedStructure(inputText);
+        // If root has no children, try classic method
+        if (Object.keys(parsed.children).length === 0 && inputText.trim().length > 0) {
+            parsed = parseClassicIndented(inputText);
+        }
+        return parsed;
+    }
+    
+    // Render tree as formatted text with icons
+    function renderTreeHTML(node, depth = 0, prefix = "") {
+        let result = "";
+        const indent = "  ";
+        const childrenKeys = Object.keys(node.children);
+        
+        for (let i = 0; i < childrenKeys.length; i++) {
+            const key = childrenKeys[i];
+            const child = node.children[key];
+            const isLast = i === childrenKeys.length - 1;
+            const connector = isLast ? "└── " : "├── ";
+            const linePrefix = prefix + connector;
+            
+            const icon = child.isFile ? '<i class="fas fa-file-alt file-icon"></i>' : '<i class="fas fa-folder folder-icon"></i>';
+            result += `<div style="white-space: nowrap;">${linePrefix} ${icon} <span style="color:#e2e8f0;">${escapeHtml(child.name)}</span></div>`;
+            
+            if (!child.isFile && Object.keys(child.children).length > 0) {
+                const newPrefix = prefix + (isLast ? "    " : "│   ");
+                result += renderTreeHTML(child, depth + 1, newPrefix);
+            }
+        }
+        return result;
+    }
+    
+    // Count stats
+    function countNodes(node) {
+        let folders = 0;
+        let files = 0;
+        for (const key in node.children) {
+            const child = node.children[key];
+            if (child.isFile) {
+                files++;
+            } else {
+                folders++;
+                const childStats = countNodes(child);
+                folders += childStats.folders;
+                files += childStats.files;
+            }
+        }
+        return { folders, files };
+    }
+    
+    // Escape HTML
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+    
+    // Generate preview UI
+    function generatePreview() {
+        const inputText = document.getElementById('structureInput').value;
+        if (!inputText.trim()) {
+            document.getElementById('treePreview').innerHTML = '<div class="empty-state"><i class="fas fa-folder-open"></i><p>Enter folder/file structure first.</p></div>';
+            document.getElementById('folderCount').innerText = '0';
+            document.getElementById('fileCount').innerText = '0';
+            document.getElementById('nodeCountBadge').innerText = '0 items';
+            currentStructure = { name: "/", children: {}, isFile: false };
+            structureValid = false;
+            return;
+        }
+        
+        try {
+            const structure = buildStructureFromInput(inputText);
+            if (Object.keys(structure.children).length === 0 && inputText.trim().length > 0) {
+                showToast("⚠️ Could not parse structure. Use indentation (spaces) or tree format like └──", "warning");
+            }
+            currentStructure = structure;
+            structureValid = true;
+            
+            const stats = countNodes(currentStructure);
+            document.getElementById('folderCount').innerText = stats.folders;
+            document.getElementById('fileCount').innerText = stats.files;
+            const totalItems = stats.folders + stats.files;
+            document.getElementById('nodeCountBadge').innerHTML = `${totalItems} item${totalItems !== 1 ? 's' : ''}`;
+            
+            const treeHtml = renderTreeHTML(currentStructure);
+            if (!treeHtml) {
+                document.getElementById('treePreview').innerHTML = '<div class="empty-state"><i class="fas fa-folder"></i><p>No valid items. Use format:<br>project/<br>  src/<br>    index.js</p></div>';
+            } else {
+                document.getElementById('treePreview').innerHTML = `<div style="font-family: 'JetBrains Mono', monospace;">${treeHtml}</div>`;
+            }
+            showToast("✅ Structure preview generated", "success");
+        } catch (err) {
+            console.error(err);
+            document.getElementById('treePreview').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Parsing error. Check indentation.</p></div>';
+            structureValid = false;
+            showToast("Parsing error: invalid structure format", "warning");
+        }
+    }
+    
+    // Build ZIP recursively
+    function buildZipFromNode(node, zipFolder) {
+        for (const key in node.children) {
+            const child = node.children[key];
+            if (child.isFile) {
+                // Create empty file with placeholder content (optional: add comment)
+                zipFolder.file(child.name, "<!-- Auto-generated by Folder Architect -->\n// Empty file placeholder\n");
+            } else {
+                const subFolder = zipFolder.folder(child.name);
+                buildZipFromNode(child, subFolder);
+            }
+        }
+    }
+    
+    // Download ZIP
+    function downloadAsZip() {
+        if (!structureValid || Object.keys(currentStructure.children).length === 0) {
+            showToast("❌ No valid structure to export. Generate preview first.", "warning");
+            return;
+        }
+        
+        const zip = new JSZip();
+        // Create root level folders/files
+        buildZipFromNode(currentStructure, zip);
+        
+        // Determine zip name from first root child or default
+        const firstChild = Object.keys(currentStructure.children)[0];
+        let zipName = "folder-structure.zip";
+        if (firstChild) {
+            let cleanName = firstChild.replace(/[\\/:*?"<>|]/g, '_');
+            zipName = `${cleanName}.zip`;
+        } else {
+            zipName = "generated-structure.zip";
+        }
+        
+        zip.generateAsync({ type: "blob" }).then(function(content) {
+            const a = document.createElement('a');
+            const url = URL.createObjectURL(content);
+            a.href = url;
+            a.download = zipName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast(`📦 ZIP downloaded: ${zipName} (empty files/folders)`, "success");
+        }).catch(err => {
+            console.error(err);
+            showToast("Failed to generate ZIP", "warning");
+        });
+    }
+    
+    // Clear everything
+    function clearAll() {
+        document.getElementById('structureInput').value = '';
+        document.getElementById('treePreview').innerHTML = '<div class="empty-state"><i class="fas fa-folder-open"></i><p>Enter structure and click "Generate Preview"</p></div>';
+        currentStructure = { name: "/", children: {}, isFile: false };
+        structureValid = false;
+        document.getElementById('folderCount').innerText = '0';
+        document.getElementById('fileCount').innerText = '0';
+        document.getElementById('nodeCountBadge').innerHTML = '0 items';
+        showToast("Cleared all", "info");
+    }
+    
+    // Set preset examples
+    function setPreset(type) {
+        let content = "";
+        if (type === "wordpress") {
+            content = `woo-elementor-addon/
+  assets/
+    css/
+      frontend.css
+      admin.css
+    js/
+      frontend.js
+  includes/
+    class-ajax-handlers.php
+    class-shortcode.php
+  widgets/
+    class-products-grid-widget.php
+  woo-elementor-addon.php
+  readme.txt`;
+        } else if (type === "react") {
+            content = `my-react-app/
+  public/
+    index.html
+    favicon.ico
+  src/
+    components/
+      Header.jsx
+      Footer.jsx
+    pages/
+      Home.jsx
+      About.jsx
+    App.js
+    index.js
+  package.json
+  README.md`;
+        } else if (type === "laravel") {
+            content = `laravel-module/
+  app/
+    Http/
+      Controllers/
+        UserController.php
+    Models/
+      User.php
+  routes/
+    web.php
+    api.php
+  resources/
+    views/
+      welcome.blade.php
+  database/
+    migrations/
+      2024_01_01_create_users_table.php
+  composer.json`;
+        } else {
+            content = `my-project/
+  src/
+    index.js
+    styles/
+      main.css
+  tests/
+    test.js
+  README.md
+  .gitignore`;
+        }
+        document.getElementById('structureInput').value = content;
+        generatePreview();
+        showToast(`Loaded ${type} preset`, "success");
+    }
+    
+    // Tab support for textarea
+    function setupTabSupport() {
+        const textarea = document.getElementById('structureInput');
+        textarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                this.value = this.value.substring(0, start) + "  " + this.value.substring(end);
+                this.selectionStart = this.selectionEnd = start + 2;
+            }
+        });
+    }
+    
+    // Initialize event listeners
+    function init() {
+        setupTabSupport();
+        document.getElementById('generateBtn').addEventListener('click', generatePreview);
+        document.getElementById('downloadZipBtn').addEventListener('click', downloadAsZip);
+        document.getElementById('clearBtn').addEventListener('click', clearAll);
+        
+        // Preset buttons
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const preset = btn.getAttribute('data-preset');
+                setPreset(preset);
+            });
+        });
+        
+        // Set default example content on load
+        const defaultExample = `my-awesome-project/
+  src/
+    components/
+      Button.js
+      Modal.js
+    utils/
+      helpers.js
+  public/
+    index.html
+  package.json
+  README.md`;
+        document.getElementById('structureInput').value = defaultExample;
+        generatePreview();
+    }
+    
+    init();
+</script>
+</body>
+</html>
