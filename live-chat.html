@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -16,7 +15,7 @@
 
         body {
             background: linear-gradient(135deg, #0b3b3a, #075e54);
-            height: 100vh;
+            height:95vh;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -408,6 +407,7 @@
 
         .call-notification button {
             transition: opacity 0.2s;
+            cursor: pointer;
         }
 
         .call-notification button:hover {
@@ -851,6 +851,10 @@
                     peerAvatarDiv.innerText = remoteUserName.charAt(0).toUpperCase(); 
                 } else if(data.type === 'file_transfer') {
                     displayFileMessage(data, false);
+                } else if(data.type === 'call_end') {
+                    // Remote peer ended the call - trigger end call on this side
+                    addSystemMessage(`📞 ${remoteUserName} ended the call`);
+                    endCall();
                 } else {
                     addMessage(data, false);
                 }
@@ -893,7 +897,7 @@
         } 
     };
 
-    // ========== CALL FUNCTIONS WITH PROPER BIDIRECTIONAL END ==========
+    // ========== CALL FUNCTIONS WITH BIDIRECTIONAL END EVENT ==========
     async function startCall(isVideo) {
         if(!dataConn || !dataConn.open) { addSystemMessage("No active data connection"); return; }
         if(activeCall) { addSystemMessage("Already in a call"); return; }
@@ -913,6 +917,7 @@
             activeCall = peer.call(dataConn.peer, stream, callOptions);
             setupCallEvents(activeCall, isVideo);
             updateCallButtons(true);
+            addSystemMessage(`📞 Starting ${isVideo ? 'video' : 'audio'} call...`);
         } catch(err) { 
             addSystemMessage(`Media error: ${err.message}`); 
         }
@@ -930,16 +935,17 @@
             ringtone.pause(); 
             ringtone.currentTime = 0;
             callNotificationDiv.style.display = 'none';
+            addSystemMessage(`📞 Call connected`);
         });
         
         callObj.on('close', () => { 
+            addSystemMessage("📞 Call ended by remote peer");
             endCall(); 
-            addSystemMessage("📞 Call ended"); 
         });
         
         callObj.on('error', err => { 
-            endCall(); 
             addSystemMessage(`Call error: ${err.message}`); 
+            endCall(); 
         });
     }
 
@@ -966,6 +972,7 @@
             callNotificationDiv.style.display = 'none';
             activeCall = incomingCallObj;
             incomingCallObj = null;
+            addSystemMessage(`📞 Call answered`);
         } catch(e) { 
             addSystemMessage(`Cannot answer: ${e.message}`); 
             callNotificationDiv.style.display = 'none'; 
@@ -973,6 +980,13 @@
     }
 
     function endCall() {
+        // Send call end notification to remote peer if data connection exists
+        if(dataConn && dataConn.open && activeCall) {
+            try {
+                dataConn.send(JSON.stringify({ type: 'call_end' }));
+            } catch(e) { console.log("Send call_end error:", e); }
+        }
+        
         // Close active call if exists
         if(activeCall) { 
             try { 
@@ -992,12 +1006,16 @@
         // Reset video UI
         videoContainer.style.display = 'none';
         if(remoteVideo.srcObject) {
-            remoteVideo.srcObject.getTracks?.().forEach(t => t.stop());
+            const tracks = remoteVideo.srcObject.getTracks();
+            if(tracks) tracks.forEach(t => t.stop());
             remoteVideo.srcObject = null;
         }
-        if(localVideo.srcObject) localVideo.srcObject = null;
+        if(localVideo.srcObject) {
+            localVideo.srcObject = null;
+        }
         if(remoteAudio.srcObject) {
-            remoteAudio.srcObject.getTracks?.().forEach(t => t.stop());
+            const tracks = remoteAudio.srcObject.getTracks();
+            if(tracks) tracks.forEach(t => t.stop());
             remoteAudio.srcObject = null;
         }
         
@@ -1006,6 +1024,11 @@
         isCameraOff = false;
         
         updateCallButtons(false);
+        
+        // Close any incoming call notification
+        callNotificationDiv.style.display = 'none';
+        ringtone.pause();
+        ringtone.currentTime = 0;
     }
 
     function updateCallButtons(inCall) {
@@ -1028,7 +1051,6 @@
             isMicMuted = !isMicMuted;
             audioTrack.enabled = !isMicMuted;
             toggleMicBtn.innerHTML = isMicMuted ? '<i class="fas fa-microphone-slash"></i>' : '<i class="fas fa-microphone"></i>';
-            addSystemMessage(isMicMuted ? "🎤 Mic muted" : "🎤 Mic unmuted");
         }
     }
 
@@ -1039,29 +1061,72 @@
             isCameraOff = !isCameraOff;
             videoTrack.enabled = !isCameraOff;
             toggleCameraBtn.innerHTML = isCameraOff ? '<i class="fas fa-video-slash"></i>' : '<i class="fas fa-video"></i>';
-            addSystemMessage(isCameraOff ? "📷 Camera off" : "📷 Camera on");
         }
     }
 
     async function switchCamera() {
         if(!isVideoActive || !localStream) { addSystemMessage("No active video stream"); return; }
+        
+        // Store current mute state
+        const wasMicMuted = isMicMuted;
+        const wasCameraOff = isCameraOff;
+        
         usingFrontCamera = !usingFrontCamera;
-        const newConstraints = { video: { facingMode: usingFrontCamera ? "user" : "environment" }, audio: true };
+        const newConstraints = { 
+            video: { facingMode: usingFrontCamera ? "user" : "environment" }, 
+            audio: true 
+        };
+        
         try {
             const newStream = await navigator.mediaDevices.getUserMedia(newConstraints);
-            const newVideoTrack = newStream.getVideoTracks()[0];
-            const oldVideoTrack = localStream.getVideoTracks()[0];
             
+            // Get new tracks
+            const newVideoTrack = newStream.getVideoTracks()[0];
+            const newAudioTrack = newStream.getAudioTracks()[0];
+            
+            // Get old tracks
+            const oldVideoTrack = localStream.getVideoTracks()[0];
+            const oldAudioTrack = localStream.getAudioTracks()[0];
+            
+            // Replace video track
             if(oldVideoTrack) localStream.removeTrack(oldVideoTrack);
             localStream.addTrack(newVideoTrack);
+            
+            // Replace audio track if needed (to maintain audio)
+            if(oldAudioTrack && newAudioTrack) {
+                localStream.removeTrack(oldAudioTrack);
+                localStream.addTrack(newAudioTrack);
+            }
+            
+            // Update local video preview
             localVideo.srcObject = localStream;
             
+            // Update remote peer's stream
             if(activeCall) {
                 const senders = activeCall.peerConnection?.getSenders();
                 const videoSender = senders?.find(s => s.track?.kind === 'video');
                 if(videoSender) await videoSender.replaceTrack(newVideoTrack);
+                
+                const audioSender = senders?.find(s => s.track?.kind === 'audio');
+                if(audioSender && newAudioTrack) await audioSender.replaceTrack(newAudioTrack);
             }
-            oldVideoTrack?.stop();
+            
+            // Clean up old tracks
+            if(oldVideoTrack) oldVideoTrack.stop();
+            if(oldAudioTrack && oldAudioTrack !== newAudioTrack) oldAudioTrack.stop();
+            
+            // Restore mute/camera states
+            if(wasMicMuted && localStream.getAudioTracks()[0]) {
+                localStream.getAudioTracks()[0].enabled = false;
+                isMicMuted = true;
+                toggleMicBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+            }
+            if(wasCameraOff && localStream.getVideoTracks()[0]) {
+                localStream.getVideoTracks()[0].enabled = false;
+                isCameraOff = true;
+                toggleCameraBtn.innerHTML = '<i class="fas fa-video-slash"></i>';
+            }
+            
             addSystemMessage(`🔄 Switched to ${usingFrontCamera ? "front" : "back"} camera`);
         } catch(err) { 
             addSystemMessage(`Camera switch failed: ${err.message}`); 
@@ -1121,6 +1186,7 @@
         if(incomingCallObj) incomingCallObj.close(); 
         callNotificationDiv.style.display = 'none'; 
         incomingCallObj = null; 
+        addSystemMessage("Call rejected");
     };
     
     toggleMicBtn.onclick = toggleMic;
