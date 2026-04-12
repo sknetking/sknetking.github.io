@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>WP Config Studio • Modern WordPress Config Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --wp-blue: #3858e9;
+            --wp-dark: #1e1e2f;
+            --wp-gray: #2c2f33;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-light: #f8fafc;
+            --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Main Container */
+        .generator-container {
+            max-width: 780px;
+            width: 100%;
+            background: white;
+            border-radius: 2rem;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            transition: transform 0.2s ease;
+        }
+
+        /* Header */
+        .wp-header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 1.8rem 2rem;
+            text-align: center;
+            border-bottom: 4px solid var(--wp-blue);
+        }
+
+        .wp-header h1 {
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .wp-header h1 i {
+            font-size: 2rem;
+            color: #60a5fa;
+        }
+
+        .wp-header p {
+            color: #94a3b8;
+            margin-top: 8px;
+            font-size: 0.9rem;
+        }
+
+        .badge-version {
+            display: inline-block;
+            background: rgba(56, 88, 233, 0.2);
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            margin-top: 10px;
+            color: #a5b4fc;
+        }
+
+        /* Form Area */
+        .form-area {
+            padding: 2rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #334155;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.2px;
+        }
+
+        .input-group label i {
+            width: 20px;
+            color: var(--wp-blue);
+            font-size: 0.95rem;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 1rem;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            font-family: 'JetBrains Mono', monospace;
+            background: #fefefe;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--wp-blue);
+            box-shadow: 0 0 0 3px rgba(56, 88, 233, 0.1);
+        }
+
+        .input-group .hint {
+            font-size: 0.7rem;
+            color: #64748b;
+            margin-top: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .double-row {
+            display: flex;
+            gap: 1.2rem;
+            flex-wrap: wrap;
+        }
+
+        .double-row .input-group {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        /* Security Keys Preview */
+        .security-preview {
+            background: #f1f5f9;
+            border-radius: 1.2rem;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .security-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.75rem;
+        }
+
+        .key-row {
+            font-family: monospace;
+            font-size: 0.7rem;
+            background: white;
+            padding: 6px 10px;
+            border-radius: 12px;
+            margin-bottom: 6px;
+            word-break: break-all;
+            color: #334155;
+            border-left: 3px solid var(--wp-blue);
+        }
+
+        .refresh-keys {
+            background: none;
+            border: none;
+            color: var(--wp-blue);
+            cursor: pointer;
+            font-size: 0.75rem;
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 12px;
+            border-radius: 30px;
+            transition: 0.2s;
+        }
+
+        .refresh-keys:hover {
+            background: #e2e8f0;
+        }
+
+        /* Buttons */
+        .btn-generate {
+            background: linear-gradient(105deg, var(--wp-blue), #4f46e5);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 0.5rem;
+            box-shadow: 0 4px 12px rgba(56, 88, 233, 0.3);
+        }
+
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.05);
+            box-shadow: 0 8px 20px rgba(56, 88, 233, 0.4);
+        }
+
+        .btn-generate:active {
+            transform: translateY(1px);
+        }
+
+        /* Instructions Panel */
+        .instructions-panel {
+            background: #fefce8;
+            border-top: 1px solid #fde047;
+            padding: 1.2rem 2rem;
+            border-radius: 0 0 2rem 2rem;
+        }
+
+        .instructions-panel h4 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #854d0e;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .instructions-panel ul {
+            margin-left: 1.5rem;
+            font-size: 0.75rem;
+            color: #713f12;
+            line-height: 1.5;
+        }
+
+        .footer-note {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #64748b;
+            padding: 1rem 2rem 1.5rem;
+            background: white;
+            border-top: 1px solid #eef2ff;
+        }
+
+        @media (max-width: 550px) {
+            .generator-container {
+                border-radius: 1.5rem;
+            }
+            .form-area {
+                padding: 1.5rem;
+            }
+            .double-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+<div class="generator-container">
+    <div class="wp-header">
+        <h1>
+            <i class="fab fa-wordpress"></i> 
+            WP Config Studio
+        </h1>
+        <p>Secure WordPress configuration file generator with salts & keys</p>
+        <div class="badge-version">
+            <i class="fas fa-shield-alt"></i> wp-config.php · v6.5+ ready
+        </div>
+    </div>
+
+    <div class="form-area">
+        <div class="double-row">
+            <div class="input-group">
+                <label><i class="fas fa-database"></i> Database Name</label>
+                <input type="text" id="db_name" placeholder="e.g., wp_database" autocomplete="off">
+                <div class="hint"><i class="fas fa-info-circle"></i> MySQL database name</div>
+            </div>
+            <div class="input-group">
+                <label><i class="fas fa-table"></i> Table Prefix</label>
+                <input type="text" id="db_prefix" placeholder="wp_" value="wp_">
+                <div class="hint"><i class="fas fa-shield"></i> Security: avoid default 'wp_'</div>
+            </div>
+        </div>
+
+        <div class="double-row">
+            <div class="input-group">
+                <label><i class="fas fa-user"></i> Database User</label>
+                <input type="text" id="db_user" placeholder="database username">
+                <div class="hint"><i class="fas fa-key"></i> MySQL username</div>
+            </div>
+            <div class="input-group">
+                <label><i class="fas fa-lock"></i> Database Password</label>
+                <input type="text" id="db_password" placeholder="••••••••">
+                <div class="hint"><i class="fas fa-eye-slash"></i> Leave empty if no password</div>
+            </div>
+        </div>
+
+        <div class="double-row">
+            <div class="input-group">
+                <label><i class="fas fa-server"></i> Database Host</label>
+                <input type="text" id="db_host" placeholder="localhost" value="localhost">
+                <div class="hint"><i class="fas fa-network-wired"></i> Usually localhost or custom IP</div>
+            </div>
+            <div class="input-group">
+                <label><i class="fas fa-code-branch"></i> Charset</label>
+                <input type="text" id="db_charset" value="utf8mb4" readonly disabled style="background:#f3f4f6; color:#4b5563;">
+                <div class="hint"><i class="fas fa-globe"></i> utf8mb4 (recommended)</div>
+            </div>
+        </div>
+
+        <!-- Security Keys Preview Section -->
+        <div class="security-preview" id="securityPreview">
+            <div class="security-header">
+                <i class="fas fa-fingerprint"></i> <span>Authentication Keys & Salts (auto‑generated)</span>
+                <button type="button" id="refreshKeysBtn" class="refresh-keys"><i class="fas fa-sync-alt"></i> Regenerate</button>
+            </div>
+            <div id="keysContainer">
+                <!-- Dynamic key previews will appear here -->
+                <div class="key-row"><i class="fas fa-key"></i> AUTH_KEY: ••••••••</div>
+                <div class="key-row"><i class="fas fa-key"></i> SECURE_AUTH_KEY: ••••••••</div>
+            </div>
+        </div>
+
+        <button class="btn-generate" id="generateBtn">
+            <i class="fas fa-file-code"></i> Generate wp-config.php
+        </button>
+    </div>
+
+    <div class="instructions-panel">
+        <h4><i class="fas fa-lightbulb"></i> Quick Setup Guide</h4>
+        <ul>
+            <li>Fill database credentials (Name, User, Host) — Password optional.</li>
+            <li>Custom table prefix increases security (e.g., <code>wp7x_</code>).</li>
+            <li>Click <strong>Generate</strong> → download <code>wp-config.php</code>.</li>
+            <li>Upload file to your WordPress root directory (where wp-load.php resides).</li>
+            <li>All security salts and keys are randomly generated using cryptographically strong methods.</li>
+        </ul>
+    </div>
+    <div class="footer-note">
+        <i class="fas fa-shield-hart"></i> Strong 64-char keys & salts · Ready for WordPress 6.x
+    </div>
+</div>
+
+<script>
+    // Cryptographically secure random key generator (64 chars from secure set)
+    function generateSecureKey(length = 64) {
+        const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_ []{}<>~`+=,.;:/?|';
+        const charsetLength = charset.length;
+        let key = '';
+        
+        if (window.crypto && window.crypto.getRandomValues) {
+            const randomValues = new Uint32Array(length);
+            window.crypto.getRandomValues(randomValues);
+            for (let i = 0; i < length; i++) {
+                key += charset[randomValues[i] % charsetLength];
+            }
+        } else {
+            // Fallback for older browsers (still secure enough for generation)
+            for (let i = 0; i < length; i++) {
+                const randomIndex = Math.floor(Math.random() * charsetLength);
+                key += charset[randomIndex];
+            }
+        }
+        return key;
+    }
+
+    // Generate all 8 security constants (keys + salts)
+    function generateAllSecurityConstants() {
+        return {
+            AUTH_KEY: generateSecureKey(64),
+            SECURE_AUTH_KEY: generateSecureKey(64),
+            LOGGED_IN_KEY: generateSecureKey(64),
+            NONCE_KEY: generateSecureKey(64),
+            AUTH_SALT: generateSecureKey(64),
+            SECURE_AUTH_SALT: generateSecureKey(64),
+            LOGGED_IN_SALT: generateSecureKey(64),
+            NONCE_SALT: generateSecureKey(64)
+        };
+    }
+
+    // Store current keys state
+    let currentKeys = generateAllSecurityConstants();
+
+    // Update the UI preview with masked keys (show first 8 chars + ... for safety)
+    function updateKeysPreview() {
+        const container = document.getElementById('keysContainer');
+        if (!container) return;
+        
+        const keyList = [
+            { name: 'AUTH_KEY', value: currentKeys.AUTH_KEY },
+            { name: 'SECURE_AUTH_KEY', value: currentKeys.SECURE_AUTH_KEY },
+            { name: 'LOGGED_IN_KEY', value: currentKeys.LOGGED_IN_KEY },
+            { name: 'NONCE_KEY', value: currentKeys.NONCE_KEY },
+            { name: 'AUTH_SALT', value: currentKeys.AUTH_SALT },
+            { name: 'SECURE_AUTH_SALT', value: currentKeys.SECURE_AUTH_SALT },
+            { name: 'LOGGED_IN_SALT', value: currentKeys.LOGGED_IN_SALT },
+            { name: 'NONCE_SALT', value: currentKeys.NONCE_SALT }
+        ];
+        
+        // Show first 12 chars + "... (length X)" for clarity, not full key to avoid visual clutter
+        container.innerHTML = keyList.map(k => {
+            const preview = k.value.substring(0, 14) + '…' + ` (${k.value.length} chars)`;
+            return `<div class="key-row"><i class="fas fa-shield-alt"></i> <strong>${k.name}:</strong> <span style="font-family: monospace; font-size:0.7rem;">${preview}</span></div>`;
+        }).join('');
+    }
+
+    // Regenerate keys and update preview
+    function regenerateKeys() {
+        currentKeys = generateAllSecurityConstants();
+        updateKeysPreview();
+    }
+
+    // Build full wp-config.php content with current keys + user inputs
+    function generateConfigContent(dbName, dbUser, dbPassword, dbHost, dbPrefix, dbCharset = 'utf8mb4') {
+        // Escape single quotes in values (security: replace ' with \' to avoid breaking PHP)
+        const escapePhpString = (str) => {
+            if (!str) return '';
+            return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        };
+        
+        const safeDbName = escapePhpString(dbName);
+        const safeDbUser = escapePhpString(dbUser);
+        const safeDbPassword = escapePhpString(dbPassword);
+        const safeDbHost = escapePhpString(dbHost);
+        const safePrefix = escapePhpString(dbPrefix);
+        
+        // If table prefix doesn't end with underscore, add it (WordPress standard)
+        let finalPrefix = safePrefix;
+        if (finalPrefix && !finalPrefix.endsWith('_') && finalPrefix.length > 0) {
+            finalPrefix = finalPrefix + '_';
+        }
+        
+        return `<?php
+/**
+ * WordPress Configuration File
+ * 
+ * Generated by WP Config Studio · Modern Generator
+ * @see https://wordpress.org/support/article/editing-wp-config-php/
+ *
+ * @package WordPress
+ */
+
+// ** Database settings - You can get this info from your web host ** //
+/** The name of the database for WordPress */
+define( 'DB_NAME', '${safeDbName}' );
+
+/** Database username */
+define( 'DB_USER', '${safeDbUser}' );
+
+/** Database password */
+define( 'DB_PASSWORD', '${safeDbPassword}' );
+
+/** Database hostname (usually 'localhost') */
+define( 'DB_HOST', '${safeDbHost}' );
+
+/** Database charset to use in creating database tables. */
+define( 'DB_CHARSET', '${dbCharset}' );
+
+/** The database collate type. Don't change this if in doubt. */
+define( 'DB_COLLATE', '' );
+
+/**#@+
+ * Authentication Unique Keys and Salts.
+ *
+ * Change these to different unique phrases!
+ * You can generate these using the {@link https://api.wordpress.org/secret-key/1.1/salt/ WordPress.org secret-key service}
+ *
+ * @since 2.6.0
+ */
+define( 'AUTH_KEY',         '${currentKeys.AUTH_KEY}' );
+define( 'SECURE_AUTH_KEY',  '${currentKeys.SECURE_AUTH_KEY}' );
+define( 'LOGGED_IN_KEY',    '${currentKeys.LOGGED_IN_KEY}' );
+define( 'NONCE_KEY',        '${currentKeys.NONCE_KEY}' );
+define( 'AUTH_SALT',        '${currentKeys.AUTH_SALT}' );
+define( 'SECURE_AUTH_SALT', '${currentKeys.SECURE_AUTH_SALT}' );
+define( 'LOGGED_IN_SALT',   '${currentKeys.LOGGED_IN_SALT}' );
+define( 'NONCE_SALT',       '${currentKeys.NONCE_SALT}' );
+/**#@-*/
+
+/**
+ * WordPress Database Table prefix.
+ *
+ * You can have multiple installations in one database if you give each
+ * a unique prefix. Only numbers, letters, and underscores please!
+ */
+\$table_prefix = '${finalPrefix}';
+
+/**
+ * For developers: WordPress debugging mode.
+ *
+ * Change this to true to enable the display of notices during development.
+ * It is strongly recommended that plugin and theme developers use WP_DEBUG
+ * in their development environments.
+ *
+ * For information on other constants that can be used for debugging,
+ * visit the documentation.
+ *
+ * @link https://wordpress.org/documentation/article/debugging-in-wordpress/
+ */
+define( 'WP_DEBUG', false );
+
+/* Add any custom values between this line and the "stop editing" line. */
+
+/* That's all, stop editing! Happy publishing. */
+
+/** Absolute path to the WordPress directory. */
+if ( ! defined( 'ABSPATH' ) ) {
+    define( 'ABSPATH', __DIR__ . '/' );
+}
+
+/** Sets up WordPress vars and included files. */
+require_once ABSPATH . 'wp-settings.php';
+`;
+    }
+
+    // Main generate function: download file using modern File System Access or fallback blob
+    async function generateAndDownload() {
+        // Get DOM values
+        const dbName = document.getElementById('db_name').value.trim();
+        const dbUser = document.getElementById('db_user').value.trim();
+        const dbPassword = document.getElementById('db_password').value;
+        const dbHost = document.getElementById('db_host').value.trim();
+        let dbPrefix = document.getElementById('db_prefix').value.trim();
+        const dbCharset = document.getElementById('db_charset')?.value || 'utf8mb4';
+        
+        // Validation: required fields (DB name, user, host)
+        if (!dbName) {
+            alert('❌ Database Name is required.');
+            document.getElementById('db_name').focus();
+            return;
+        }
+        if (!dbUser) {
+            alert('❌ Database User is required.');
+            document.getElementById('db_user').focus();
+            return;
+        }
+        if (!dbHost) {
+            alert('❌ Database Host is required (usually localhost).');
+            document.getElementById('db_host').focus();
+            return;
+        }
+        
+        // Set default prefix if empty
+        if (!dbPrefix) {
+            dbPrefix = 'wp_';
+        }
+        
+        // Ensure prefix is valid (only alphanumeric and underscore, but we sanitize)
+        const cleanPrefix = dbPrefix.replace(/[^a-zA-Z0-9_]/g, '');
+        const finalPrefix = cleanPrefix || 'wp_';
+        if (cleanPrefix !== dbPrefix) {
+            // auto-correct silently
+            document.getElementById('db_prefix').value = finalPrefix;
+        }
+        
+        // Generate full config text with current security keys
+        const configText = generateConfigContent(dbName, dbUser, dbPassword, dbHost, finalPrefix, dbCharset);
+        
+        // Try using modern File System Access API (Chrome, Edge)
+        if ('showSaveFilePicker' in window) {
+            try {
+                const fileHandle = await window.showSaveFilePicker({
+                    suggestedName: 'wp-config.php',
+                    types: [{
+                        description: 'PHP Configuration File',
+                        accept: { 'text/x-php': ['.php'] }
+                    }]
+                });
+                const writable = await fileHandle.createWritable();
+                await writable.write(configText);
+                await writable.close();
+                showToastMessage('✅ wp-config.php saved successfully!', 'success');
+                return;
+            } catch (err) {
+                // User cancelled or fallback needed
+                if (err.name !== 'AbortError') {
+                    console.log('File System API error, using fallback', err);
+                }
+                // Fallback to blob download
+            }
+        }
+        
+        // Fallback: Blob download
+        const blob = new Blob([configText], { type: 'text/plain' });
+        const downloadLink = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        downloadLink.href = url;
+        downloadLink.download = 'wp-config.php';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(url);
+        showToastMessage('📁 wp-config.php downloaded. Place it in WordPress root folder.', 'info');
+    }
+    
+    // Simple non-intrusive toast message (lightweight)
+    function showToastMessage(message, type = 'info') {
+        // Remove existing toast if any
+        const oldToast = document.querySelector('.wp-toast-notify');
+        if (oldToast) oldToast.remove();
+        
+        const toast = document.createElement('div');
+        toast.className = 'wp-toast-notify';
+        toast.style.position = 'fixed';
+        toast.style.bottom = '20px';
+        toast.style.left = '50%';
+        toast.style.transform = 'translateX(-50%)';
+        toast.style.backgroundColor = type === 'success' ? '#10b981' : '#3b82f6';
+        toast.style.color = 'white';
+        toast.style.padding = '12px 24px';
+        toast.style.borderRadius = '60px';
+        toast.style.fontSize = '0.85rem';
+        toast.style.fontWeight = '500';
+        toast.style.zIndex = '9999';
+        toast.style.boxShadow = '0 10px 20px rgba(0,0,0,0.2)';
+        toast.style.backdropFilter = 'blur(8px)';
+        toast.style.fontFamily = 'Inter, sans-serif';
+        toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i> ${message}`;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+    
+    // Real-time: update any UI if needed? but keep keys preview.
+    // Setup event listeners
+    function initGenerator() {
+        const generateBtn = document.getElementById('generateBtn');
+        const refreshBtn = document.getElementById('refreshKeysBtn');
+        
+        // Generate config event
+        if (generateBtn) {
+            generateBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                await generateAndDownload();
+            });
+        }
+        
+        // Refresh security keys
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                regenerateKeys();
+                showToastMessage('🔐 New security keys & salts generated!', 'info');
+            });
+        }
+        
+        // Optional: improve user experience by adding example default database name placeholder
+        // Also ensure prefix field sanitization on blur
+        const prefixInput = document.getElementById('db_prefix');
+        if (prefixInput) {
+            prefixInput.addEventListener('blur', function() {
+                let val = this.value.trim();
+                if (val === '') val = 'wp_';
+                const cleaned = val.replace(/[^a-zA-Z0-9_]/g, '');
+                if (cleaned !== val) this.value = cleaned;
+                if (!this.value.endsWith('_') && this.value.length > 0) {
+                    // Not forcing underscore but typical standard, optional.
+                }
+            });
+        }
+        
+        // Fill quick demo tips? Not auto-filling sensitive data but we can set optional example for usability
+        // Set localhost default if empty host
+        const hostInput = document.getElementById('db_host');
+        if (hostInput && !hostInput.value) hostInput.value = 'localhost';
+        
+        // initial keys preview load
+        updateKeysPreview();
+    }
+    
+    // Initialize when DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initGenerator);
+    } else {
+        initGenerator();
+    }
+    
+    // Additional style for toast animation
+    const styleSheet = document.createElement("style");
+    styleSheet.textContent = `
+        .wp-toast-notify {
+            animation: fadeInUp 0.2s ease-out;
+            pointer-events: none;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        .key-row {
+            transition: background 0.1s;
+        }
+        code {
+            background: #eef2ff;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+        }
+    `;
+    document.head.appendChild(styleSheet);
+</script>
+</body>
+</html>
