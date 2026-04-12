@@ -1,0 +1,113 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Lot & Math Calculator</title>
+    <style>
+        :root { --primary: #007BFF; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; display: flex; justify-content: center; }
+        .calculator { background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { font-size: 20px; margin-bottom: 20px; color: #333; text-align: center; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 13px; font-weight: 600; color: #666; margin-bottom: 5px; }
+        input { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 8px; box-sizing: border-box; font-size: 15px; transition: 0.3s; }
+        input:focus { border-color: var(--primary); outline: none; }
+        .lot-container { display: flex; gap: 10px; background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+        .result-box { background: #eef6ff; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center; border-left: 5px solid var(--primary); }
+        .profit { color: #28a745; font-weight: bold; }
+        .loss { color: #dc3545; font-weight: bold; }
+        small { color: #888; font-size: 11px; }
+    </style>
+</head>
+<body>
+
+<div class="calculator">
+    <h2>Trade Calculator</h2>
+    
+    <div class="input-group">
+        <label>Current Price</label>
+        <input type="number" id="currentPrice" placeholder="e.g. 100" step="0.01">
+    </div>
+
+    <div class="input-group">
+        <label>Target Price</label>
+        <input type="number" id="targetPrice" placeholder="e.g. 120" step="0.01">
+    </div>
+
+    <div class="lot-container">
+        <div class="input-group" style="flex: 2;">
+            <label>Lot Size (Supports Math)</label>
+            <input type="text" id="lotSize" placeholder="60 or 50*2">
+            <small>Press Enter to solve math</small>
+        </div>
+        <div class="input-group" style="flex: 1;">
+            <label>No. of Lots</label>
+            <input type="number" id="lotCount" value="1" min="1">
+        </div>
+    </div>
+
+    <div class="result-box" id="result">
+        Enter details to calculate...
+    </div>
+</div>
+
+<script>
+    const inputs = ['currentPrice', 'targetPrice', 'lotSize', 'lotCount'];
+    
+    // Function to safely solve math like 550*2
+    function solveMath(str) {
+        try {
+            // Replaces any non-math characters and evaluates
+            const sanitized = str.replace(/[^-+*/().0-9]/g, '');
+            return Function(`'use strict'; return (${sanitized})`)() || 0;
+        } catch (e) {
+            return 0;
+        }
+    }
+
+    function calculate() {
+        const cp = parseFloat(document.getElementById('currentPrice').value);
+        const tp = parseFloat(document.getElementById('targetPrice').value);
+        const lotSizeRaw = document.getElementById('lotSize').value;
+        const numLots = parseFloat(document.getElementById('lotCount').value) || 0;
+
+        // Solve math in the lotSize field
+        const lotSizeValue = solveMath(lotSizeRaw);
+        const totalQty = lotSizeValue * numLots;
+
+        if (isNaN(cp) || isNaN(tp) || totalQty <= 0) {
+            document.getElementById('result').innerHTML = "Enter valid prices and quantity.";
+            return;
+        }
+
+        const changePct = ((tp - cp) / cp) * 100;
+        const pnl = (tp - cp) * totalQty;
+        const totalInv = cp * totalQty;
+        const statusClass = pnl >= 0 ? 'profit' : 'loss';
+
+        document.getElementById('result').innerHTML = `
+            <div>Total Qty: <strong>${totalQty}</strong></div>
+            <div>Change: <span class="${statusClass}">${changePct.toFixed(2)}%</span></div>
+            <div style="margin-top:8px; font-size:18px;">
+                Est. P&L: <span class="${statusClass}">${pnl.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+            </div>
+            <div style="font-size:12px; color: #666; margin-top:5px;">Investment: ${totalInv.toLocaleString()}</div>
+        `;
+    }
+
+    // Listen for changes
+    inputs.forEach(id => {
+        document.getElementById(id).addEventListener('input', calculate);
+    });
+
+    // Solve math immediately if user presses Enter in the lotSize field
+    document.getElementById('lotSize').addEventListener('change', (e) => {
+        const solved = solveMath(e.target.value);
+        if(solved !== 0) e.target.value = solved;
+        calculate();
+    });
+
+</script>
+
+</body>
+</html>
