@@ -8,7 +8,6 @@
 	<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <link rel="stylesheet" href="assets/main.css">
 	<style>
 		* {
 			margin: 0;
@@ -31,12 +30,8 @@
 		.header {
 			text-align: center;
 			margin-bottom: 1.5rem;
-			margin-top:100px;
 		}
-		footer {
-		    margin-top: 100px;
-		}
-		
+
 		.header h1 {
 			font-weight: 800;
 			font-size: 1.8rem;
@@ -406,24 +401,6 @@
 </head>
 
 <body>
-  <nav class="navbar" style="background: rgba(255, 255, 255, 0.95); box-shadow: rgba(0, 0, 0, 0.1) 0px 2px 10px;">
-        <div class="container">
-            <a href="https://sknetking.github.io/SpeedBrush/" class="logo">SpeedBrush</a>
-            <ul class="nav-links">
-                <li><a href="https://sknetking.github.io/SpeedBrush/#home">Home</a></li>
-                <li><a href="https://sknetking.github.io/SpeedBrush/#portfolio">Portfolio</a></li>
-                <li><a href="https://sknetking.github.io/SpeedBrush/#pricing">Pricing</a></li>
-                <li><a href="https://sknetking.github.io/SpeedBrush/#about">About</a></li>
-                <li><a href="https://sknetking.github.io/SpeedBrush/#contact">Contact</a></li>
-            </ul>
-            <div class="hamburger">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-        </div>
-    </nav>
-  
 	<div class="container">
 		<div class="header">
 			<h1><i class="fas fa-paint-roller"></i> PaintMaster Pro <span class="currency-badge"><i class="fas fa-rupee-sign"></i> INR</span></h1>
@@ -501,352 +478,318 @@
 					<div class="card-header"><i class="fas fa-user-plus"></i> Get Exact Quote</div>
 					<div class="card-body">
 						<a href='https://wa.me/917398113232?text=Hello%20Shyam%2C%0AI%20need%20a%20quote%20about%20my%20home%20painting.' id="shareWhatsAppBtn" class="btn btn-primary"><i class="fab fa-whatsapp"></i>Get a Quote</a>
+					</div>
 				</div>
 			</div>
 		</div>
-	</div>
-	<div id="toastMsg" class="toast-msg">✓ Action completed</div>
+		<div id="toastMsg" class="toast-msg">✓ Action completed</div>
 
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-col">
-                    <h3>SpeedBrush</h3>
-                    <p>Professional painting services with speed and precision.</p>
-
-                </div>
-                <div class="footer-col">
-                    <h3>Quick Links</h3>
-                    <ul>
-                        <li><a href="#home">Home</a></li>
-                        <li><a href="#portfolio">Portfolio</a></li>
-                        <li><a href="#pricing">Pricing</a></li>
-                        <li><a href="#about">About</a></li>
-                        <li><a href="#contact">Contact</a></li>
-                    </ul>
-                </div>
-                <div class="footer-col">
-                    <h3>Legal</h3>
-                    <ul>
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Terms of Service</a></li>
-                        <li><a href="#">Shipping Policy</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="copyright">
-                <p>© 2025 SpeedBrush. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
-</div>
-    <script src="assets/custom.js"></script>
-	<script>
-		// ---------- STATE ----------
-		let rooms = [];
-		let nextRoomId = 1;
-		let updateTimeout = null;
-		// DOM elements
-		const roomsContainer = document.getElementById('roomsList');
-		const addRoomBtn = document.getElementById('addRoomBtn');
-		const paintQuality = document.getElementById('paintQuality');
-		const ceilingCheckbox = document.getElementById('ceilingCheckbox');
-		const puttyCheckbox = document.getElementById('puttyCheckbox');
-		const primerCheckbox = document.getElementById('primerCheckbox');
-		const laborRateInput = document.getElementById('laborRate');
-		const coatsSelect = document.getElementById('coatsCount');
-		const profitMarginInput = document.getElementById('profitMargin');
-		const gstCheckbox = document.getElementById('gstCheckbox');
-		const discountAmountInput = document.getElementById('discountAmount');
-		const extraFeesInput = document.getElementById('extraFees');
-		// Helper: format INR
-		function formatINR(amount) {
-			return '₹' + Math.round(amount).toLocaleString('en-IN');
-		}
-		// Calculate net paintable area per room (wall area - doors/windows deduction)
-		function calculateRoomPaintableArea(room) {
-			const w = parseFloat(room.width) || 0,
-				l = parseFloat(room.length) || 0,
-				h = parseFloat(room.height) || 0;
-			if (w <= 0 || l <= 0 || h <= 0) return 0;
-			const wallArea = 2 * (w + l) * h;
-			const doors = parseFloat(room.doors) || 0;
-			const windows = parseFloat(room.windows) || 0;
-			const deduction = (doors * 20) + (windows * 15); // standard deduction per door/window
-			return Math.max(0, wallArea - deduction);
-		}
-
-		function getTotalPaintableArea() {
-			return rooms.reduce((sum, r) => sum + calculateRoomPaintableArea(r), 0);
-		}
-
-		function getTotalCeilingArea() {
-			return rooms.reduce((sum, r) => sum + ((parseFloat(r.width) || 0) * (parseFloat(r.length) || 0)), 0);
-		}
-		// Core calculation
-		function calculateAll() {
-			const wallArea = getTotalPaintableArea();
-			const ceilingArea = ceilingCheckbox.checked ? getTotalCeilingArea() : 0;
-			const totalArea = wallArea + ceilingArea;
-			const paintRate = parseFloat(paintQuality.value);
-			const coats = parseInt(coatsSelect.value);
-			const laborRate = parseFloat(laborRateInput.value) || 0;
-			const includePutty = puttyCheckbox.checked;
-			const includePrimer = primerCheckbox.checked;
-			const includeCeiling = ceilingCheckbox.checked;
-			let paintCost = totalArea * paintRate * coats;
-			let primerCost = includePrimer ? wallArea * 8 : 0;
-			let puttyCost = includePutty ? wallArea * 12 : 0;
-			let ceilingPrepCost = includeCeiling ? ceilingArea * 18 : 0; // ceiling paint extra
-			let surfacePrepCost = primerCost + puttyCost + ceilingPrepCost;
-			let laborCost = totalArea * laborRate;
-			let subtotal = paintCost + surfacePrepCost + laborCost;
-			// Contractor mode
-			let profitPercent = parseFloat(profitMarginInput.value) || 0;
-			let profitAmount = subtotal * (profitPercent / 100);
-			let afterProfit = subtotal + profitAmount;
-			let gstAmount = gstCheckbox.checked ? afterProfit * 0.18 : 0;
-			let discount = parseFloat(discountAmountInput.value) || 0;
-			let extraFees = parseFloat(extraFeesInput.value) || 0;
-			let finalTotal = afterProfit + gstAmount + extraFees - discount;
-			finalTotal = Math.max(0, finalTotal);
-			// Update UI
-			document.getElementById('totalArea').innerText = totalArea.toFixed(1) + ' sq ft';
-			document.getElementById('paintCost').innerHTML = formatINR(paintCost);
-			document.getElementById('surfacePrepCost').innerHTML = formatINR(surfacePrepCost);
-			document.getElementById('laborCost').innerHTML = formatINR(laborCost);
-			document.getElementById('subtotal').innerHTML = formatINR(subtotal);
-			document.getElementById('profitPercent').innerText = profitPercent;
-			document.getElementById('profitAmount').innerHTML = formatINR(profitAmount);
-			document.getElementById('gstAmount').innerHTML = gstCheckbox.checked ? formatINR(gstAmount) : '₹0';
-			document.getElementById('discountAmountDisplay').innerHTML = formatINR(discount);
-			document.getElementById('extraFeesDisplay').innerHTML = formatINR(extraFees);
-			document.getElementById('totalBudget').innerHTML = formatINR(finalTotal);
-			const perSqft = totalArea > 0 ? finalTotal / totalArea : 0;
-			document.getElementById('perSqftRate').innerHTML = `⭐ Final rate: ${formatINR(perSqft)} / sq ft`;
-			return {
-				finalTotal,
-				totalArea,
-				perSqft
-			};
-		}
-
-		function debouncedUpdate() {
-			if (updateTimeout) clearTimeout(updateTimeout);
-			updateTimeout = setTimeout(() => calculateAll(), 100);
-		}
-		// Room Rendering
-		function renderRooms() {
-			roomsContainer.innerHTML = '';
-			if (rooms.length === 0) {
-				roomsContainer.innerHTML = '<div class="text-muted text-center p-4"><i class="fas fa-home"></i> No rooms added</div>';
-				return;
+		<script>
+			// ---------- STATE ----------
+			let rooms = [];
+			let nextRoomId = 1;
+			let updateTimeout = null;
+			// DOM elements
+			const roomsContainer = document.getElementById('roomsList');
+			const addRoomBtn = document.getElementById('addRoomBtn');
+			const paintQuality = document.getElementById('paintQuality');
+			const ceilingCheckbox = document.getElementById('ceilingCheckbox');
+			const puttyCheckbox = document.getElementById('puttyCheckbox');
+			const primerCheckbox = document.getElementById('primerCheckbox');
+			const laborRateInput = document.getElementById('laborRate');
+			const coatsSelect = document.getElementById('coatsCount');
+			const profitMarginInput = document.getElementById('profitMargin');
+			const gstCheckbox = document.getElementById('gstCheckbox');
+			const discountAmountInput = document.getElementById('discountAmount');
+			const extraFeesInput = document.getElementById('extraFees');
+			// Helper: format INR
+			function formatINR(amount) {
+				return '₹' + Math.round(amount).toLocaleString('en-IN');
 			}
-			rooms.forEach(room => {
-				const div = document.createElement('div');
-				div.className = 'room-item';
-				div.dataset.id = room.id;
-				div.innerHTML = `<div class="room-header"><span class="room-name"><i class="fas fa-arrows-alt"></i> ${escapeHtml(room.name)}</span><button class="remove-room" data-id="${room.id}"><i class="fas fa-trash-alt"></i></button></div>
+			// Calculate net paintable area per room (wall area - doors/windows deduction)
+			function calculateRoomPaintableArea(room) {
+				const w = parseFloat(room.width) || 0,
+					l = parseFloat(room.length) || 0,
+					h = parseFloat(room.height) || 0;
+				if (w <= 0 || l <= 0 || h <= 0) return 0;
+				const wallArea = 2 * (w + l) * h;
+				const doors = parseFloat(room.doors) || 0;
+				const windows = parseFloat(room.windows) || 0;
+				const deduction = (doors * 20) + (windows * 15); // standard deduction per door/window
+				return Math.max(0, wallArea - deduction);
+			}
+
+			function getTotalPaintableArea() {
+				return rooms.reduce((sum, r) => sum + calculateRoomPaintableArea(r), 0);
+			}
+
+			function getTotalCeilingArea() {
+				return rooms.reduce((sum, r) => sum + ((parseFloat(r.width) || 0) * (parseFloat(r.length) || 0)), 0);
+			}
+			// Core calculation
+			function calculateAll() {
+				const wallArea = getTotalPaintableArea();
+				const ceilingArea = ceilingCheckbox.checked ? getTotalCeilingArea() : 0;
+				const totalArea = wallArea + ceilingArea;
+				const paintRate = parseFloat(paintQuality.value);
+				const coats = parseInt(coatsSelect.value);
+				const laborRate = parseFloat(laborRateInput.value) || 0;
+				const includePutty = puttyCheckbox.checked;
+				const includePrimer = primerCheckbox.checked;
+				const includeCeiling = ceilingCheckbox.checked;
+				let paintCost = totalArea * paintRate * coats;
+				let primerCost = includePrimer ? wallArea * 8 : 0;
+				let puttyCost = includePutty ? wallArea * 12 : 0;
+				let ceilingPrepCost = includeCeiling ? ceilingArea * 18 : 0; // ceiling paint extra
+				let surfacePrepCost = primerCost + puttyCost + ceilingPrepCost;
+				let laborCost = totalArea * laborRate;
+				let subtotal = paintCost + surfacePrepCost + laborCost;
+				// Contractor mode
+				let profitPercent = parseFloat(profitMarginInput.value) || 0;
+				let profitAmount = subtotal * (profitPercent / 100);
+				let afterProfit = subtotal + profitAmount;
+				let gstAmount = gstCheckbox.checked ? afterProfit * 0.18 : 0;
+				let discount = parseFloat(discountAmountInput.value) || 0;
+				let extraFees = parseFloat(extraFeesInput.value) || 0;
+				let finalTotal = afterProfit + gstAmount + extraFees - discount;
+				finalTotal = Math.max(0, finalTotal);
+				// Update UI
+				document.getElementById('totalArea').innerText = totalArea.toFixed(1) + ' sq ft';
+				document.getElementById('paintCost').innerHTML = formatINR(paintCost);
+				document.getElementById('surfacePrepCost').innerHTML = formatINR(surfacePrepCost);
+				document.getElementById('laborCost').innerHTML = formatINR(laborCost);
+				document.getElementById('subtotal').innerHTML = formatINR(subtotal);
+				document.getElementById('profitPercent').innerText = profitPercent;
+				document.getElementById('profitAmount').innerHTML = formatINR(profitAmount);
+				document.getElementById('gstAmount').innerHTML = gstCheckbox.checked ? formatINR(gstAmount) : '₹0';
+				document.getElementById('discountAmountDisplay').innerHTML = formatINR(discount);
+				document.getElementById('extraFeesDisplay').innerHTML = formatINR(extraFees);
+				document.getElementById('totalBudget').innerHTML = formatINR(finalTotal);
+				const perSqft = totalArea > 0 ? finalTotal / totalArea : 0;
+				document.getElementById('perSqftRate').innerHTML = `⭐ Final rate: ${formatINR(perSqft)} / sq ft`;
+				return {
+					finalTotal,
+					totalArea,
+					perSqft
+				};
+			}
+
+			function debouncedUpdate() {
+				if (updateTimeout) clearTimeout(updateTimeout);
+				updateTimeout = setTimeout(() => calculateAll(), 100);
+			}
+			// Room Rendering
+			function renderRooms() {
+				roomsContainer.innerHTML = '';
+				if (rooms.length === 0) {
+					roomsContainer.innerHTML = '<div class="text-muted text-center p-4"><i class="fas fa-home"></i> No rooms added</div>';
+					return;
+				}
+				rooms.forEach(room => {
+					const div = document.createElement('div');
+					div.className = 'room-item';
+					div.dataset.id = room.id;
+					div.innerHTML = `<div class="room-header"><span class="room-name"><i class="fas fa-arrows-alt"></i> ${escapeHtml(room.name)}</span><button class="remove-room" data-id="${room.id}"><i class="fas fa-trash-alt"></i></button></div>
         <div class="room-dimensions"><div class="dim-input"><label>Width(ft)</label><input type="number" step="0.5" class="room-width" value="${room.width}"></div>
         <div class="dim-input"><label>Length(ft)</label><input type="number" step="0.5" class="room-length" value="${room.length}"></div>
         <div class="dim-input"><label>Height(ft)</label><input type="number" step="0.5" class="room-height" value="${room.height}"></div></div>
         <div class="door-window-row"><input type="number" step="1" class="room-doors" placeholder="🚪 Doors (count)" value="${room.doors || 0}"><input type="number" step="1" class="room-windows" placeholder="🪟 Windows (count)" value="${room.windows || 0}"></div>`;
-				div.querySelector('.room-width').addEventListener('input', (e) => {
-					room.width = e.target.value;
-					debouncedUpdate();
-					saveToLocal();
+					div.querySelector('.room-width').addEventListener('input', (e) => {
+						room.width = e.target.value;
+						debouncedUpdate();
+						saveToLocal();
+					});
+					div.querySelector('.room-length').addEventListener('input', (e) => {
+						room.length = e.target.value;
+						debouncedUpdate();
+						saveToLocal();
+					});
+					div.querySelector('.room-height').addEventListener('input', (e) => {
+						room.height = e.target.value;
+						debouncedUpdate();
+						saveToLocal();
+					});
+					div.querySelector('.room-doors').addEventListener('input', (e) => {
+						room.doors = e.target.value;
+						debouncedUpdate();
+						saveToLocal();
+					});
+					div.querySelector('.room-windows').addEventListener('input', (e) => {
+						room.windows = e.target.value;
+						debouncedUpdate();
+						saveToLocal();
+					});
+					div.querySelector('.remove-room').addEventListener('click', () => {
+						rooms = rooms.filter(r => r.id !== room.id);
+						renderRooms();
+						debouncedUpdate();
+						saveToLocal();
+					});
+					roomsContainer.appendChild(div);
 				});
-				div.querySelector('.room-length').addEventListener('input', (e) => {
-					room.length = e.target.value;
-					debouncedUpdate();
-					saveToLocal();
-				});
-				div.querySelector('.room-height').addEventListener('input', (e) => {
-					room.height = e.target.value;
-					debouncedUpdate();
-					saveToLocal();
-				});
-				div.querySelector('.room-doors').addEventListener('input', (e) => {
-					room.doors = e.target.value;
-					debouncedUpdate();
-					saveToLocal();
-				});
-				div.querySelector('.room-windows').addEventListener('input', (e) => {
-					room.windows = e.target.value;
-					debouncedUpdate();
-					saveToLocal();
-				});
-				div.querySelector('.remove-room').addEventListener('click', () => {
-					rooms = rooms.filter(r => r.id !== room.id);
-					renderRooms();
-					debouncedUpdate();
-					saveToLocal();
-				});
-				roomsContainer.appendChild(div);
-			});
-			debouncedUpdate();
-		}
-
-		function addRoom(name = 'New Room', width = 12, length = 12, height = 8, doors = 0, windows = 0) {
-			rooms.push({
-				id: nextRoomId++,
-				name,
-				width,
-				length,
-				height,
-				doors,
-				windows
-			});
-			renderRooms();
-			saveToLocal();
-		}
-
-		function escapeHtml(str) {
-			return str.replace(/[&<>]/g, function(m) {
-				if (m === '&') return '&amp;';
-				if (m === '<') return '&lt;';
-				if (m === '>') return '&gt;';
-				return m;
-			});
-		}
-		// Presets
-		function setPreset(type) {
-			rooms = [];
-			nextRoomId = 1;
-			if (type === '1bhk') {
-				addRoom('Bedroom', 12, 13, 9, 1, 1);
-				addRoom('Living', 12, 14, 9, 1, 1);
-			} else if (type === '2bhk') {
-  addRoom('Master Bedroom', 14, 16, 9, 1, 1);
-  addRoom('Bedroom 2', 12, 14, 9, 1, 1);
-  addRoom('Living Room', 16, 18, 9, 1, 2);
-  addRoom('Kitchen', 10, 12, 8, 1, 1);
-  addRoom('Hall Passage', 6, 10, 9, 0, 0);
-} else if (type === '3bhk') {
-				addRoom('Master Bedroom', 15, 16, 9, 1, 1);
-				addRoom('Bedroom 2', 13, 14, 9, 1, 1);
-				addRoom('Bedroom 3', 12, 13, 9, 1, 1);
-				addRoom('Living', 18, 16, 9, 1, 2);
-				addRoom('Kitchen', 12, 12, 8, 1, 0);
+				debouncedUpdate();
 			}
-			renderRooms();
-		}
-		// LocalStorage
-		function saveToLocal() {
-			localStorage.setItem('paintMasterRooms', JSON.stringify(rooms));
-		}
 
-		function loadFromLocal() {
-			const saved = localStorage.getItem('paintMasterRooms');
-			if (saved) {
-				rooms = JSON.parse(saved);
-				nextRoomId = Math.max(0, ...rooms.map(r => r.id), 0) + 1;
+			function addRoom(name = 'New Room', width = 12, length = 12, height = 8, doors = 0, windows = 0) {
+				rooms.push({
+					id: nextRoomId++,
+					name,
+					width,
+					length,
+					height,
+					doors,
+					windows
+				});
 				renderRooms();
-			} else {
-				setPreset('2bhk');
+				saveToLocal();
 			}
-		}
-		// PDF Quote
-		async function downloadPDF() {
-			const element = document.getElementById('resultCard');
-			const originalWidth = element.style.width;
-			element.style.width = '400px';
-			const canvas = await html2canvas(element, {
-				scale: 2,
-				backgroundColor: '#1e3c2c'
-			});
-			element.style.width = originalWidth;
-			const link = document.createElement('a');
-			link.download = 'PaintQuote.png';
-			link.href = canvas.toDataURL();
-			link.click();
-			showToast('Quote image saved');
-		}
 
-		function shareWhatsApp() {
-			const total = document.getElementById('totalBudget').innerText;
-			const msg = `🏠 *PaintMaster Quote*\nTotal Area: ${document.getElementById('totalArea').innerText}\nFinal Price: ${total}\nPer Sq Ft: ${document.getElementById('perSqftRate').innerText}\n\nGet professional painting service!`;
-			window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-		}
-
-		function showToast(msg) {
-			const t = document.getElementById('toastMsg');
-			t.innerText = msg;
-			t.classList.add('show');
-			setTimeout(() => t.classList.remove('show'), 2500);
-		}
-		// Lead Generation
-		function submitLead() {
-			const name = document.getElementById('leadName').value.trim();
-			const phone = document.getElementById('leadPhone').value.trim();
-			const city = document.getElementById('leadCity').value.trim();
-			if (!name || !phone) {
-				showToast('Please enter name and phone');
-				return;
+			function escapeHtml(str) {
+				return str.replace(/[&<>]/g, function(m) {
+					if (m === '&') return '&amp;';
+					if (m === '<') return '&lt;';
+					if (m === '>') return '&gt;';
+					return m;
+				});
 			}
-			const leadData = {
-				name,
-				phone,
-				city,
-				rooms,
-				totalBudget: document.getElementById('totalBudget').innerText,
-				timestamp: new Date().toISOString()
-			};
-			console.log('API Payload:', leadData);
-			// Simulate API call
-			showToast(`Thank you ${name}! Our team will contact you shortly.`);
-			// Clear form
-			document.getElementById('leadName').value = '';
-			document.getElementById('leadPhone').value = '';
-			document.getElementById('leadCity').value = '';
-			// In production: fetch('/api/leads', { method: 'POST', body: JSON.stringify(leadData) })
-		}
-		// Event bindings
-		function bindEvents() {
-			document.querySelectorAll('.preset-btn').forEach(btn => btn.addEventListener('click', (e) => setPreset(e.target.dataset.preset)));
-			addRoomBtn.addEventListener('click', () => addRoom(`Room ${rooms.length+1}`, 12, 12, 8, 0, 0));
-			paintQuality.addEventListener('input', debouncedUpdate);
-			ceilingCheckbox.addEventListener('change', debouncedUpdate);
-			puttyCheckbox.addEventListener('change', debouncedUpdate);
-			primerCheckbox.addEventListener('change', debouncedUpdate);
-			laborRateInput.addEventListener('input', debouncedUpdate);
-			coatsSelect.addEventListener('change', debouncedUpdate);
-			profitMarginInput.addEventListener('input', debouncedUpdate);
-			gstCheckbox.addEventListener('change', debouncedUpdate);
-			discountAmountInput.addEventListener('input', debouncedUpdate);
-			extraFeesInput.addEventListener('input', debouncedUpdate);
-			document.getElementById('downloadPDFBtn').addEventListener('click', downloadPDF);
-			document.getElementById('shareWhatsAppBtn').addEventListener('click', shareWhatsApp);
-			document.getElementById('getQuoteBtn').addEventListener('click', submitLead);
-		}
-		// Room rename double-click
-		document.addEventListener('dblclick', (e) => {
-			const span = e.target.closest('.room-name');
-			if (!span) return;
-			const roomDiv = span.closest('.room-item');
-			const id = parseInt(roomDiv.dataset.id);
-			const room = rooms.find(r => r.id === id);
-			if (room) {
-				const input = document.createElement('input');
-				input.value = room.name;
-				input.style.width = '120px';
-				span.innerHTML = '';
-				span.appendChild(input);
-				input.focus();
-				input.onblur = () => {
-					room.name = input.value.trim() || 'Room';
+			// Presets
+			function setPreset(type) {
+				rooms = [];
+				nextRoomId = 1;
+				if (type === '1bhk') {
+					addRoom('Bedroom', 12, 13, 9, 1, 1);
+					addRoom('Living', 12, 14, 9, 1, 1);
+				} else if (type === '2bhk') {
+					addRoom('Master Bedroom', 14, 16, 9, 1, 1);
+					addRoom('Bedroom 2', 12, 14, 9, 1, 1);
+					addRoom('Living Room', 16, 18, 9, 1, 2);
+					addRoom('Kitchen', 10, 12, 8, 1, 1);
+					addRoom('Hall Passage', 6, 10, 9, 0, 0);
+				} else if (type === '3bhk') {
+					addRoom('Master Bedroom', 15, 16, 9, 1, 1);
+					addRoom('Bedroom 2', 13, 14, 9, 1, 1);
+					addRoom('Bedroom 3', 12, 13, 9, 1, 1);
+					addRoom('Living', 18, 16, 9, 1, 2);
+					addRoom('Kitchen', 12, 12, 8, 1, 0);
+				}
+				renderRooms();
+			}
+			// LocalStorage
+			function saveToLocal() {
+				localStorage.setItem('paintMasterRooms', JSON.stringify(rooms));
+			}
+
+			function loadFromLocal() {
+				const saved = localStorage.getItem('paintMasterRooms');
+				if (saved) {
+					rooms = JSON.parse(saved);
+					nextRoomId = Math.max(0, ...rooms.map(r => r.id), 0) + 1;
 					renderRooms();
-					saveToLocal();
-				};
-				input.onkeypress = (e) => {
-					if (e.key === 'Enter') input.blur();
-				};
+				} else {
+					setPreset('2bhk');
+				}
 			}
-		});
-		loadFromLocal();
-		bindEvents();
-		debouncedUpdate();
-	</script>
+			// PDF Quote
+			async function downloadPDF() {
+				const element = document.getElementById('resultCard');
+				const originalWidth = element.style.width;
+				element.style.width = '400px';
+				const canvas = await html2canvas(element, {
+					scale: 2,
+					backgroundColor: '#1e3c2c'
+				});
+				element.style.width = originalWidth;
+				const link = document.createElement('a');
+				link.download = 'PaintQuote.png';
+				link.href = canvas.toDataURL();
+				link.click();
+				showToast('Quote image saved');
+			}
+
+			function shareWhatsApp() {
+				const total = document.getElementById('totalBudget').innerText;
+				const msg = `🏠 *PaintMaster Quote*\nTotal Area: ${document.getElementById('totalArea').innerText}\nFinal Price: ${total}\nPer Sq Ft: ${document.getElementById('perSqftRate').innerText}\n\nGet professional painting service!`;
+				window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+			}
+
+			function showToast(msg) {
+				const t = document.getElementById('toastMsg');
+				t.innerText = msg;
+				t.classList.add('show');
+				setTimeout(() => t.classList.remove('show'), 2500);
+			}
+			// Lead Generation
+			function submitLead() {
+				const name = document.getElementById('leadName').value.trim();
+				const phone = document.getElementById('leadPhone').value.trim();
+				const city = document.getElementById('leadCity').value.trim();
+				if (!name || !phone) {
+					showToast('Please enter name and phone');
+					return;
+				}
+				const leadData = {
+					name,
+					phone,
+					city,
+					rooms,
+					totalBudget: document.getElementById('totalBudget').innerText,
+					timestamp: new Date().toISOString()
+				};
+				console.log('API Payload:', leadData);
+				// Simulate API call
+				showToast(`Thank you ${name}! Our team will contact you shortly.`);
+				// Clear form
+				document.getElementById('leadName').value = '';
+				document.getElementById('leadPhone').value = '';
+				document.getElementById('leadCity').value = '';
+				// In production: fetch('/api/leads', { method: 'POST', body: JSON.stringify(leadData) })
+			}
+			// Event bindings
+			function bindEvents() {
+				document.querySelectorAll('.preset-btn').forEach(btn => btn.addEventListener('click', (e) => setPreset(e.target.dataset.preset)));
+				addRoomBtn.addEventListener('click', () => addRoom(`Room ${rooms.length+1}`, 12, 12, 8, 0, 0));
+				paintQuality.addEventListener('input', debouncedUpdate);
+				ceilingCheckbox.addEventListener('change', debouncedUpdate);
+				puttyCheckbox.addEventListener('change', debouncedUpdate);
+				primerCheckbox.addEventListener('change', debouncedUpdate);
+				laborRateInput.addEventListener('input', debouncedUpdate);
+				coatsSelect.addEventListener('change', debouncedUpdate);
+				profitMarginInput.addEventListener('input', debouncedUpdate);
+				gstCheckbox.addEventListener('change', debouncedUpdate);
+				discountAmountInput.addEventListener('input', debouncedUpdate);
+				extraFeesInput.addEventListener('input', debouncedUpdate);
+				document.getElementById('downloadPDFBtn').addEventListener('click', downloadPDF);
+				document.getElementById('shareWhatsAppBtn').addEventListener('click', shareWhatsApp);
+				document.getElementById('getQuoteBtn').addEventListener('click', submitLead);
+			}
+			// Room rename double-click
+			document.addEventListener('dblclick', (e) => {
+				const span = e.target.closest('.room-name');
+				if (!span) return;
+				const roomDiv = span.closest('.room-item');
+				const id = parseInt(roomDiv.dataset.id);
+				const room = rooms.find(r => r.id === id);
+				if (room) {
+					const input = document.createElement('input');
+					input.value = room.name;
+					input.style.width = '120px';
+					span.innerHTML = '';
+					span.appendChild(input);
+					input.focus();
+					input.onblur = () => {
+						room.name = input.value.trim() || 'Room';
+						renderRooms();
+						saveToLocal();
+					};
+					input.onkeypress = (e) => {
+						if (e.key === 'Enter') input.blur();
+					};
+				}
+			});
+			loadFromLocal();
+			bindEvents();
+			debouncedUpdate();
+		</script>
 </body>
 
 </html>
