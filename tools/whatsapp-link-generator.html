@@ -1,169 +1,624 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Advanced QR Code Generator</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>WhatsApp Link Creator · Modern Tool</title>
+  <!-- Google Fonts + Simple Icons (Feather via CDN for clean icons) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <!-- Font Awesome 6 (free icons) for better visual feedback -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    body { background: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
-    .container { margin-top: 40px; }
-    .card { border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    #qrCanvas { margin: 20px auto; display: block; border: 2px dashed #dee2e6; border-radius: 8px; background: #fff; }
-    #logoPreview { margin-top: 10px; max-width: 120px; max-height: 120px; border: 1px solid #dee2e6; border-radius: 8px; padding: 4px; background: #fff; }
-    .btn-custom { margin-top: 15px; width: 100%; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(145deg, #e0eafc 0%, #cfdef3 100%);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+      padding: 1.5rem;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* modern glassmorphic card */
+    .wa-card {
+      max-width: 680px;
+      width: 100%;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(0px);
+      border-radius: 2rem;
+      box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.02);
+      transition: all 0.2s ease;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.5);
+    }
+
+    /* header with brand */
+    .tool-header {
+      background: #075e54;
+      background: linear-gradient(135deg, #075e54 0%, #128c7e 100%);
+      padding: 1.5rem 2rem;
+      color: white;
+      text-align: center;
+    }
+
+    .tool-header h1 {
+      font-weight: 700;
+      font-size: 1.8rem;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .tool-header h1 i {
+      font-size: 2rem;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+    }
+
+    .tool-header p {
+      font-weight: 400;
+      font-size: 0.9rem;
+      opacity: 0.9;
+      margin-top: 8px;
+    }
+
+    /* form area */
+    .form-content {
+      padding: 2rem 2rem 1.8rem;
+    }
+
+    .input-group {
+      margin-bottom: 1.6rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .input-group label {
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #1f2e3a;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .input-group label i {
+      color: #25D366;
+      font-size: 1rem;
+      width: 20px;
+    }
+
+    .input-field {
+      background: #f9fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 1.2rem;
+      padding: 0.9rem 1.2rem;
+      font-size: 1rem;
+      font-family: 'Inter', monospace;
+      transition: all 0.2s;
+      width: 100%;
+      outline: none;
+      color: #0f172a;
+      font-weight: 500;
+    }
+
+    .input-field:focus {
+      border-color: #25D366;
+      box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.2);
+      background: white;
+    }
+
+    textarea.input-field {
+      resize: vertical;
+      min-height: 110px;
+      line-height: 1.5;
+    }
+
+    /* helper formatting tips */
+    .format-tips {
+      background: #f1f5f9;
+      border-radius: 1rem;
+      padding: 0.8rem 1rem;
+      margin: 0.5rem 0 1rem 0;
+      font-size: 0.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .badge-list {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      background: white;
+      border-radius: 40px;
+      padding: 0.2rem 0.7rem;
+      font-family: monospace;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #0f2b1d;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      border: 1px solid #cbd5e1;
+    }
+
+    .badge i {
+      margin-right: 4px;
+      font-size: 0.7rem;
+      color: #25D366;
+    }
+
+    .preview-link-section {
+      background: #fefce8;
+      border-radius: 1.2rem;
+      padding: 1rem 1.2rem;
+      margin: 1.2rem 0 1rem;
+      transition: all 0.2s;
+      border-left: 5px solid #25D366;
+    }
+
+    .preview-title {
+      font-weight: 600;
+      font-size: 0.8rem;
+      color: #3b4e3c;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .link-preview {
+      background: #ffffff;
+      border-radius: 1rem;
+      padding: 0.8rem 1rem;
+      word-break: break-all;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.85rem;
+      border: 1px solid #e9e9ef;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .link-preview a {
+      color: #075e54;
+      text-decoration: none;
+      font-weight: 500;
+      overflow-wrap: anywhere;
+      flex: 1;
+    }
+
+    .link-preview a:hover {
+      text-decoration: underline;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 1.2rem;
+    }
+
+    .btn {
+      border: none;
+      font-weight: 600;
+      padding: 0.9rem 1rem;
+      border-radius: 2rem;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex: 1 1 auto;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .btn-primary {
+      background: #25D366;
+      color: white;
+      box-shadow: 0 4px 8px rgba(37, 211, 102, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: #20b859;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(37, 211, 102, 0.35);
+    }
+
+    .btn-secondary {
+      background: #eef2ff;
+      color: #1e293b;
+      border: 1px solid #cbd5e1;
+    }
+
+    .btn-secondary:hover {
+      background: #e2e8f0;
+      transform: translateY(-1px);
+    }
+
+    .btn-wa {
+      background: #075e54;
+      color: white;
+    }
+
+    .btn-wa:hover {
+      background: #054a41;
+      transform: translateY(-2px);
+    }
+
+    .toast-msg {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) scale(0.95);
+      background: #1e293b;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+      background: rgba(0,0,0,0.8);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .toast-msg.show {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+
+    hr {
+      margin: 0.8rem 0;
+      border: none;
+      border-top: 1px solid #e2edf2;
+    }
+
+    /* Responsive */
+    @media (max-width: 560px) {
+      body {
+        padding: 0.8rem;
+      }
+      .form-content {
+        padding: 1.5rem;
+      }
+      .btn {
+        padding: 0.75rem 0.9rem;
+      }
+      .tool-header h1 {
+        font-size: 1.4rem;
+      }
+      .link-preview {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    /* subtle animation */
+    .fade-slide {
+      animation: fadeSlideUp 0.25s ease-out;
+    }
+
+    @keyframes fadeSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <h1 class="text-center mb-4">🎨 Free Advanced QR Code Generator</h1>
-  <div class="row">
-    
-    <!-- Left Column: Controls -->
-    <div class="col-md-6">
-      <div class="card p-4">
-        <div class="mb-3">
-          <label for="qrData" class="form-label fw-bold">QR Content</label>
-          <textarea class="form-control" id="qrData" rows="3" placeholder="Enter text or URL">Hello World</textarea>
-        </div>
+<div class="wa-card">
+  <div class="tool-header">
+    <h1>
+      <i class="fab fa-whatsapp"></i> 
+      WhatsApp Link Studio
+    </h1>
+    <p>Generate smart links · rich formatting · instant open & share</p>
+  </div>
 
-        <div class="mb-3">
-          <label for="qrSize" class="form-label fw-bold">Size (px)</label>
-          <input type="number" id="qrSize" class="form-control" value="300">
-        </div>
-
-        <div class="mb-3">
-          <label for="qrMargin" class="form-label fw-bold">Margin</label>
-          <input type="number" id="qrMargin" class="form-control" value="2">
-        </div>
-
-        <div class="row mb-3">
-          <div class="col">
-            <label for="foregroundColor" class="form-label fw-bold">Foreground</label>
-            <input type="color" id="foregroundColor" class="form-control form-control-color" value="#000000">
-          </div>
-          <div class="col">
-            <label for="backgroundColor" class="form-label fw-bold">Background</label>
-            <input type="color" id="backgroundColor" class="form-control form-control-color" value="#ffffff">
-          </div>
-        </div>
-
-        <div class="mb-3">
-          <label for="errorLevel" class="form-label fw-bold">Error Correction</label>
-          <select id="errorLevel" class="form-select">
-            <option value="L">L (Low)</option>
-            <option value="M">M (Medium)</option>
-            <option value="Q">Q (Quartile)</option>
-            <option value="H" selected>H (High)</option>
-          </select>
-        </div>
-
-        <div class="mb-3">
-          <label for="logoInput" class="form-label fw-bold">Upload Logo</label>
-          <input type="file" id="logoInput" class="form-control" accept="image/*">
-          <div class="text-center mt-3">
-            <img id="logoPreview" alt="Logo Preview" />
-																				
-          </div>
-        </div>
-
-        <div class="mb-3">
-          <label for="formatSelect" class="form-label fw-bold">Image Format</label>
-          <select id="formatSelect" class="form-select">
-            <option value="png" selected>PNG</option>
-            <option value="jpeg">JPEG</option>
-          </select>
-        </div>
-
-        <button id="generateBtn" class="btn btn-primary btn-custom">Generate QR</button>
-        <button id="downloadBtn" class="btn btn-success btn-custom" style="display: none;">Download QR Code</button>
+  <div class="form-content">
+    <div class="input-group">
+      <label><i class="fas fa-phone-alt"></i> Phone number (with country code)</label>
+      <input type="tel" id="phoneInput" class="input-field" placeholder="e.g. 919876543210 or 447911123456" value="919876543210">
+      <div class="format-tips" style="margin-top: 6px;">
+        <span><i class="fas fa-globe"></i> No plus sign needed · International format</span>
+        <span><i class="fas fa-check-circle" style="color:#25D366;"></i> Example: 1XXXXXXXXXX</span>
       </div>
     </div>
 
-    <!-- Right Column: Preview -->
-    <div class="col-md-6 text-center">
-      <div class="card p-4">
-        <h5 class="fw-bold">QR Code Preview</h5>
-        <canvas id="qrCanvas"></canvas>
+    <div class="input-group">
+      <label><i class="fas fa-comment-dots"></i> Your message</label>
+      <textarea id="messageInput" class="input-field" placeholder="Write your message here...  Use *bold*, _italic_, ~strikethrough~ for rich WhatsApp formatting.">Hello *friend*! Check out this amazing tool _customize_ your message. ~easy~</textarea>
+      <div class="format-tips">
+        <div class="badge-list">
+          <span class="badge"><i class="fas fa-asterisk"></i> *bold*</span>
+          <span class="badge"><i class="fas fa-underline"></i> _italic_</span>
+          <span class="badge"><i class="fas fa-strikethrough"></i> ~strikethrough~</span>
+          <span class="badge"><i class="fas fa-code"></i> ```code```</span>
+        </div>
+        <span><i class="fas fa-magic"></i> Preview link updates live</span>
       </div>
-					<a href='https://codepen.io/sknetking/pen/QwjbyBG' target='_blank'>Create Your whatsapp chat link for QR</a>
-					<img src="https://cdn.pixabay.com/photo/2015/08/03/13/58/whatsapp-873316_1280.png" alt="dowload logo"  width="64" height="64" title='For whatsapp link right click on it and save it.' > 
+    </div>
+
+    <!-- Live preview + generated link area (dynamic) -->
+    <div id="resultPanel" style="display: none;" class="preview-link-section fade-slide">
+      <div class="preview-title">
+        <i class="fas fa-link"></i> Generated WhatsApp link (ready to use)
+      </div>
+      <div class="link-preview" id="linkPreviewBox">
+        <a id="dynamicLink" href="#" target="_blank" rel="noopener noreferrer">https://wa.me/...</a>
+        <button id="copyLinkBtn" class="btn-secondary" style="padding: 0.5rem 1rem; border-radius: 2rem; background:#e9ecef; margin:0;">
+          <i class="far fa-copy"></i> Copy
+        </button>
+      </div>
+    </div>
+
+    <div class="action-buttons">
+      <button id="generateBtn" class="btn btn-primary">
+        <i class="fas fa-sync-alt"></i> Generate link
+      </button>
+      <button id="openWhatsAppBtn" class="btn btn-wa" style="background:#128C7E;">
+        <i class="fab fa-whatsapp"></i> Open chat
+      </button>
+    </div>
+    
+    <hr>
+    <div style="font-size: 0.7rem; text-align: center; color: #5a6e7a; margin-top: 0.5rem;">
+      <i class="fas fa-shield-alt"></i> No data stored · Instant link generation
     </div>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<!-- Toast notification -->
+<div id="toastMessage" class="toast-msg">✨ Link copied to clipboard</div>
+
 <script>
-  const qrDataInput = document.getElementById('qrData');
-  const qrSizeInput = document.getElementById('qrSize');
-  const qrMarginInput = document.getElementById('qrMargin');
-  const foregroundColorInput = document.getElementById('foregroundColor');
-  const backgroundColorInput = document.getElementById('backgroundColor');
-  const errorLevelInput = document.getElementById('errorLevel');
-  const logoInput = document.getElementById('logoInput');
-  const logoPreview = document.getElementById('logoPreview');
-  const generateBtn = document.getElementById('generateBtn');
-  const downloadBtn = document.getElementById('downloadBtn');
-  const qrCanvas = document.getElementById('qrCanvas');
-  const formatSelect = document.getElementById('formatSelect');
-
-  let logoImage = null;
-
-  // Logo preview
-  logoInput.addEventListener('change', (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        logoImage = new Image();
-        logoImage.src = reader.result;
-        logoPreview.src = reader.result;
-      };
-      reader.readAsDataURL(file);
-    }
-  });
-
-  // Generate QR
-  const generateQRCode = () => {
-    const qrData = qrDataInput.value || 'Sample QR Code';
-    const size = parseInt(qrSizeInput.value) || 300;
-    const margin = parseInt(qrMarginInput.value) || 2;
-    const foregroundColor = foregroundColorInput.value;
-    const backgroundColor = backgroundColorInput.value;
-    const errorLevel = errorLevelInput.value;
-
-    QRCode.toCanvas(qrCanvas, qrData, {
-      width: size,
-      margin: margin,
-      color: { dark: foregroundColor, light: backgroundColor },
-      errorCorrectionLevel: errorLevel,
-    }, (error) => {
-      if (error) {
-        console.error('Error generating QR Code:', error);
+  (function() {
+    // DOM elements
+    const phoneInput = document.getElementById('phoneInput');
+    const messageInput = document.getElementById('messageInput');
+    const generateBtn = document.getElementById('generateBtn');
+    const openWhatsAppBtn = document.getElementById('openWhatsAppBtn');
+    const resultPanel = document.getElementById('resultPanel');
+    const dynamicLinkAnchor = document.getElementById('dynamicLink');
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
+    
+    // Helper: show toast
+    function showToast(text, isError = false) {
+      const toast = document.getElementById('toastMessage');
+      toast.textContent = text || (isError ? '⚠️ Something went wrong' : '✓ Copied!');
+      if (isError) {
+        toast.style.background = 'rgba(180, 50, 50, 0.9)';
       } else {
-        if (logoImage) {
-          const ctx = qrCanvas.getContext('2d');
-          const logoSize = qrCanvas.width * 0.2;
-          const x = (qrCanvas.width - logoSize) / 2;
-          const y = (qrCanvas.height - logoSize) / 2;
-          ctx.drawImage(logoImage, x, y, logoSize, logoSize);
-        }
-        downloadBtn.style.display = 'block';
+        toast.style.background = 'rgba(0,0,0,0.85)';
       }
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+        // reset bg style after hide
+        setTimeout(() => {
+          toast.style.background = 'rgba(0,0,0,0.8)';
+        }, 200);
+      }, 2200);
+    }
+    
+    // core: generate link from current inputs
+    function generateLinkObject() {
+      let phone = phoneInput.value.trim();
+      let rawMessage = messageInput.value;
+      
+      // Clean phone: remove any non-digit except + but we want only digits (no plus sign)
+      // allow plus? according to wa.me spec, we can have plus but better to sanitize digits only + optional plus?
+      // we will keep only digits (0-9) and optionally allow a leading plus if user typed but we remove it.
+      let cleanedPhone = phone.replace(/\s/g, '');
+      // if starts with '+', remove the plus and keep digits
+      if (cleanedPhone.startsWith('+')) {
+        cleanedPhone = cleanedPhone.substring(1);
+      }
+      // keep only digits
+      cleanedPhone = cleanedPhone.replace(/\D/g, '');
+      
+      if (cleanedPhone === '') {
+        showToast('📞 Please enter a valid phone number (digits only)', true);
+        return null;
+      }
+      
+      // optional: if message empty, treat as empty string (allowed)
+      const finalMessage = rawMessage || '';
+      // encodeURIComponent for full compatibility
+      const encodedMsg = encodeURIComponent(finalMessage);
+      const waLink = `https://wa.me/${cleanedPhone}${finalMessage ? '?text=' + encodedMsg : ''}`;
+      return { link: waLink, phoneValid: cleanedPhone, hasMessage: finalMessage !== '' };
+    }
+    
+    // update UI: show result panel & fill link
+    function updateGeneratedUI() {
+      const generated = generateLinkObject();
+      if (!generated) {
+        // hide panel if invalid phone
+        resultPanel.style.display = 'none';
+        return false;
+      }
+      // set link
+      dynamicLinkAnchor.href = generated.link;
+      dynamicLinkAnchor.textContent = generated.link;
+      resultPanel.style.display = 'block';
+      // add little fade class again (optional)
+      resultPanel.classList.remove('fade-slide');
+      void resultPanel.offsetWidth; // reflow
+      resultPanel.classList.add('fade-slide');
+      return true;
+    }
+    
+    // copy link to clipboard
+    async function copyCurrentLink() {
+      const generated = generateLinkObject();
+      if (!generated) {
+        showToast('⚠️ Invalid phone number, cannot copy', true);
+        return;
+      }
+      const linkToCopy = generated.link;
+      try {
+        await navigator.clipboard.writeText(linkToCopy);
+        showToast('🔗 WhatsApp link copied! Ready to share');
+      } catch (err) {
+        console.error(err);
+        // fallback
+        const textarea = document.createElement('textarea');
+        textarea.value = linkToCopy;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast('📋 Link copied (fallback)', false);
+      }
+    }
+    
+    // open WhatsApp (mobile/desktop compatible)
+    function openWhatsAppChat() {
+      const generated = generateLinkObject();
+      if (!generated) {
+        showToast('❌ Please fix phone number before opening chat', true);
+        return;
+      }
+      const link = generated.link;
+      // For desktop web.whatsapp.com vs wa.me, wa.me works universally
+      // open in new tab for better ux
+      window.open(link, '_blank', 'noopener,noreferrer');
+      showToast('🚀 Opening WhatsApp...');
+    }
+    
+    // live update: any change to phone/message will auto-refresh the link preview (if panel visible)
+    // but we also maintain user's request to regenerate on demand. but modern UX: live update!
+    function autoRefreshPreview() {
+      const isPanelVisible = resultPanel.style.display === 'block';
+      if (isPanelVisible) {
+        const valid = updateGeneratedUI();
+        if (!valid) {
+          // if phone became invalid, hide panel
+          resultPanel.style.display = 'none';
+        }
+      }
+    }
+    
+    // generate button behavior (force show panel and update)
+    function onGenerateClick() {
+      const valid = updateGeneratedUI();
+      if (valid) {
+        showToast('✅ Link generated', false);
+        // also set focus maybe
+      } else {
+        showToast('⚠️ Enter a valid phone number (digits only)', true);
+      }
+    }
+    
+    // Event listeners for live sync when inputs change if the panel is already visible.
+    // Better UX: automatically update the link preview after any modification
+    function setupLiveSync() {
+      phoneInput.addEventListener('input', () => {
+        autoRefreshPreview();
+      });
+      messageInput.addEventListener('input', () => {
+        autoRefreshPreview();
+      });
+    }
+    
+    // handle copy from dedicated copy button in preview
+    copyLinkBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      copyCurrentLink();
     });
-  };
-
-  // Generate button
-  generateBtn.addEventListener('click', generateQRCode);
-
-  // Download button
-  downloadBtn.addEventListener('click', () => {
-    const format = formatSelect.value;
-    const link = document.createElement('a');
-    link.download = `qrcode_with_logo.${format}`;
-    link.href = qrCanvas.toDataURL(`image/${format}`);
-    link.click();
-  });
+    
+    generateBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      onGenerateClick();
+    });
+    
+    openWhatsAppBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openWhatsAppChat();
+    });
+    
+    // initially generate a default preview (prefill demo values) but only if phone valid
+    // set default demo phone: 919876543210 (already in input) and message prefilled.
+    // show preview panel by default? great for first-time user.
+    function initDefaultPreview() {
+      // Prefill demo phone & message (already set in HTML value)
+      // Ensure phone is cleaned for demo: existing value 919876543210
+      const initialValid = generateLinkObject();
+      if (initialValid) {
+        resultPanel.style.display = 'block';
+        dynamicLinkAnchor.href = initialValid.link;
+        dynamicLinkAnchor.textContent = initialValid.link;
+      } else {
+        resultPanel.style.display = 'none';
+      }
+    }
+    
+    // Additional: realtime validation for phone field style
+    function validatePhoneStyle() {
+      const phone = phoneInput.value.trim();
+      let cleaned = phone.replace(/\s/g, '');
+      if (cleaned.startsWith('+')) cleaned = cleaned.substring(1);
+      const digitsOnly = cleaned.replace(/\D/g, '');
+      if (digitsOnly.length < 6 && digitsOnly.length > 0) {
+        phoneInput.style.borderColor = "#f59e0b";
+      } else if (digitsOnly.length === 0) {
+        phoneInput.style.borderColor = "#e2e8f0";
+      } else {
+        phoneInput.style.borderColor = "#25D366";
+      }
+    }
+    
+    phoneInput.addEventListener('input', validatePhoneStyle);
+    messageInput.addEventListener('input', () => {
+      // subtle: no extra style
+    });
+    
+    setupLiveSync();
+    initDefaultPreview();
+    validatePhoneStyle();
+    
+    // if the user manually clicks copy on link preview - handle gracefully
+    // also double-check that empty message is okay
+    // edge: open whatsapp button will use the same generator, ensure it uses current phone/message
+    
+    // Bonus: extra formatting tip: help user understand markdown-like syntax.
+    // Also make sure we prevent accidental double encoding (encodeURIComponent is safe).
+    // Additionally, provide more robust numeric handling: allow plus input but remove plus.
+    // Edge: if phone has letters, we ignore them.
+    // finally, modernize the copy: show "link ready" 
+    // final enhancement: responsive, accessibility
+  })();
 </script>
-
 </body>
 </html>
