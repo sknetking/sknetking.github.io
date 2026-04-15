@@ -1,0 +1,847 @@
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+	<title>PaintMaster Pro · Professional Painting Cost Calculator</title>
+	<!-- Google Fonts + Font Awesome + html2canvas for PDF -->
+	<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link rel="stylesheet" href="assets/main.css">
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			background: linear-gradient(145deg, #e9eef3 0%, #dce3ec 100%);
+			font-family: 'Inter', system-ui, -apple-system, sans-serif;
+			padding: 1rem;
+			min-height: 100vh;
+		}
+
+		.container {
+			max-width: 1400px;
+			margin: 0 auto;
+		}
+
+		.header {
+			text-align: center;
+			margin-bottom: 1.5rem;
+		}
+
+		.header h1 {
+			font-weight: 800;
+			font-size: 1.8rem;
+			background: linear-gradient(135deg, #1e3c2c, #2b7a4b);
+			-webkit-background-clip: text;
+			background-clip: text;
+			color: transparent;
+		}
+
+		.currency-badge {
+			background: #ffd966;
+			color: #1e3c2c;
+			padding: 0.2rem 0.8rem;
+			border-radius: 2rem;
+			font-size: 0.7rem;
+			font-weight: 700;
+			display: inline-block;
+			margin-left: 0.5rem;
+		}
+
+		/* Main Grid */
+		.dashboard {
+			display: grid;
+			grid-template-columns: 1fr 400px;
+			gap: 1.5rem;
+		}
+
+		@media (max-width: 950px) {
+			.dashboard {
+				grid-template-columns: 1fr;
+			}
+		}
+
+		/* Cards */
+		.card {
+			background: rgba(255, 255, 255, 0.97);
+			border-radius: 1.5rem;
+			box-shadow: 0 15px 35px -12px rgba(0, 0, 0, 0.15);
+			overflow: hidden;
+		}
+
+		.card-header {
+			background: #fff;
+			padding: 1rem 1.5rem;
+			border-bottom: 2px solid #eef2f8;
+			font-weight: 700;
+			display: flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.card-header i {
+			color: #2b7a4b;
+		}
+
+		.card-body {
+			padding: 1.5rem;
+		}
+
+		/* Rooms */
+		.rooms-container {
+			max-height: 450px;
+			overflow-y: auto;
+			display: flex;
+			flex-direction: column;
+			gap: 1rem;
+		}
+
+		.room-item {
+			background: #f9fbfd;
+			border-radius: 1rem;
+			padding: 1rem;
+			border: 1px solid #e2edf2;
+		}
+
+		.room-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 0.8rem;
+			flex-wrap: wrap;
+		}
+
+		.room-name {
+			font-weight: 700;
+			background: #eef2fa;
+			padding: 0.2rem 0.8rem;
+			border-radius: 2rem;
+			font-size: 0.8rem;
+			cursor: pointer;
+		}
+
+		.room-dimensions {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 0.8rem;
+			margin-bottom: 0.8rem;
+		}
+
+		.dim-input {
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+		}
+
+		.dim-input label {
+			font-size: 0.7rem;
+			font-weight: 600;
+			color: #4a627a;
+		}
+
+		.dim-input input {
+			padding: 0.5rem;
+			border-radius: 0.8rem;
+			border: 1.5px solid #e2e8f0;
+			font-family: inherit;
+		}
+
+		.door-window-row {
+			display: flex;
+			gap: 0.8rem;
+			margin-top: 0.5rem;
+		}
+
+		.door-window-row input {
+			flex: 1;
+			padding: 0.4rem;
+			border-radius: 0.8rem;
+			border: 1.5px solid #e2e8f0;
+			font-size: 0.8rem;
+		}
+
+		.remove-room {
+			background: none;
+			border: none;
+			color: #c00e3a;
+			cursor: pointer;
+			padding: 0.3rem 0.8rem;
+			border-radius: 2rem;
+		}
+
+		.btn-add {
+			background: #ecfdf5;
+			border: 2px dashed #2b7a4b;
+			border-radius: 2rem;
+			padding: 0.7rem;
+			font-weight: 600;
+			color: #1e5e3a;
+			width: 100%;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 8px;
+			margin-top: 1rem;
+		}
+
+		/* Settings */
+		.settings-grid {
+			display: flex;
+			flex-direction: column;
+			gap: 1rem;
+		}
+
+		.setting-row {
+			display: flex;
+			flex-direction: column;
+			gap: 6px;
+		}
+
+		.setting-row label {
+			font-weight: 600;
+			font-size: 0.85rem;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		select,
+		input {
+			padding: 0.6rem 1rem;
+			border-radius: 1rem;
+			border: 1.5px solid #e2e8f0;
+			background: white;
+		}
+
+		.checkbox-group {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			flex-wrap: wrap;
+			margin-top: 0.25rem;
+		}
+
+		.checkbox-item {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			background: #f1f5f9;
+			padding: 0.4rem 1rem;
+			border-radius: 2rem;
+		}
+
+		.preset-buttons {
+			display: flex;
+			gap: 0.5rem;
+			margin-bottom: 1rem;
+			flex-wrap: wrap;
+		}
+
+		.preset-btn {
+			background: #eef2ff;
+			border: none;
+			border-radius: 2rem;
+			padding: 0.4rem 1rem;
+			font-size: 0.75rem;
+			font-weight: 600;
+			cursor: pointer;
+			transition: 0.2s;
+		}
+
+		.preset-btn:hover {
+			background: #2b7a4b;
+			color: white;
+		}
+
+		/* Result Panel Sticky on Mobile */
+		.result-card {
+			background: linear-gradient(135deg, #1e3c2c, #1f543b);
+			color: white;
+			/*position: sticky;*/
+			top: 1rem;
+		}
+
+		@media (max-width: 950px) {
+			.result-card {
+				margin-top: 1rem;
+			}
+		}
+
+		.budget-breakdown {
+			display: flex;
+			flex-direction: column;
+			gap: 0.8rem;
+		}
+
+		.budget-line {
+			display: flex;
+			justify-content: space-between;
+			padding: 0.5rem 0;
+			border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+			font-size: 0.9rem;
+		}
+
+		.budget-total {
+			font-size: 1.8rem;
+			font-weight: 800;
+			text-align: center;
+			background: #ffd96620;
+			border-radius: 1rem;
+			padding: 0.8rem;
+			margin-top: 0.5rem;
+		}
+
+		.per-sqft-rate {
+			font-size: 0.8rem;
+			text-align: center;
+			margin-top: 0.5rem;
+			opacity: 0.9;
+		}
+
+		.action-buttons {
+			display: flex;
+			gap: 0.8rem;
+			margin-top: 1rem;
+			flex-wrap: wrap;
+		}
+
+		.btn {
+			flex: 1;
+			padding: 0.6rem;
+			border-radius: 2rem;
+			border: none;
+			font-weight: 600;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 6px;
+			transition: 0.2s;
+		}
+
+		.btn-primary {
+			background: #25D366;
+			color: white;
+		}
+
+		.btn-secondary {
+			background: #ffd966;
+			color: #1e3c2c;
+		}
+
+		.btn-outline {
+			background: transparent;
+			border: 1px solid white;
+			color: white;
+		}
+
+		/* Lead Form */
+		.lead-form {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 0.8rem;
+			margin-top: 1rem;
+		}
+
+		.lead-form input {
+			padding: 0.6rem;
+			border-radius: 2rem;
+			border: none;
+			font-family: inherit;
+		}
+
+		.lead-form button {
+			grid-column: span 2;
+			background: #ffd966;
+			color: #1e3c2c;
+			border: none;
+			border-radius: 2rem;
+			padding: 0.7rem;
+			font-weight: 700;
+			cursor: pointer;
+		}
+
+		.small-note {
+			font-size: 0.7rem;
+			opacity: 0.8;
+			text-align: center;
+			margin-top: 0.8rem;
+		}
+
+		hr {
+			margin: 0.5rem 0;
+			border-color: #e2edf2;
+		}
+
+		.toast-msg {
+			position: fixed;
+			bottom: 20px;
+			left: 50%;
+			transform: translateX(-50%);
+			background: #1e293b;
+			color: white;
+			padding: 10px 20px;
+			border-radius: 50px;
+			font-size: 0.8rem;
+			opacity: 0;
+			transition: 0.2s;
+			pointer-events: none;
+			z-index: 1000;
+		}
+
+		.toast-msg.show {
+			opacity: 1;
+		}
+	</style>
+</head>
+
+<body>
+  <nav class="navbar" style="background: rgba(255, 255, 255, 0.95); box-shadow: rgba(0, 0, 0, 0.1) 0px 2px 10px;">
+        <div class="container">
+            <a href="#" class="logo">SpeedBrush</a>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#portfolio">Portfolio</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+  
+	<div class="container">
+		<div class="header">
+			<h1><i class="fas fa-paint-roller"></i> PaintMaster Pro <span class="currency-badge"><i class="fas fa-rupee-sign"></i> INR</span></h1>
+		</div>
+		<div class="dashboard">
+			<!-- Left Column -->
+			<div class="card">
+				<div class="card-header"><i class="fas fa-door-open"></i> Rooms & Dimensions</div>
+				<div class="card-body">
+					<div class="preset-buttons"><button class="preset-btn" data-preset="1bhk">🏠 1 BHK</button><button class="preset-btn" data-preset="2bhk">🏢 2 BHK</button><button class="preset-btn" data-preset="3bhk">🏘️ 3 BHK</button></div>
+					<div id="roomsList" class="rooms-container"></div>
+					<button id="addRoomBtn" class="btn-add"><i class="fas fa-plus-circle"></i> Add New Room</button>
+					<div class="small-note mt-2"><i class="fas fa-ruler"></i> Each room: W×L×H (ft). Doors/Windows reduce area by ~20 sq ft each.</div>
+				</div>
+			</div>
+			<!-- Right Column -->
+			<div style="display: flex; flex-direction: column; gap: 1.5rem;">
+				<div class="card">
+					<div class="card-header"><i class="fas fa-sliders-h"></i> Paint & Contractor Settings</div>
+					<div class="card-body">
+						<div class="settings-grid">
+							<div class="setting-row"><label><i class="fas fa-palette"></i> Paint Quality</label><select id="paintQuality">
+									<option value="22">Economy · ₹22/sq ft</option>
+									<option value="35" selected>Standard · ₹35/sq ft</option>
+									<option value="52">Premium · ₹52/sq ft</option>
+									<option value="78">Luxury · ₹78/sq ft</option>
+								</select></div>
+							<div class="setting-row">
+								<div class="checkbox-item"><input type="checkbox" id="ceilingCheckbox"><label>Paint Ceiling (+₹18/sq ft)</label></div>
+							</div>
+							<div class="setting-row">
+								<div class="checkbox-item"><input type="checkbox" id="puttyCheckbox"><label>Wall Putty (+₹12/sq ft)</label></div>
+							</div>
+							<div class="setting-row">
+								<div class="checkbox-item"><input type="checkbox" id="primerCheckbox" checked><label>Primer (+₹8/sq ft)</label></div>
+							</div>
+							<div class="setting-row"><label><i class="fas fa-brush"></i> Labor Rate (₹/sq ft)</label><input type="number" id="laborRate" value="28" step="2"></div>
+							<div class="setting-row"><label><i class="fas fa-layer-group"></i> Paint Coats</label><select id="coatsCount">
+									<option value="1">1 coat</option>
+									<option value="2" selected>2 coats</option>
+									<option value="3">3 coats</option>
+								</select></div>
+							<div class="setting-row"><label><i class="fas fa-chart-line"></i> Profit Margin (%)</label><input type="number" id="profitMargin" value="15" step="1"></div>
+							<div class="setting-row">
+								<div class="checkbox-item"><input type="checkbox" id="gstCheckbox"><label>GST 18%</label></div>
+							</div>
+							<div class="setting-row"><label><i class="fas fa-tag"></i> Discount (₹)</label><input type="number" id="discountAmount" value="0" step="500"></div>
+							<div class="setting-row"><label><i class="fas fa-tools"></i> Additional Fees</label><input type="number" id="extraFees" value="0" step="500"></div>
+						</div>
+					</div>
+				</div>
+				<!-- Result Panel -->
+				<div class="card result-card" id="resultCard">
+					<div class="card-header"><i class="fas fa-calculator"></i> Cost Breakdown <i class="fas fa-rupee-sign"></i></div>
+					<div class="card-body">
+						<div class="budget-breakdown" id="budgetDetails">
+							<div class="budget-line"><span>📐 Total Wall Area:</span><span id="totalArea">0 sq ft</span></div>
+							<div class="budget-line"><span>🎨 Paint Cost:</span><span id="paintCost">₹0</span></div>
+							<div class="budget-line"><span>🧴 Primer + Putty + Ceiling:</span><span id="surfacePrepCost">₹0</span></div>
+							<div class="budget-line"><span>👷 Labor Cost:</span><span id="laborCost">₹0</span></div>
+							<div class="budget-line"><span>📦 Subtotal:</span><span id="subtotal">₹0</span></div>
+							<div class="budget-line"><span>💼 Profit (<span id="profitPercent">15</span>%):</span><span id="profitAmount">₹0</span></div>
+							<div class="budget-line"><span>🧾 GST (18%):</span><span id="gstAmount">₹0</span></div>
+							<div class="budget-line"><span>🎁 Discount:</span><span id="discountAmountDisplay">₹0</span></div>
+							<div class="budget-line"><span>🔧 Extra Fees:</span><span id="extraFeesDisplay">₹0</span></div>
+							<hr>
+							<div class="budget-total" id="totalBudget">₹0.00</div>
+							<div class="per-sqft-rate" id="perSqftRate">⭐ Final rate: ₹0 / sq ft</div>
+						</div>
+						<div class="action-buttons"><button id="downloadPDFBtn" class="btn btn-secondary"><i class="fas fa-file-pdf"></i> PDF Quote</button><button id="shareWhatsAppBtn" class="btn btn-primary"><i class="fab fa-whatsapp"></i> Share</button></div>
+					</div>
+				</div>
+				<!-- Lead Generation -->
+				<div class="card">
+					<div class="card-header"><i class="fas fa-user-plus"></i> Get Exact Quote</div>
+					<div class="card-body">
+						<a href='https://wa.me/917398113232?text=Hello%20Shyam%2C%0AI%20need%20a%20quote%20about%20my%20home%20painting.' id="shareWhatsAppBtn" class="btn btn-primary"><i class="fab fa-whatsapp"></i>Get a Quote</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="toastMsg" class="toast-msg">✓ Action completed</div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-col">
+                    <h3>SpeedBrush</h3>
+                    <p>Professional painting services with speed and precision.</p>
+
+                </div>
+                <div class="footer-col">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#portfolio">Portfolio</a></li>
+                        <li><a href="#pricing">Pricing</a></li>
+                        <li><a href="#about">About</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h3>Legal</h3>
+                    <ul>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                        <li><a href="#">Shipping Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>© 2025 SpeedBrush. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    <script src="assets/custom.js"></script>
+	<script>
+		// ---------- STATE ----------
+		let rooms = [];
+		let nextRoomId = 1;
+		let updateTimeout = null;
+		// DOM elements
+		const roomsContainer = document.getElementById('roomsList');
+		const addRoomBtn = document.getElementById('addRoomBtn');
+		const paintQuality = document.getElementById('paintQuality');
+		const ceilingCheckbox = document.getElementById('ceilingCheckbox');
+		const puttyCheckbox = document.getElementById('puttyCheckbox');
+		const primerCheckbox = document.getElementById('primerCheckbox');
+		const laborRateInput = document.getElementById('laborRate');
+		const coatsSelect = document.getElementById('coatsCount');
+		const profitMarginInput = document.getElementById('profitMargin');
+		const gstCheckbox = document.getElementById('gstCheckbox');
+		const discountAmountInput = document.getElementById('discountAmount');
+		const extraFeesInput = document.getElementById('extraFees');
+		// Helper: format INR
+		function formatINR(amount) {
+			return '₹' + Math.round(amount).toLocaleString('en-IN');
+		}
+		// Calculate net paintable area per room (wall area - doors/windows deduction)
+		function calculateRoomPaintableArea(room) {
+			const w = parseFloat(room.width) || 0,
+				l = parseFloat(room.length) || 0,
+				h = parseFloat(room.height) || 0;
+			if (w <= 0 || l <= 0 || h <= 0) return 0;
+			const wallArea = 2 * (w + l) * h;
+			const doors = parseFloat(room.doors) || 0;
+			const windows = parseFloat(room.windows) || 0;
+			const deduction = (doors * 20) + (windows * 15); // standard deduction per door/window
+			return Math.max(0, wallArea - deduction);
+		}
+
+		function getTotalPaintableArea() {
+			return rooms.reduce((sum, r) => sum + calculateRoomPaintableArea(r), 0);
+		}
+
+		function getTotalCeilingArea() {
+			return rooms.reduce((sum, r) => sum + ((parseFloat(r.width) || 0) * (parseFloat(r.length) || 0)), 0);
+		}
+		// Core calculation
+		function calculateAll() {
+			const wallArea = getTotalPaintableArea();
+			const ceilingArea = ceilingCheckbox.checked ? getTotalCeilingArea() : 0;
+			const totalArea = wallArea + ceilingArea;
+			const paintRate = parseFloat(paintQuality.value);
+			const coats = parseInt(coatsSelect.value);
+			const laborRate = parseFloat(laborRateInput.value) || 0;
+			const includePutty = puttyCheckbox.checked;
+			const includePrimer = primerCheckbox.checked;
+			const includeCeiling = ceilingCheckbox.checked;
+			let paintCost = totalArea * paintRate * coats;
+			let primerCost = includePrimer ? wallArea * 8 : 0;
+			let puttyCost = includePutty ? wallArea * 12 : 0;
+			let ceilingPrepCost = includeCeiling ? ceilingArea * 18 : 0; // ceiling paint extra
+			let surfacePrepCost = primerCost + puttyCost + ceilingPrepCost;
+			let laborCost = totalArea * laborRate;
+			let subtotal = paintCost + surfacePrepCost + laborCost;
+			// Contractor mode
+			let profitPercent = parseFloat(profitMarginInput.value) || 0;
+			let profitAmount = subtotal * (profitPercent / 100);
+			let afterProfit = subtotal + profitAmount;
+			let gstAmount = gstCheckbox.checked ? afterProfit * 0.18 : 0;
+			let discount = parseFloat(discountAmountInput.value) || 0;
+			let extraFees = parseFloat(extraFeesInput.value) || 0;
+			let finalTotal = afterProfit + gstAmount + extraFees - discount;
+			finalTotal = Math.max(0, finalTotal);
+			// Update UI
+			document.getElementById('totalArea').innerText = totalArea.toFixed(1) + ' sq ft';
+			document.getElementById('paintCost').innerHTML = formatINR(paintCost);
+			document.getElementById('surfacePrepCost').innerHTML = formatINR(surfacePrepCost);
+			document.getElementById('laborCost').innerHTML = formatINR(laborCost);
+			document.getElementById('subtotal').innerHTML = formatINR(subtotal);
+			document.getElementById('profitPercent').innerText = profitPercent;
+			document.getElementById('profitAmount').innerHTML = formatINR(profitAmount);
+			document.getElementById('gstAmount').innerHTML = gstCheckbox.checked ? formatINR(gstAmount) : '₹0';
+			document.getElementById('discountAmountDisplay').innerHTML = formatINR(discount);
+			document.getElementById('extraFeesDisplay').innerHTML = formatINR(extraFees);
+			document.getElementById('totalBudget').innerHTML = formatINR(finalTotal);
+			const perSqft = totalArea > 0 ? finalTotal / totalArea : 0;
+			document.getElementById('perSqftRate').innerHTML = `⭐ Final rate: ${formatINR(perSqft)} / sq ft`;
+			return {
+				finalTotal,
+				totalArea,
+				perSqft
+			};
+		}
+
+		function debouncedUpdate() {
+			if (updateTimeout) clearTimeout(updateTimeout);
+			updateTimeout = setTimeout(() => calculateAll(), 100);
+		}
+		// Room Rendering
+		function renderRooms() {
+			roomsContainer.innerHTML = '';
+			if (rooms.length === 0) {
+				roomsContainer.innerHTML = '<div class="text-muted text-center p-4"><i class="fas fa-home"></i> No rooms added</div>';
+				return;
+			}
+			rooms.forEach(room => {
+				const div = document.createElement('div');
+				div.className = 'room-item';
+				div.dataset.id = room.id;
+				div.innerHTML = `<div class="room-header"><span class="room-name"><i class="fas fa-arrows-alt"></i> ${escapeHtml(room.name)}</span><button class="remove-room" data-id="${room.id}"><i class="fas fa-trash-alt"></i></button></div>
+        <div class="room-dimensions"><div class="dim-input"><label>Width(ft)</label><input type="number" step="0.5" class="room-width" value="${room.width}"></div>
+        <div class="dim-input"><label>Length(ft)</label><input type="number" step="0.5" class="room-length" value="${room.length}"></div>
+        <div class="dim-input"><label>Height(ft)</label><input type="number" step="0.5" class="room-height" value="${room.height}"></div></div>
+        <div class="door-window-row"><input type="number" step="1" class="room-doors" placeholder="🚪 Doors (count)" value="${room.doors || 0}"><input type="number" step="1" class="room-windows" placeholder="🪟 Windows (count)" value="${room.windows || 0}"></div>`;
+				div.querySelector('.room-width').addEventListener('input', (e) => {
+					room.width = e.target.value;
+					debouncedUpdate();
+					saveToLocal();
+				});
+				div.querySelector('.room-length').addEventListener('input', (e) => {
+					room.length = e.target.value;
+					debouncedUpdate();
+					saveToLocal();
+				});
+				div.querySelector('.room-height').addEventListener('input', (e) => {
+					room.height = e.target.value;
+					debouncedUpdate();
+					saveToLocal();
+				});
+				div.querySelector('.room-doors').addEventListener('input', (e) => {
+					room.doors = e.target.value;
+					debouncedUpdate();
+					saveToLocal();
+				});
+				div.querySelector('.room-windows').addEventListener('input', (e) => {
+					room.windows = e.target.value;
+					debouncedUpdate();
+					saveToLocal();
+				});
+				div.querySelector('.remove-room').addEventListener('click', () => {
+					rooms = rooms.filter(r => r.id !== room.id);
+					renderRooms();
+					debouncedUpdate();
+					saveToLocal();
+				});
+				roomsContainer.appendChild(div);
+			});
+			debouncedUpdate();
+		}
+
+		function addRoom(name = 'New Room', width = 12, length = 12, height = 8, doors = 0, windows = 0) {
+			rooms.push({
+				id: nextRoomId++,
+				name,
+				width,
+				length,
+				height,
+				doors,
+				windows
+			});
+			renderRooms();
+			saveToLocal();
+		}
+
+		function escapeHtml(str) {
+			return str.replace(/[&<>]/g, function(m) {
+				if (m === '&') return '&amp;';
+				if (m === '<') return '&lt;';
+				if (m === '>') return '&gt;';
+				return m;
+			});
+		}
+		// Presets
+		function setPreset(type) {
+			rooms = [];
+			nextRoomId = 1;
+			if (type === '1bhk') {
+				addRoom('Bedroom', 12, 13, 9, 1, 1);
+				addRoom('Living', 12, 14, 9, 1, 1);
+			} else if (type === '2bhk') {
+  addRoom('Master Bedroom', 14, 16, 9, 1, 1);
+  addRoom('Bedroom 2', 12, 14, 9, 1, 1);
+  addRoom('Living Room', 16, 18, 9, 1, 2);
+  addRoom('Kitchen', 10, 12, 8, 1, 1);
+  addRoom('Hall Passage', 6, 10, 9, 0, 0);
+} else if (type === '3bhk') {
+				addRoom('Master Bedroom', 15, 16, 9, 1, 1);
+				addRoom('Bedroom 2', 13, 14, 9, 1, 1);
+				addRoom('Bedroom 3', 12, 13, 9, 1, 1);
+				addRoom('Living', 18, 16, 9, 1, 2);
+				addRoom('Kitchen', 12, 12, 8, 1, 0);
+			}
+			renderRooms();
+		}
+		// LocalStorage
+		function saveToLocal() {
+			localStorage.setItem('paintMasterRooms', JSON.stringify(rooms));
+		}
+
+		function loadFromLocal() {
+			const saved = localStorage.getItem('paintMasterRooms');
+			if (saved) {
+				rooms = JSON.parse(saved);
+				nextRoomId = Math.max(0, ...rooms.map(r => r.id), 0) + 1;
+				renderRooms();
+			} else {
+				setPreset('2bhk');
+			}
+		}
+		// PDF Quote
+		async function downloadPDF() {
+			const element = document.getElementById('resultCard');
+			const originalWidth = element.style.width;
+			element.style.width = '400px';
+			const canvas = await html2canvas(element, {
+				scale: 2,
+				backgroundColor: '#1e3c2c'
+			});
+			element.style.width = originalWidth;
+			const link = document.createElement('a');
+			link.download = 'PaintQuote.png';
+			link.href = canvas.toDataURL();
+			link.click();
+			showToast('Quote image saved');
+		}
+
+		function shareWhatsApp() {
+			const total = document.getElementById('totalBudget').innerText;
+			const msg = `🏠 *PaintMaster Quote*\nTotal Area: ${document.getElementById('totalArea').innerText}\nFinal Price: ${total}\nPer Sq Ft: ${document.getElementById('perSqftRate').innerText}\n\nGet professional painting service!`;
+			window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+		}
+
+		function showToast(msg) {
+			const t = document.getElementById('toastMsg');
+			t.innerText = msg;
+			t.classList.add('show');
+			setTimeout(() => t.classList.remove('show'), 2500);
+		}
+		// Lead Generation
+		function submitLead() {
+			const name = document.getElementById('leadName').value.trim();
+			const phone = document.getElementById('leadPhone').value.trim();
+			const city = document.getElementById('leadCity').value.trim();
+			if (!name || !phone) {
+				showToast('Please enter name and phone');
+				return;
+			}
+			const leadData = {
+				name,
+				phone,
+				city,
+				rooms,
+				totalBudget: document.getElementById('totalBudget').innerText,
+				timestamp: new Date().toISOString()
+			};
+			console.log('API Payload:', leadData);
+			// Simulate API call
+			showToast(`Thank you ${name}! Our team will contact you shortly.`);
+			// Clear form
+			document.getElementById('leadName').value = '';
+			document.getElementById('leadPhone').value = '';
+			document.getElementById('leadCity').value = '';
+			// In production: fetch('/api/leads', { method: 'POST', body: JSON.stringify(leadData) })
+		}
+		// Event bindings
+		function bindEvents() {
+			document.querySelectorAll('.preset-btn').forEach(btn => btn.addEventListener('click', (e) => setPreset(e.target.dataset.preset)));
+			addRoomBtn.addEventListener('click', () => addRoom(`Room ${rooms.length+1}`, 12, 12, 8, 0, 0));
+			paintQuality.addEventListener('input', debouncedUpdate);
+			ceilingCheckbox.addEventListener('change', debouncedUpdate);
+			puttyCheckbox.addEventListener('change', debouncedUpdate);
+			primerCheckbox.addEventListener('change', debouncedUpdate);
+			laborRateInput.addEventListener('input', debouncedUpdate);
+			coatsSelect.addEventListener('change', debouncedUpdate);
+			profitMarginInput.addEventListener('input', debouncedUpdate);
+			gstCheckbox.addEventListener('change', debouncedUpdate);
+			discountAmountInput.addEventListener('input', debouncedUpdate);
+			extraFeesInput.addEventListener('input', debouncedUpdate);
+			document.getElementById('downloadPDFBtn').addEventListener('click', downloadPDF);
+			document.getElementById('shareWhatsAppBtn').addEventListener('click', shareWhatsApp);
+			document.getElementById('getQuoteBtn').addEventListener('click', submitLead);
+		}
+		// Room rename double-click
+		document.addEventListener('dblclick', (e) => {
+			const span = e.target.closest('.room-name');
+			if (!span) return;
+			const roomDiv = span.closest('.room-item');
+			const id = parseInt(roomDiv.dataset.id);
+			const room = rooms.find(r => r.id === id);
+			if (room) {
+				const input = document.createElement('input');
+				input.value = room.name;
+				input.style.width = '120px';
+				span.innerHTML = '';
+				span.appendChild(input);
+				input.focus();
+				input.onblur = () => {
+					room.name = input.value.trim() || 'Room';
+					renderRooms();
+					saveToLocal();
+				};
+				input.onkeypress = (e) => {
+					if (e.key === 'Enter') input.blur();
+				};
+			}
+		});
+		loadFromLocal();
+		bindEvents();
+		debouncedUpdate();
+	</script>
+</body>
+
+</html>
