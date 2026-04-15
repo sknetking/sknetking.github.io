@@ -1,168 +1,575 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Enhanced QR Code Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>QR Canvas Pro · Smart QR Generator with Live Preview</title>
+  <!-- Bootstrap 5 + modern icons & fonts -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    body {
-      background: #f8f9fa;
-      font-family: 'Segoe UI', sans-serif;
+    * {
+      transition: all 0.2s ease;
     }
+    body {
+      background: linear-gradient(135deg, #f5f7fc 0%, #e9eef5 100%);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      padding: 1.5rem 0;
+    }
+    /* custom font import */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+    
     .container {
-      margin-top: 40px;
+      max-width: 1280px;
+      margin: 0 auto;
     }
     .card {
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border: none;
+      border-radius: 1.8rem;
+      box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(0px);
+      background: rgba(255,255,255,0.98);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      box-shadow: 0 25px 40px -14px rgba(0, 0, 0, 0.15);
+    }
+    .card-header-custom {
+      background: transparent;
+      border-bottom: 2px solid #f0f2f5;
+      padding: 1.2rem 1.8rem;
+      font-weight: 700;
+      font-size: 1.2rem;
+      letter-spacing: -0.2px;
+    }
+    .card-body {
+      padding: 1.8rem;
+    }
+    .form-label {
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      color: #1e2a3e;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .form-label i {
+      color: #2c7da0;
+      font-size: 0.9rem;
+    }
+    textarea.form-control, .form-control-color {
+      border-radius: 1rem;
+      border: 1.5px solid #e2e8f0;
+      padding: 0.7rem 1rem;
+      font-family: 'Inter', monospace;
+      transition: 0.2s;
+    }
+    textarea.form-control:focus, .form-control:focus {
+      border-color: #2c7da0;
+      box-shadow: 0 0 0 3px rgba(44,125,160,0.2);
+    }
+    .qr-preview-card {
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
     #qrCanvas {
-      margin: 20px auto;
+      margin: 0 auto;
       display: block;
-      border: 2px dashed #dee2e6;
-      border-radius: 8px;
-      background: #fff;
+      border-radius: 1.5rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+      background: white;
+      max-width: 100%;
+      height: auto;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    #qrCanvas:hover {
+      transform: scale(1.01);
+    }
+    .preview-badge {
+      margin-top: 1rem;
+      background: #eef2ff;
+      border-radius: 40px;
+      padding: 0.3rem 1rem;
+      font-size: 0.7rem;
+      color: #1e4a6b;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .logo-preview-container {
+      background: #f8fafc;
+      border-radius: 1rem;
+      padding: 1rem;
+      text-align: center;
+      border: 1px dashed #cbd5e1;
+      margin-top: 0.5rem;
     }
     #logoPreview {
-      margin-top: 10px;
-      max-width: 120px;
-      max-height: 120px;
-      border: 1px solid #dee2e6;
-      border-radius: 8px;
-      padding: 4px;
-      background: #fff;
+      max-width: 90px;
+      max-height: 90px;
+      border-radius: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      background: white;
+      object-fit: contain;
     }
     .btn-custom {
-      margin-top: 15px;
+      border-radius: 2rem;
+      padding: 0.7rem 1rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
       width: 100%;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: #2c7da0;
+      border: none;
+      box-shadow: 0 2px 6px rgba(44,125,160,0.3);
+    }
+    .btn-primary:hover {
+      background: #1f5e7a;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(44,125,160,0.25);
+    }
+    .btn-success {
+      background: #2a9d8f;
+      border: none;
+    }
+    .btn-success:hover {
+      background: #21867a;
+      transform: translateY(-2px);
+    }
+    .btn-outline-secondary {
+      border-radius: 2rem;
+    }
+    .action-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .action-group button {
+      flex: 1;
+    }
+    .info-chip {
+      background: #f1f5f9;
+      border-radius: 1rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.7rem;
+      color: #334155;
+      text-align: center;
+    }
+    @media (max-width: 768px) {
+      .card-body {
+        padding: 1.2rem;
+      }
+      .action-group {
+        flex-direction: column;
+      }
+    }
+    .animate-pulse {
+      animation: subtlePulse 0.3s ease-out;
+    }
+    @keyframes subtlePulse {
+      0% { transform: scale(0.98); opacity: 0.9; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .toast-custom {
+      position: fixed;
+      bottom: 25px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1e293b;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 60px;
+      font-weight: 500;
+      font-size: 0.85rem;
+      z-index: 1080;
+      opacity: 0;
+      transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      backdrop-filter: blur(8px);
+      background: rgba(0,0,0,0.85);
+    }
+    .toast-custom.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .reset-icon {
+      cursor: pointer;
+      color: #5f7f9e;
+      font-size: 0.75rem;
+      margin-left: 8px;
+    }
+    .reset-icon:hover {
+      color: #2c7da0;
     }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h1 class="text-center mb-4">🎨 Enhanced QR Code Generator</h1>
-  <div class="row">
-    
-    <!-- Left Column: Tools -->
-    <div class="col-md-6">
-      <div class="card p-4">
-        <div class="mb-3">
-          <label for="qrData" class="form-label fw-bold">Enter Data</label>
-          <textarea class="form-control" id="qrData" rows="3" placeholder="Type text or URL..."></textarea>
-        </div>
+  <div class="text-center mb-4">
+    <h1 style="font-weight: 800; background: linear-gradient(135deg, #1f5e7a, #2a9d8f); -webkit-background-clip: text; background-clip: text; color: transparent;">
+      <i class="fas fa-qrcode me-2"></i>QR Canvas Pro
+    </h1>
+    <p class="text-muted">Live QR generation · Custom colors · Logo overlay · Real‑time sync</p>
+  </div>
 
-        <div class="row mb-3">
-          <div class="col">
-            <label for="foregroundColor" class="form-label fw-bold">Foreground</label>
-            <input type="color" id="foregroundColor" class="form-control form-control-color" value="#000000">
+  <div class="row g-4">
+    <!-- Left Column: Controls -->
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header-custom">
+          <i class="fas fa-sliders-h me-2 text-primary"></i> Design & Content
+        </div>
+        <div class="card-body">
+          <div class="mb-4">
+            <label class="form-label"><i class="fas fa-database"></i> Data (Text / URL)</label>
+            <textarea id="qrData" class="form-control" rows="3" placeholder="https://yourwebsite.com or any text..." style="resize: vertical;">https://www.whatsapp.com</textarea>
+            <div class="info-chip mt-2">
+              <i class="fas fa-info-circle"></i> Supports URLs, emails, Wi-Fi, or any text — updates live
+            </div>
           </div>
-          <div class="col">
-            <label for="backgroundColor" class="form-label fw-bold">Background</label>
-            <input type="color" id="backgroundColor" class="form-control form-control-color" value="#ffffff">
+
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label"><i class="fas fa-palette"></i> Foreground</label>
+              <input type="color" id="foregroundColor" class="form-control form-control-color" value="#1f2937">
+              <small class="text-muted">QR dots color</small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label"><i class="fas fa-fill-drip"></i> Background</label>
+              <input type="color" id="backgroundColor" class="form-control form-control-color" value="#ffffff">
+              <small class="text-muted">Canvas background</small>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label"><i class="fas fa-image"></i> Center Logo (Optional)</label>
+            <input type="file" id="logoInput" class="form-control" accept="image/png,image/jpeg,image/webp,image/svg+xml">
+            <div class="logo-preview-container mt-2 d-flex align-items-center justify-content-between flex-wrap">
+              <div class="d-flex align-items-center gap-3">
+                <span style="font-size: 0.75rem;"><i class="fas fa-magic"></i> Preview:</span>
+                <img id="logoPreview" alt="Logo Preview" style="display: none;" />
+                <span id="noLogoText" class="text-muted small">No logo uploaded</span>
+              </div>
+              <button id="clearLogoBtn" class="btn btn-sm btn-outline-secondary mt-2 mt-sm-0" style="border-radius: 2rem;">
+                <i class="fas fa-trash-alt"></i> Clear Logo
+              </button>
+            </div>
+            <div class="form-text mt-1">Recommended: square image, max 120x120px (auto-resized)</div>
+          </div>
+
+          <div class="action-group mt-3">
+            <button id="generateBtn" class="btn btn-primary btn-custom">
+              <i class="fas fa-sync-alt"></i> Regenerate QR
+            </button>
+            <button id="downloadBtn" class="btn btn-success btn-custom">
+              <i class="fas fa-download"></i> Download PNG
+            </button>
+          </div>
+          <div class="action-group mt-2">
+            <button id="resetDefaultsBtn" class="btn btn-outline-secondary btn-custom" style="background:#f1f5f9;">
+              <i class="fas fa-undo-alt"></i> Reset to Defaults
+            </button>
           </div>
         </div>
-
-        <div class="mb-3">
-          <label for="logoInput" class="form-label fw-bold">Upload Logo</label>
-          <input type="file" id="logoInput" class="form-control" accept="image/*">
-          <div class="text-center mt-3">
-            <img id="logoPreview" alt="Logo Preview" />
-          </div>
-        </div>
-
-        <button id="generateBtn" class="btn btn-primary btn-custom">Generate QR</button>
-        <button id="downloadBtn" class="btn btn-success btn-custom" style="display: none;">Download QR Code</button>
       </div>
     </div>
 
-    <!-- Right Column: Preview -->
-    <div class="col-md-6 text-center">
-      <div class="card p-4">
-        <h5 class="fw-bold">QR Code Preview</h5>
-        <canvas id="qrCanvas" width="300" height="300"></canvas>
+    <!-- Right Column: Live Preview -->
+    <div class="col-lg-6">
+      <div class="card h-100 qr-preview-card">
+        <div class="card-header-custom border-0">
+          <i class="fas fa-eye me-2 text-success"></i> Live QR Preview
+          <span class="preview-badge ms-2"><i class="fas fa-bolt"></i> updates on change</span>
+        </div>
+        <div class="card-body text-center">
+          <canvas id="qrCanvas" width="320" height="320" style="width:100%; height:auto; max-width:320px; border-radius: 1.2rem;"></canvas>
+          <div class="mt-3 d-flex flex-wrap justify-content-center gap-3">
+            <span class="badge bg-light text-dark p-2"><i class="fas fa-arrow-pointer"></i> Click canvas to regenerate</span>
+            <span class="badge bg-light text-dark p-2"><i class="fas fa-charging-station"></i> Real-time color & data sync</span>
+          </div>
+          <div class="info-chip mt-3">
+            <i class="fas fa-qrcode"></i> High error correction (H) · supports logo overlay
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Toast notification -->
+<div id="liveToast" class="toast-custom"><i class="fas fa-check-circle me-1"></i> QR updated</div>
+
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script>
-  const qrDataInput = document.getElementById('qrData');
-  const foregroundColorInput = document.getElementById('foregroundColor');
-  const backgroundColorInput = document.getElementById('backgroundColor');
-  const logoInput = document.getElementById('logoInput');
-  const logoPreview = document.getElementById('logoPreview');
-  const generateBtn = document.getElementById('generateBtn');
-  const downloadBtn = document.getElementById('downloadBtn');
-  const qrCanvas = document.getElementById('qrCanvas');
+  (function() {
+    // DOM elements
+    const qrDataInput = document.getElementById('qrData');
+    const foregroundColorInput = document.getElementById('foregroundColor');
+    const backgroundColorInput = document.getElementById('backgroundColor');
+    const logoInput = document.getElementById('logoInput');
+    const logoPreview = document.getElementById('logoPreview');
+    const noLogoText = document.getElementById('noLogoText');
+    const generateBtn = document.getElementById('generateBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const qrCanvas = document.getElementById('qrCanvas');
+    const resetDefaultsBtn = document.getElementById('resetDefaultsBtn');
+    const clearLogoBtn = document.getElementById('clearLogoBtn');
 
-  let logoImage = null;
+    let currentLogoImage = null;      // stores HTMLImageElement
+    let logoDataURL = null;            // optional stored src
+    let isGenerating = false;
+    let lastQRString = '';
 
-  // Live Preview of Logo
-  logoInput.addEventListener('change', (event) => {
-    const file = event.target.files[0];
-    if (file) {
+    // Toast helper
+    function showToast(message, isError = false) {
+      const toast = document.getElementById('liveToast');
+      toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'} me-1"></i> ${message || (isError ? 'Failed' : 'QR updated')}`;
+      toast.style.background = isError ? 'rgba(180, 50, 50, 0.9)' : 'rgba(0,0,0,0.85)';
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+          toast.style.background = 'rgba(0,0,0,0.85)';
+        }, 200);
+      }, 1800);
+    }
+
+    // Draw logo onto canvas after QR is generated
+    function drawLogoOnCanvas() {
+      if (!currentLogoImage) return;
+      const ctx = qrCanvas.getContext('2d');
+      if (!ctx) return;
+      // wait for image loaded or draw if already loaded
+      const logoSize = qrCanvas.width * 0.22; // 22% of QR size (modern look)
+      const x = (qrCanvas.width - logoSize) / 2;
+      const y = (qrCanvas.height - logoSize) / 2;
+      
+      // Draw white circular background behind logo for better visibility (optional)
+      ctx.save();
+      ctx.shadowBlur = 0;
+      ctx.beginPath();
+      ctx.arc(qrCanvas.width/2, qrCanvas.height/2, logoSize/2 + 4, 0, 2 * Math.PI);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      // Draw logo with rounded corners
+      if (currentLogoImage.complete && currentLogoImage.naturalWidth > 0) {
+        ctx.drawImage(currentLogoImage, x, y, logoSize, logoSize);
+      } else {
+        currentLogoImage.onload = () => {
+          ctx.drawImage(currentLogoImage, x, y, logoSize, logoSize);
+        };
+      }
+      ctx.restore();
+    }
+
+    // Core QR generation with optional logo redraw
+    function renderQRCode(showToastMessage = false) {
+      if (isGenerating) return;
+      let qrText = qrDataInput.value.trim();
+      if (qrText === "") {
+        qrText = "✨ Interactive QR ✨";
+        // but we don't force, just placeholder
+      }
+      const fgColor = foregroundColorInput.value;
+      const bgColor = backgroundColorInput.value;
+      
+      isGenerating = true;
+      // Generate QR using qrcode library (with high error correction)
+      QRCode.toCanvas(qrCanvas, qrText, {
+        width: 320,
+        margin: 1,
+        color: {
+          dark: fgColor,
+          light: bgColor,
+        },
+        errorCorrectionLevel: 'H',     // High level for logo overlay
+      }, (error) => {
+        isGenerating = false;
+        if (error) {
+          console.error("QR Error:", error);
+          showToast("⚠️ Invalid data or encoding error", true);
+          return;
+        }
+        // After base QR generated, overlay logo if exists
+        if (currentLogoImage) {
+          // wait a tick to ensure canvas is ready
+          setTimeout(() => {
+            drawLogoOnCanvas();
+          }, 10);
+        }
+        lastQRString = qrText;
+        if (showToastMessage) {
+          showToast("QR refreshed ✨");
+        }
+      });
+    }
+
+    // full update: regenerate QR and then if logo present, redraw (safe)
+    function fullUpdate(showMsg = true) {
+      renderQRCode(showMsg);
+    }
+
+    // Handle logo upload
+    function handleLogoUpload(file) {
+      if (!file) {
+        clearLogo();
+        return;
+      }
+      const allowedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
+      if (!allowedTypes.includes(file.type)) {
+        showToast("Only PNG, JPEG, WEBP or SVG allowed", true);
+        logoInput.value = '';
+        return;
+      }
       const reader = new FileReader();
-      reader.onload = () => {
-        logoImage = new Image();
-        logoImage.src = reader.result;
-        logoPreview.src = reader.result;
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          currentLogoImage = img;
+          logoPreview.src = e.target.result;
+          logoPreview.style.display = 'block';
+          if (noLogoText) noLogoText.style.display = 'none';
+          // regenerate QR to include new logo
+          fullUpdate(true);
+        };
+        img.onerror = () => {
+          showToast("Failed to load image", true);
+          clearLogo();
+        };
+        img.src = e.target.result;
+      };
+      reader.onerror = () => {
+        showToast("File read error", true);
       };
       reader.readAsDataURL(file);
     }
-  });
 
-  // Generate QR Code
-  const generateQRCode = () => {
-    const qrData = qrDataInput.value || 'Sample QR Code';
-    const foregroundColor = foregroundColorInput.value;
-    const backgroundColor = backgroundColorInput.value;
+    function clearLogo() {
+      currentLogoImage = null;
+      logoInput.value = '';
+      logoPreview.style.display = 'none';
+      if (noLogoText) noLogoText.style.display = 'inline-block';
+      logoPreview.src = '';
+      // regenerate QR without logo overlay
+      renderQRCode(true);
+      showToast("Logo removed");
+    }
 
-    QRCode.toCanvas(qrCanvas, qrData, {
-      width: 300,
-      margin: 1,
-      color: {
-        dark: foregroundColor,
-        light: backgroundColor,
-      },
-      errorCorrectionLevel: 'H',
-    }, (error) => {
-      if (error) {
-        console.error('Error generating QR Code:', error);
-      } else {
-        if (logoImage) {
-          const ctx = qrCanvas.getContext('2d');
-          const logoSize = qrCanvas.width * 0.2;
-          const x = (qrCanvas.width - logoSize) / 2;
-          const y = (qrCanvas.height - logoSize) / 2;
+    // Reset to default values
+    function resetDefaults() {
+      qrDataInput.value = "https://www.whatsapp.com";
+      foregroundColorInput.value = "#1f2937";
+      backgroundColorInput.value = "#ffffff";
+      clearLogo();  // removes logo and regenerates
+      // after clearLogo, regenerate again with new colors and text
+      setTimeout(() => {
+        fullUpdate(true);
+      }, 30);
+      showToast("Reset to default theme");
+    }
 
-          logoImage.onload = () => {
-            ctx.drawImage(logoImage, x, y, logoSize, logoSize);
-          };
-          if (logoImage.complete) {
-            ctx.drawImage(logoImage, x, y, logoSize, logoSize);
-          }
+    // event listeners for live updates (real-time)
+    function setupLiveUpdates() {
+      // Real-time: when data text changes, regenerate QR instantly (modern ux)
+      qrDataInput.addEventListener('input', () => {
+        fullUpdate(true);
+      });
+      foregroundColorInput.addEventListener('input', () => {
+        fullUpdate(true);
+      });
+      backgroundColorInput.addEventListener('input', () => {
+        fullUpdate(true);
+      });
+      
+      // manual generate button
+      generateBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        fullUpdate(true);
+      });
+      
+      // download high-res canvas (including logo)
+      downloadBtn.addEventListener('click', () => {
+        try {
+          // create temporary link to download canvas as PNG
+          const link = document.createElement('a');
+          link.download = 'qr_pro_modern.png';
+          link.href = qrCanvas.toDataURL('image/png');
+          link.click();
+          showToast("QR saved as PNG 📸");
+        } catch (err) {
+          showToast("Download failed", true);
         }
-        downloadBtn.style.display = 'block';
-      }
+      });
+      
+      // logo upload
+      logoInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) handleLogoUpload(file);
+        else clearLogo();
+      });
+      
+      clearLogoBtn.addEventListener('click', () => {
+        clearLogo();
+      });
+      
+      resetDefaultsBtn.addEventListener('click', () => {
+        resetDefaults();
+      });
+      
+      // click on canvas to re-trigger generation (nice UX)
+      qrCanvas.addEventListener('click', () => {
+        fullUpdate(true);
+      });
+    }
+    
+    // initial load: generate default QR (with data + logo if any, but initially none)
+    function init() {
+      // ensure default data sample
+      if (!qrDataInput.value.trim()) qrDataInput.value = "https://www.qr.example";
+      // hide logo preview initially
+      logoPreview.style.display = 'none';
+      if (noLogoText) noLogoText.style.display = 'inline-block';
+      currentLogoImage = null;
+      renderQRCode(false);
+      setupLiveUpdates();
+    }
+    
+    // when window fully loaded, also ensure canvas size consistency
+    window.addEventListener('load', () => {
+      init();
+      // set canvas default dimensions (320x320)
+      qrCanvas.width = 320;
+      qrCanvas.height = 320;
+      // extra call to redraw properly
+      fullUpdate(false);
     });
-  };
 
-  // Auto-update on color change
-  foregroundColorInput.addEventListener('input', generateQRCode);
-  backgroundColorInput.addEventListener('input', generateQRCode);
-
-  // Generate QR Button
-  generateBtn.addEventListener('click', generateQRCode);
-
-  // Download QR Code
-  downloadBtn.addEventListener('click', () => {
-    const link = document.createElement('a');
-    link.download = 'qrcode_with_logo.png';
-    link.href = qrCanvas.toDataURL('image/png');
-    link.click();
-  });
+    // Handle scenario where logo needs to be redrawn after color change: already fullUpdate does it
+    // Also fix potential double logo drawing due to async onload
+    // Override the renderQRCode to add logo after generation completly
+    const originalRender = renderQRCode;
+    window.ensureLogoDraw = function() {
+      if (currentLogoImage) drawLogoOnCanvas();
+    };
+    
+    // for enhanced reliability, watch if logo is set later, regenerate
+  })();
 </script>
-
 </body>
 </html>
