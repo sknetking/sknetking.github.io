@@ -60,8 +60,8 @@
 										<li><a href="#about">About</a></li>
 										<li><a href="#service">Service</a></li>
 										<li><a href="#resume">Resume</a></li>
-										<li><a href="#portfolio">Portfolio</a></li>								
-										<li><a href="#blog">Blog</a></li>													
+										<li><a href="portfolio">Portfolio</a></li>								
+										<li><a href="https://sknetking9.blogspot.com/">Blog</a></li>													
 										<li><a href="#contact">Contact</a></li>
 										<li><a href="tools.html">Tools</a></li>									
 									</ul>
@@ -527,40 +527,72 @@ Infront of M.P. State Shooting Academy, Bishankhedi, Bhopal, Madhya Pradesh-4620
 		
 		<!-- START CONTACT -->
 			<section id="contact" class="dark_bg section_padding">
-				<div class="container">
-					<div class="col-md-12 col-sm-12-col-xs-12">
-						<div class="section_heading text-center">
-							<h2>Contact <span>Us</span></h2>
-							<p>Lorem Ipsum is simply dummy text of the printing and typesetting<br> industry. Lorem Ipsum standard dummy text.</p>
-							<div class="sm_border"></div>
-						</div>	
-					</div>	
-					
-					<div class="row">						
-						<div class="col-md-12 col-sm-12">
-							<form class="form" name="enq" method="post" action="contact.php" onsubmit="return validation();">
-								<div class="row">
-									<div class="form-group col-md-4">
-										<input type="text" name="name" class="form-control" placeholder="Name" required="required">
-									</div>
-									<div class="form-group col-md-4">
-										<input type="email" name="email" class="form-control" placeholder="Email" required="required">
-									</div>
-									<div class="form-group col-md-4">
-										<input type="text" name="subject" class="form-control" placeholder="Subject" required="required">
-									</div>
-									<div class="form-group col-md-12">
-										<textarea rows="6" name="message" class="form-control" placeholder="Your Message" required="required"></textarea>
-									</div>
-									<div class="col-md-12 text-center">
-										<button type="submit" value="Send message" name="submit" id="submitButton" class="btn btn-default main_btn" title="Submit Your Message!">Send Message</button>
-									</div>
-								</div>
-							</form>
-						</div>						
-					</div>
-				</div>
-			</section>
+    <div class="container">
+        <div class="col-md-12 col-sm-12-col-xs-12">
+            <div class="section_heading text-center">
+                <h2>Contact <span>Us</span></h2>
+                <p>Have a project in mind? Drop me a message and let's chat!</p>
+                <div class="sm_border"></div>
+            </div>	
+        </div>	
+
+        <div class="row">						
+            <div class="col-md-12 col-sm-12">
+                <form class="form" id="whatsappForm">
+                    <div class="row">
+                        <div class="form-group col-md-4">
+                            <input type="text" id="name" name="name" class="form-control" placeholder="Name" required="required">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <input type="email" id="email" name="email" class="form-control" placeholder="Email" required="required">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <input type="text" id="subject" name="subject" class="form-control" placeholder="Subject" required="required">
+                        </div>
+                        <div class="form-group col-md-12">
+                            <textarea rows="6" id="message" name="message" class="form-control" placeholder="Your Message" required="required"></textarea>
+                        </div>
+                        <div class="col-md-12 text-center">
+                            <button type="button" onclick="sendToWhatsApp()" class="btn btn-default main_btn" title="Submit Your Message!">Send via WhatsApp</button>
+                        </div>
+                    </div>
+                </form>
+            </div>						
+        </div>
+    </div>
+</section>
+
+<script>
+function sendToWhatsApp() {
+    // --- CONFIGURE YOUR NUMBER HERE ---
+    const phoneNumber = "1234567890"; // Replace with your full phone number (including country code, no + or spaces)
+    
+    // Get form values
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const subject = document.getElementById('subject').value;
+    const message = document.getElementById('message').value;
+
+    // Validate if fields are filled (since we bypassed the default submit)
+    if(!name || !email || !subject || !message) {
+        alert("Please fill in all fields.");
+        return;
+    }
+
+    // Format the message
+    const text = `*New Contact Inquiry*%0A%0A` +
+                 `*Name:* ${name}%0A` +
+                 `*Email:* ${email}%0A` +
+                 `*Subject:* ${subject}%0A` +
+                 `*Message:* ${message}`;
+
+    // Create the WhatsApp link
+    const wpLink = `https://wa.me/${phoneNumber}?text=${text}`;
+
+    // Open in a new tab
+    window.open(wpLink, '_blank').focus();
+}
+</script>
 		<!-- END CONTACT -->
 		
 		<!-- START FOOTER -->
