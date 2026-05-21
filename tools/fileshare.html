@@ -7,11 +7,12 @@
   <!-- PeerJS for WebRTC handshake -->
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <!-- Tailwind CSS via CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
   <!-- QR Code generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- HTML5 QR scanner -->
   <script src="https://unpkg.com/html5-qrcode"></script>
+  
   <style>
     /* Custom drag-over glow effect */
     .drag-over-glow {
@@ -29,12 +30,23 @@
       background: rgba(148, 163, 184, 0.2);
       border-radius: 10px;
     }
+    /* Toast slide-in keyframes */
+    @keyframes toast-slide-in {
+      from { transform: translateY(1rem); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .toast-animate {
+      animation: toast-slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-indigo-500/30">
 
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 max-w-sm w-full px-4 pointer-events-none"></div>
+
   <!-- Header with connection badge -->
-  <header class="border-b border-slate-800/60 bg-slate-900/40 backdrop-blur-md sticky top-0 z-50 px-4 py-3">
+  <header class="border-b border-slate-800/60 bg-slate-900/40 backdrop-blur-md sticky top-0 z-40 px-4 py-3">
     <div class="max-w-5xl mx-auto flex justify-between items-center">
       <div class="flex items-center gap-3">
         <span class="text-2xl">⚡</span>
@@ -124,7 +136,7 @@
         <!-- Transfer feed -->
         <div id="transfer-feed-timeline" class="flex-grow p-4 md:p-6 space-y-4 max-h-[360px] overflow-y-auto bg-slate-950/20 scrollbar-thin">
           <div class="text-center text-xs text-slate-500 italic py-8">
-            Secure pipe open. Drag files anywhere or use the attachment below.
+            Secure pipe open. Drag & drop files anywhere, copy & paste pictures/files, or use the attachment below.
           </div>
         </div>
 
@@ -144,7 +156,7 @@
               <input type="file" id="file-selector-input" class="hidden">
             </label>
             <div class="w-full bg-slate-900/60 rounded-xl px-4 py-2.5 border border-slate-800 flex items-center justify-between text-xs text-slate-400">
-              <span id="selected-file-preview-placeholder" class="truncate max-w-xs sm:max-w-md">No file staged. Click 📎 or drag & drop</span>
+              <span id="selected-file-preview-placeholder" class="truncate max-w-xs sm:max-w-md">No file staged. Click 📎, drag-and-drop or paste from clipboard</span>
               <button id="btn-abort-staged" class="hidden text-red-400 hover:text-red-300 font-bold ml-2">✕</button>
             </div>
             <button id="btn-trigger-transmission" disabled class="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white text-xs font-bold px-5 py-3 rounded-xl transition-all shrink-0 cursor-pointer shadow-md">
@@ -157,7 +169,7 @@
   </main>
 
   <!-- Drag & Drop overlay (appears when dragging files over the window) -->
-  <div id="drag-overlay" class="hidden fixed inset-0 z-40 bg-indigo-950/70 backdrop-blur-sm flex items-center justify-center pointer-events-none">
+  <div id="drag-overlay" class="hidden fixed inset-0 z-50 bg-indigo-950/70 backdrop-blur-sm flex items-center justify-center pointer-events-none">
     <div class="bg-slate-900 border-2 border-indigo-400 border-dashed rounded-3xl p-12 text-center shadow-2xl">
       <span class="text-5xl block mb-4">📂</span>
       <p class="text-xl font-bold text-indigo-300">Drop file to stage</p>
@@ -179,6 +191,48 @@
       let html5QrcodeScanner = null;
       let heartbeatInterval = null;
       let currentInboundTransfer = null;
+
+      // ---------- Premium Toast Notifications (Replacing system alerts) ----------
+      function showNotification(title, message, status = 'info') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        let statusBg = "bg-slate-900 border-slate-800 text-slate-200";
+        let statusIcon = "ℹ️";
+
+        if (status === 'success') {
+          statusBg = "bg-emerald-950/90 border-emerald-500/30 text-emerald-200";
+          statusIcon = "✅";
+        } else if (status === 'warning') {
+          statusBg = "bg-amber-950/90 border-amber-500/30 text-amber-200";
+          statusIcon = "⚠️";
+        } else if (status === 'error') {
+          statusBg = "bg-red-950/90 border-red-500/30 text-red-200";
+          statusIcon = "❌";
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `toast-animate flex gap-3 p-4 rounded-xl border shadow-2xl backdrop-blur-md pointer-events-auto select-none ${statusBg}`;
+        toast.innerHTML = `
+          <div class="text-base shrink-0">${statusIcon}</div>
+          <div class="flex-grow min-w-0">
+            <h5 class="text-xs font-bold leading-tight truncate">${title}</h5>
+            <p class="text-[10px] text-slate-300 mt-0.5 leading-snug">${message}</p>
+          </div>
+        `;
+
+        container.appendChild(toast);
+
+        // Slide out & destroy after 4 seconds
+        setTimeout(() => {
+          toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateY(-10px)';
+          setTimeout(() => {
+            if (toast.parentNode) toast.parentNode.removeChild(toast);
+          }, 300);
+        }, 4000);
+      }
 
       // ---------- Helpers ----------
       function formatBytes(bytes) {
@@ -208,7 +262,7 @@
         }
       }
 
-      // ---------- File staging (shared by both file input and drag-drop) ----------
+      // ---------- File staging (shared by both file input, clipboard and drag-drop) ----------
       function stageFile(file) {
         if (!file) return;
         selectedFile = file;
@@ -247,15 +301,11 @@
             iceServers: [
               { urls: 'stun:stun.l.google.com:19302' },
               { urls: 'stun:stun1.l.google.com:19302' },
-              // Additional STUN can help with consistent local candidate gathering
               { urls: 'stun:stun2.l.google.com:19302' }
             ],
-            // Gather all candidates quickly, then let browser prioritize host (LAN) over srflx/relay
             iceCandidatePoolSize: 2,
-            // 'all' allows both local and relay; we rely on browser default priority (host > srflx > relay)
             iceTransportPolicy: 'all'
           },
-          // Additional PeerJS options to favor quick local connection
           pingInterval: 3000,
         });
 
@@ -334,7 +384,6 @@
         connection.on('open', () => {
           startHeartbeatLoop();
           
-          // Ensure binary channel uses arraybuffer for efficiency
           if(connection.dataChannel) {
             connection.dataChannel.binaryType = 'arraybuffer';
           }
@@ -351,6 +400,7 @@
               🔒 Peer connection established. LAN path preferred; internet relay only if necessary.
             </div>
           `;
+          showNotification('Link Active', `Connected to peer: ${connection.peer.toUpperCase()}`, 'success');
         });
 
         connection.on('data', (incomingData) => {
@@ -361,7 +411,7 @@
           if (incomingData.type === 'pong') return; 
 
           if (incomingData.type === 'sys-error') {
-            alert(`Connection Refused: ${incomingData.reason}`);
+            showNotification('Connection Refused', incomingData.reason, 'error');
             breakPipelineLink();
             return;
           }
@@ -376,12 +426,13 @@
 
         connection.on('close', () => {
           stopHeartbeatLoop();
-          alert('P2P channel closed.');
+          showNotification('Disconnected', 'The P2P transmission link was closed.', 'warning');
           breakPipelineLink();
         });
 
         connection.on('error', (e) => {
           console.error('Channel Error:', e);
+          showNotification('Channel Error', 'P2P pipeline encountered a transmission fault.', 'error');
           breakPipelineLink();
         });
       }
@@ -471,6 +522,7 @@
         reader.onload = function(e) {
           if (e.target.error) {
             document.getElementById(`status-text-${transferId}`).innerText = "Local read error";
+            showNotification('Read Error', 'Failed to read local data for transport.', 'error');
             return;
           }
 
@@ -496,6 +548,7 @@
           } else {
             document.getElementById(`status-text-${transferId}`).className = "text-blue-400 font-semibold text-[9px]";
             document.getElementById(`status-text-${transferId}`).innerText = "✓ Upload complete";
+            showNotification('Upload Complete', `Successfully uploaded ${fileRef.name}`, 'success');
           }
         };
 
@@ -558,13 +611,14 @@
 
         document.getElementById(`status-text-${session.id}`).className = "text-emerald-400 font-semibold text-[9px]";
         document.getElementById(`status-text-${session.id}`).innerText = "✓ Ready to save";
+        showNotification('File Received', `Received ready-to-save file: ${session.name}`, 'success');
       }
 
       function resetStagedFileElement() {
         selectedFile = null;
         stagedThumbnailBase64 = null;
         document.getElementById('file-selector-input').value = '';
-        document.getElementById('selected-file-preview-placeholder').innerText = "No file staged. Click 📎 or drag & drop";
+        document.getElementById('selected-file-preview-placeholder').innerText = "No file staged. Click 📎, drag-and-drop or paste from clipboard";
         document.getElementById('selected-file-preview-placeholder').className = "truncate max-w-xs sm:max-w-md text-slate-400";
         document.getElementById('btn-abort-staged').classList.add('hidden');
         document.getElementById('btn-trigger-transmission').disabled = true;
@@ -600,7 +654,7 @@
           },
           (errorMessage) => {}
         ).catch(err => {
-          alert("Camera access required for scanning.");
+          showNotification('Camera Error', 'Camera access is required for scanning.', 'error');
           scannerZone.classList.add('hidden');
         });
       }
@@ -615,12 +669,12 @@
         }
       }
 
-      // ---------- Drag & Drop setup ----------
+      // ---------- Drag & Drop Setup (Flicker-Free and Solid) ----------
       function setupDragAndDrop() {
         const overlay = document.getElementById('drag-overlay');
         let dragCounter = 0;
 
-        // Prevent default drag behaviors on the entire document
+        // Prevent default browser reactions to dragging globally
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
           document.addEventListener(eventName, (e) => {
             e.preventDefault();
@@ -628,7 +682,7 @@
           });
         });
 
-        // Show overlay when dragging files into the window
+        // Trigger staging overlay cleanly without flicker
         document.addEventListener('dragenter', (e) => {
           dragCounter++;
           if (e.dataTransfer.types && e.dataTransfer.types.includes('Files')) {
@@ -638,76 +692,113 @@
 
         document.addEventListener('dragleave', (e) => {
           dragCounter--;
-          if (dragCounter === 0) {
+          if (dragCounter <= 0) {
+            dragCounter = 0;
             overlay.classList.add('hidden');
           }
         });
 
-        // Handle the drop event
+        document.addEventListener('dragover', (e) => {
+          // Necessary to allow dropping elements
+          e.dataTransfer.dropEffect = 'copy';
+        });
+
         document.addEventListener('drop', (e) => {
           dragCounter = 0;
           overlay.classList.add('hidden');
           
           const files = e.dataTransfer.files;
-          if (files.length > 0) {
-            // Only stage if connected (or allow staging even when unconnected for UX)
+          if (files && files.length > 0) {
             stageFile(files[0]);
-            
-            // Optional: show a subtle notification if not connected
-            if (!connection || !connection.open) {
-              const placeholder = document.getElementById('selected-file-preview-placeholder');
-              if (placeholder && !placeholder.innerText.includes('⚠️')) {
-                // Just let them stage; transmit button will be visible when connected
-              }
-            }
+            showNotification('Staged Drop', `File ready to send: ${files[0].name}`, 'success');
           }
         });
 
-        // Also allow dropping directly on the connected panel for convenience
+        // Setup drop zones for interactive UI sections (optional interactive visual cues)
         const connectedPanel = document.getElementById('room-connected');
         if (connectedPanel) {
-          connectedPanel.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            connectedPanel.classList.add('drag-over-glow');
-          });
-          connectedPanel.addEventListener('dragleave', (e) => {
-            connectedPanel.classList.remove('drag-over-glow');
-          });
-          connectedPanel.addEventListener('drop', (e) => {
-            e.stopPropagation();
-            connectedPanel.classList.remove('drag-over-glow');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-              stageFile(files[0]);
-            }
-          });
+          connectedPanel.addEventListener('dragenter', () => connectedPanel.classList.add('drag-over-glow'));
+          connectedPanel.addEventListener('dragleave', () => connectedPanel.classList.remove('drag-over-glow'));
+          connectedPanel.addEventListener('drop', () => connectedPanel.classList.remove('drag-over-glow'));
         }
 
-        // Same for unconnected panel
         const unconnectedPanel = document.getElementById('room-unconnected');
         if (unconnectedPanel) {
-          unconnectedPanel.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            unconnectedPanel.classList.add('drag-over-glow');
-          });
-          unconnectedPanel.addEventListener('dragleave', (e) => {
-            unconnectedPanel.classList.remove('drag-over-glow');
-          });
-          unconnectedPanel.addEventListener('drop', (e) => {
-            e.stopPropagation();
-            unconnectedPanel.classList.remove('drag-over-glow');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-              stageFile(files[0]);
-            }
-          });
+          unconnectedPanel.addEventListener('dragenter', () => unconnectedPanel.classList.add('drag-over-glow'));
+          unconnectedPanel.addEventListener('dragleave', () => unconnectedPanel.classList.remove('drag-over-glow'));
+          unconnectedPanel.addEventListener('drop', () => unconnectedPanel.classList.remove('drag-over-glow'));
         }
+      }
+
+      // ---------- Clipboard Paste Functionality (Ctrl+V) ----------
+      function setupClipboardPaste() {
+        document.addEventListener('paste', (e) => {
+          // Bypass paste handling if user is focusing the manual inputs to write text
+          const activeEl = document.activeElement;
+          const isInputFocused = activeEl && (
+            activeEl.tagName === 'INPUT' || 
+            activeEl.tagName === 'TEXTAREA' || 
+            activeEl.isContentEditable
+          );
+
+          let fileDetected = false;
+
+          // 1. Detect direct binary files or screenshots inside the clipboard transfer payload
+          if (e.clipboardData && e.clipboardData.files && e.clipboardData.files.length > 0) {
+            const pastedFile = e.clipboardData.files[0];
+            stageFile(pastedFile);
+            showNotification('Clipboard Staged', `Staged: ${pastedFile.name || 'Pasted Content'}`, 'success');
+            fileDetected = true;
+          } 
+          // 2. Alternative fallback block traversal for older items structure
+          else if (e.clipboardData && e.clipboardData.items) {
+            const items = e.clipboardData.items;
+            for (let i = 0; i < items.length; i++) {
+              if (items[i].kind === 'file') {
+                const pastedFile = items[i].getAsFile();
+                if (pastedFile) {
+                  stageFile(pastedFile);
+                  showNotification('Clipboard Staged', `Staged: ${pastedFile.name || 'Pasted Image'}`, 'success');
+                  fileDetected = true;
+                  break;
+                }
+              }
+            }
+          }
+
+          // If a file was correctly processed and staged, prevent standard text insertion
+          if (fileDetected) {
+            e.preventDefault();
+          }
+        });
+      }
+
+      // ---------- Fallback Clipboard Link Copy (for restricted Sandbox situations) ----------
+      function secureFallbackCopyText(text) {
+        const tempTextarea = document.createElement("textarea");
+        tempTextarea.value = text;
+        tempTextarea.style.position = "fixed";
+        tempTextarea.style.top = "0";
+        tempTextarea.style.left = "0";
+        tempTextarea.style.opacity = "0";
+        document.body.appendChild(tempTextarea);
+        tempTextarea.focus();
+        tempTextarea.select();
+        try {
+          document.execCommand('copy');
+          showNotification('Link Copied', 'Magic link copied to keyboard.', 'success');
+        } catch (err) {
+          console.error('Fallback copy operation failed', err);
+          showNotification('Copy Failed', 'Failed to save link to clipboard.', 'error');
+        }
+        document.body.removeChild(tempTextarea);
       }
 
       // ---------- Event wiring ----------
       document.addEventListener('DOMContentLoaded', () => {
         initializeApplicationNode();
         setupDragAndDrop();
+        setupClipboardPaste();
 
         document.getElementById('file-selector-input').addEventListener('change', (e) => {
           const targetFile = e.target.files[0];
@@ -723,7 +814,7 @@
           if (rawInVal.length === 6) {
             connectToRemotePeerNode(rawInVal);
           } else {
-            alert('Invalid 6-character Peer ID.');
+            showNotification('Invalid ID', 'Peer IDs must be exactly 6 characters.', 'warning');
           }
         });
 
@@ -734,7 +825,19 @@
         document.getElementById('btn-copy-link').addEventListener('click', () => {
           if (!peer || !peer.id) return;
           const generatedUrlString = `${window.location.origin}${window.location.pathname}#${peer.id}`;
-          navigator.clipboard.writeText(generatedUrlString);
+          
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(generatedUrlString)
+              .then(() => {
+                showNotification('Link Copied', 'Magic link copied to keyboard.', 'success');
+              })
+              .catch(() => {
+                secureFallbackCopyText(generatedUrlString);
+              });
+          } else {
+            secureFallbackCopyText(generatedUrlString);
+          }
+
           const copyBtn = document.getElementById('btn-copy-link');
           copyBtn.innerText = "✓ Link Copied Success!";
           setTimeout(() => { copyBtn.innerText = "🔗 Copy Room Magic Link"; }, 2000);
