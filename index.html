@@ -184,7 +184,7 @@
             { title: "Precision Age Calculator", description: "Know your age down to seconds — years, months, days, and more.", link: "age-calculator.html", image: "https://i.ibb.co/TMc2JjzH/image.png" },
             { title: "4K Screen Recorder", description: "Capture your screen, facecam or both with high-quality export.", link: "screen-recorder.html", image: "https://i.ibb.co/QWDYdX8/image.png" },
             { title: "Instant Live Chat", description: "Real-time rooms, instant messaging, seamless communication.", link: "live-chat.html", image: "https://images.unsplash.com/photo-1577563908411-5077b6dc7624?w=600&auto=format" },
-            { title: "Live File Share", description: "Real-time rooms, instant file share, seamless communication.", link: " https://sknetking.github.io/tools/fileshare.html", image: "https://raw.githubusercontent.com/sknetking/sknetking.github.io/blob/main/images/instant-file-share-without-login.jpg" },
+            { title: "Live File Share", description: "Real-time rooms, instant file share, seamless communication.", link: "https://sknetking.github.io/tools/fileshare.html", image: "https://raw.githubusercontent.com/sknetking/sknetking.github.io/main/images/instant-file-share-without-login.jpg" },
           
             { title: "Live Clock", description: "Clock with minute, second, hour, and date visualization.", link: "/tools/live-clock.html", image: "https://i.ibb.co/kVGrD0gq/image.png" },
             { title: "PixelPilot Compressor", description: "Compress images from MB to KB without quality loss.", link: "https://sknetking.github.io/tools/image-Compression.html", image: "https://i.ibb.co/V5N2CRj/image.png" },
@@ -227,9 +227,11 @@
             const grid = document.getElementById('toolsGrid');
             grid.innerHTML = toolsCatalog.map(tool => `
                 <div class="tool-card group">
-                    <div class="h-44 rounded-3xl overflow-hidden">
+                 <a href="${tool.link}" target="_blank">
+                 <div class="h-44 rounded-3xl overflow-hidden">
                         <img src="${tool.image}" alt="${tool.title}" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-500">
                     </div>
+                </a>
                     <div class="p-5 text-left">
                         <h3 class="font-bold text-lg mb-2 group-hover:text-blue-400 transition">${tool.title}</h3>
                         <p class="text-xs text-gray-400 mb-4 line-clamp-2 leading-relaxed">${tool.description}</p>
