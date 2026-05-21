@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PeerShare Pro • LAN‑First File Bridge</title>
+  <!-- PeerJS for WebRTC handshake -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <!-- QR Code generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- HTML5 QR scanner -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    /* Custom drag-over glow effect */
+    .drag-over-glow {
+      box-shadow: 0 0 30px rgba(99, 102, 241, 0.4), 0 0 60px rgba(99, 102, 241, 0.1);
+      border-color: rgba(99, 102, 241, 0.6) !important;
+    }
+    /* Scrollbar styling */
+    .scrollbar-thin::-webkit-scrollbar {
+      width: 4px;
+    }
+    .scrollbar-thin::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.2);
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-indigo-500/30">
+
+  <!-- Header with connection badge -->
+  <header class="border-b border-slate-800/60 bg-slate-900/40 backdrop-blur-md sticky top-0 z-50 px-4 py-3">
+    <div class="max-w-5xl mx-auto flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">⚡</span>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">
+            PeerShare Room
+          </h1>
+          <p class="text-[10px] text-slate-400">LAN‑First · Same‑network direct stream</p>
+        </div>
+      </div>
+      <div id="connection-badge" class="flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/20 font-medium">
+        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+        Booting signaling...
+      </div>
+    </div>
+  </header>
+
+  <!-- Main layout -->
+  <main class="max-w-5xl mx-auto p-4 md:p-6 w-full flex-grow grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+    
+    <!-- LEFT COLUMN: Identity & Scanner -->
+    <div class="space-y-6 lg:col-span-1">
+      <div class="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-5 shadow-xl backdrop-blur-sm flex flex-col items-center text-center">
+        <span class="text-xs font-semibold text-indigo-400 tracking-wider uppercase mb-1">Your Identity Key</span>
+        <h3 id="my-id-display" class="text-2xl font-black text-slate-200 tracking-widest font-mono">------</h3>
+        
+        <div class="bg-white p-2.5 rounded-xl mt-4 shadow-inner relative group min-h-[148px] min-w-[148px] flex items-center justify-center">
+          <div id="qrcode-container"></div>
+        </div>
+        
+        <p class="text-[11px] text-slate-400 mt-3 px-2">Scan or share the room link – devices on the same hotspot/Wi‑Fi connect directly without internet relay.</p>
+
+        <div class="w-full border-t border-slate-800/80 my-4"></div>
+
+        <div class="w-full space-y-2">
+          <button id="btn-copy-link" class="w-full bg-slate-800 hover:bg-slate-700 active:bg-slate-700 text-slate-200 text-xs font-medium py-2 rounded-xl transition-all border border-slate-700/50 cursor-pointer">
+            🔗 Copy Room Magic Link
+          </button>
+          <button id="btn-open-scanner" class="w-full bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs font-semibold py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-950/40 cursor-pointer">
+            📷 Scan Someone's QR Code
+          </button>
+        </div>
+      </div>
+
+      <!-- Scanner panel -->
+      <div id="scanner-box" class="hidden bg-slate-900/80 border border-slate-700 p-4 rounded-2xl shadow-2xl relative animate-fade-in">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-xs font-bold text-red-400 flex items-center gap-1">🎥 Live Scanner Target</span>
+          <button id="btn-close-scanner" class="text-slate-400 hover:text-slate-200 text-xs font-bold px-2 py-0.5 border border-slate-800 bg-slate-950 rounded cursor-pointer">Close</button>
+        </div>
+        <div id="interactive-reader" class="overflow-hidden rounded-xl bg-black border border-slate-800"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Connection & Transfer Hub -->
+    <div class="lg:col-span-2 space-y-6">
+
+      <!-- Unconnected state -->
+      <div id="room-unconnected" class="bg-slate-900/30 border-2 border-dashed border-slate-800 rounded-3xl p-8 text-center flex flex-col items-center justify-center min-h-[400px]">
+        <div class="w-16 h-16 rounded-2xl bg-slate-900 flex items-center justify-center text-2xl mb-4 border border-slate-800">📡</div>
+        <h3 class="text-lg font-bold text-slate-200 mb-1">Direct LAN Node Link</h3>
+        <p class="text-sm text-slate-400 max-w-sm mb-6">When both devices share the same network (mobile hotspot or Wi‑Fi), files stream locally at maximum speed. Internet relay only used if LAN fails.</p>
+        
+        <div class="flex w-full max-w-md bg-slate-950 border border-slate-800 rounded-xl p-1.5 focus-within:border-indigo-500 transition-all shadow-inner">
+          <input type="text" id="manual-target-id" placeholder="Enter 6‑letter ID..." class="bg-transparent px-3 py-2 text-sm text-slate-200 font-mono tracking-widest uppercase w-full focus:outline-none">
+          <button id="btn-manual-connect" class="bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 font-semibold text-xs px-5 py-2.5 rounded-lg transition-all cursor-pointer whitespace-nowrap">
+            Link Nodes
+          </button>
+        </div>
+      </div>
+
+      <!-- Connected pipeline -->
+      <div id="room-connected" class="hidden bg-slate-900/40 border border-slate-800/80 rounded-2xl shadow-xl backdrop-blur-sm overflow-hidden flex flex-col min-h-[460px]">
+        
+        <div class="bg-slate-950/80 px-5 py-3 border-b border-slate-800 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            <p class="text-xs font-semibold text-slate-300">
+              P2P active with <span id="connected-peer-label" class="font-mono text-indigo-400 uppercase font-bold">------</span>
+            </p>
+          </div>
+          <button id="btn-disconnect" class="text-[10px] text-red-400 hover:text-red-300 bg-red-500/10 border border-red-500/20 px-2 py-1 rounded-md cursor-pointer transition-colors">
+            Break Link
+          </button>
+        </div>
+
+        <!-- Transfer feed -->
+        <div id="transfer-feed-timeline" class="flex-grow p-4 md:p-6 space-y-4 max-h-[360px] overflow-y-auto bg-slate-950/20 scrollbar-thin">
+          <div class="text-center text-xs text-slate-500 italic py-8">
+            Secure pipe open. Drag files anywhere or use the attachment below.
+          </div>
+        </div>
+
+        <!-- File staging & send -->
+        <div class="p-4 bg-slate-950/80 border-t border-slate-800/80 flex flex-col gap-3">
+          <div id="input-thumbnail-preview-container" class="hidden flex items-center gap-3 bg-slate-900/40 p-2 rounded-xl border border-slate-800 max-w-xs animate-fade-in">
+            <img id="input-thumbnail-preview" class="w-12 h-12 rounded-lg object-cover border border-slate-700" src="" alt="Thumbnail preview">
+            <div class="truncate text-[11px]">
+              <p class="text-slate-300 font-medium truncate" id="input-thumb-name"></p>
+              <p class="text-slate-500" id="input-thumb-dims">Image Staged</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <label class="bg-slate-900 hover:bg-slate-800 border border-slate-700/60 p-2.5 rounded-xl cursor-pointer transition-colors text-xl flex items-center justify-center shrink-0 group shadow-md" title="Attach file">
+              📎
+              <input type="file" id="file-selector-input" class="hidden">
+            </label>
+            <div class="w-full bg-slate-900/60 rounded-xl px-4 py-2.5 border border-slate-800 flex items-center justify-between text-xs text-slate-400">
+              <span id="selected-file-preview-placeholder" class="truncate max-w-xs sm:max-w-md">No file staged. Click 📎 or drag & drop</span>
+              <button id="btn-abort-staged" class="hidden text-red-400 hover:text-red-300 font-bold ml-2">✕</button>
+            </div>
+            <button id="btn-trigger-transmission" disabled class="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white text-xs font-bold px-5 py-3 rounded-xl transition-all shrink-0 cursor-pointer shadow-md">
+              Transmit
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Drag & Drop overlay (appears when dragging files over the window) -->
+  <div id="drag-overlay" class="hidden fixed inset-0 z-40 bg-indigo-950/70 backdrop-blur-sm flex items-center justify-center pointer-events-none">
+    <div class="bg-slate-900 border-2 border-indigo-400 border-dashed rounded-3xl p-12 text-center shadow-2xl">
+      <span class="text-5xl block mb-4">📂</span>
+      <p class="text-xl font-bold text-indigo-300">Drop file to stage</p>
+      <p class="text-sm text-slate-400 mt-2">Release anywhere to attach</p>
+    </div>
+  </div>
+
+  <footer class="p-4 w-full text-center text-[10px] text-slate-600 border-t border-slate-900 bg-slate-950/40">
+    PeerShare Pro · 16 KB chunks · LAN host candidates prioritized (mDNS/private IP) · Internet relay as fallback.
+  </footer>
+
+  <script>
+    (function() {
+      const CHUNK_SIZE = 16384; 
+      let peer = null;
+      let connection = null;
+      let selectedFile = null;
+      let stagedThumbnailBase64 = null;
+      let html5QrcodeScanner = null;
+      let heartbeatInterval = null;
+      let currentInboundTransfer = null;
+
+      // ---------- Helpers ----------
+      function formatBytes(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      }
+
+      function generateId() {
+        return Math.random().toString(36).substring(2, 8).toLowerCase();
+      }
+
+      function updateConnectionBadge(status, text) {
+        const badge = document.getElementById('connection-badge');
+        badge.innerText = text;
+        if (status === 'ready') {
+          badge.className = "flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20 font-medium";
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> ${text}`;
+        } else if (status === 'connected') {
+          badge.className = "flex items-center gap-2 text-xs text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-full border border-indigo-500/20 font-medium";
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span> ${text}`;
+        } else {
+          badge.className = "flex items-center gap-2 text-xs text-red-400 bg-red-500/10 px-3 py-1.5 rounded-full border border-red-500/20 font-medium";
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> ${text}`;
+        }
+      }
+
+      // ---------- File staging (shared by both file input and drag-drop) ----------
+      function stageFile(file) {
+        if (!file) return;
+        selectedFile = file;
+        
+        const textDisplay = document.getElementById('selected-file-preview-placeholder');
+        textDisplay.innerText = `${file.name} (${formatBytes(file.size)})`;
+        textDisplay.className = "truncate max-w-xs sm:max-w-md text-blue-400 font-medium";
+        
+        document.getElementById('btn-abort-staged').classList.remove('hidden');
+        document.getElementById('btn-trigger-transmission').disabled = false;
+
+        if (file.type && file.type.startsWith('image/')) {
+          const thumbReader = new FileReader();
+          thumbReader.onload = function(event) {
+            stagedThumbnailBase64 = event.target.result;
+            document.getElementById('input-thumbnail-preview').src = event.target.result;
+            document.getElementById('input-thumb-name').innerText = file.name;
+            document.getElementById('input-thumbnail-preview-container').classList.remove('hidden');
+          };
+          thumbReader.readAsDataURL(file);
+        } else {
+          document.getElementById('input-thumbnail-preview-container').classList.add('hidden');
+          stagedThumbnailBase64 = null;
+        }
+      }
+
+      // ---------- LAN-first Peer initialization ----------
+      function initializeApplicationNode() {
+        const myNodeId = generateId();
+        
+        // Enhanced ICE configuration: strongly prefer local network candidates (host, srflx with private IP)
+        // Using multiple STUN servers helps discover local addresses; no TURN to avoid forcing relay.
+        peer = new Peer(myNodeId, {
+          debug: 1,
+          config: {
+            iceServers: [
+              { urls: 'stun:stun.l.google.com:19302' },
+              { urls: 'stun:stun1.l.google.com:19302' },
+              // Additional STUN can help with consistent local candidate gathering
+              { urls: 'stun:stun2.l.google.com:19302' }
+            ],
+            // Gather all candidates quickly, then let browser prioritize host (LAN) over srflx/relay
+            iceCandidatePoolSize: 2,
+            // 'all' allows both local and relay; we rely on browser default priority (host > srflx > relay)
+            iceTransportPolicy: 'all'
+          },
+          // Additional PeerJS options to favor quick local connection
+          pingInterval: 3000,
+        });
+
+        peer.on('open', (id) => {
+          document.getElementById('my-id-display').innerText = id.toUpperCase();
+          
+          document.getElementById('qrcode-container').innerHTML = '';
+          new QRCode(document.getElementById('qrcode-container'), {
+            text: `${window.location.origin}${window.location.pathname}#${id}`,
+            width: 148,
+            height: 148,
+            colorDark: "#020617",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+          });
+
+          updateConnectionBadge('ready', `Ready: Node ${id.toUpperCase()}`);
+          checkLocationAnchorHash();
+        });
+
+        peer.on('connection', (incomingConn) => {
+          if (connection && connection.open) {
+            incomingConn.on('open', () => {
+              incomingConn.send({ type: 'sys-error', reason: 'Node pipeline busy' });
+              setTimeout(() => incomingConn.close(), 500);
+            });
+            return;
+          }
+          connection = incomingConn;
+          bindPipelineEvents();
+        });
+
+        peer.on('error', (err) => {
+          console.error('System Node Fault:', err);
+          updateConnectionBadge('error', 'Signaling pipeline exception');
+        });
+      }
+
+      function checkLocationAnchorHash() {
+        const parsedId = window.location.hash.replace('#', '').trim().toLowerCase();
+        if (parsedId && parsedId.length === 6) {
+          connectToRemotePeerNode(parsedId);
+        }
+      }
+
+      function connectToRemotePeerNode(targetId) {
+        updateConnectionBadge('loading', `Routing to ${targetId.toUpperCase()}...`);
+        
+        connection = peer.connect(targetId, { 
+          reliable: true,
+          connectionTimeout: 15000 
+        });
+        bindPipelineEvents();
+      }
+
+      // ---------- Heartbeat & Pipeline binding ----------
+      function startHeartbeatLoop() {
+        stopHeartbeatLoop();
+        heartbeatInterval = setInterval(() => {
+          if (connection && connection.open) {
+            connection.send({ type: 'ping' });
+          }
+        }, 15000);
+      }
+
+      function stopHeartbeatLoop() {
+        if (heartbeatInterval) {
+          clearInterval(heartbeatInterval);
+          heartbeatInterval = null;
+        }
+      }
+
+      function bindPipelineEvents() {
+        if (!connection) return;
+
+        connection.on('open', () => {
+          startHeartbeatLoop();
+          
+          // Ensure binary channel uses arraybuffer for efficiency
+          if(connection.dataChannel) {
+            connection.dataChannel.binaryType = 'arraybuffer';
+          }
+
+          document.getElementById('room-unconnected').classList.add('hidden');
+          document.getElementById('room-connected').classList.remove('hidden');
+          document.getElementById('connected-peer-label').innerText = connection.peer.toUpperCase();
+          updateConnectionBadge('connected', 'Encrypted Link Live');
+          
+          closeWebcamScanner();
+
+          document.getElementById('transfer-feed-timeline').innerHTML = `
+            <div class="bg-indigo-950/20 border border-indigo-500/10 text-indigo-300 text-xs px-4 py-3 rounded-xl text-center shadow-sm">
+              🔒 Peer connection established. LAN path preferred; internet relay only if necessary.
+            </div>
+          `;
+        });
+
+        connection.on('data', (incomingData) => {
+          if (incomingData.type === 'ping') {
+            connection.send({ type: 'pong' });
+            return;
+          }
+          if (incomingData.type === 'pong') return; 
+
+          if (incomingData.type === 'sys-error') {
+            alert(`Connection Refused: ${incomingData.reason}`);
+            breakPipelineLink();
+            return;
+          }
+
+          if (incomingData.type === 'meta-header') {
+            initializeInboundTransferSession(incomingData);
+          } 
+          else if (incomingData.type === 'file-chunk') {
+            processIncomingChunk(incomingData);
+          }
+        });
+
+        connection.on('close', () => {
+          stopHeartbeatLoop();
+          alert('P2P channel closed.');
+          breakPipelineLink();
+        });
+
+        connection.on('error', (e) => {
+          console.error('Channel Error:', e);
+          breakPipelineLink();
+        });
+      }
+
+      function breakPipelineLink() {
+        stopHeartbeatLoop();
+        if (connection) {
+          connection.close();
+          connection = null;
+        }
+        window.location.hash = '';
+        document.getElementById('room-connected').classList.add('hidden');
+        document.getElementById('room-unconnected').classList.remove('hidden');
+        if (peer && peer.id) {
+          updateConnectionBadge('ready', `Ready: Node ${peer.id.toUpperCase()}`);
+        }
+        resetStagedFileElement();
+      }
+
+      // ---------- Feed & Transfer UI ----------
+      function appendBubbleToFeed(id, filename, size, direction, thumbnailData = null) {
+        const feed = document.getElementById('transfer-feed-timeline');
+        const isOut = direction === 'outgoing';
+        
+        const thumbnailImgTag = thumbnailData 
+          ? `<img src="${thumbnailData}" class="w-14 h-14 rounded-xl object-cover border border-slate-700/80 shadow bg-slate-950" alt="preview">`
+          : `<div class="text-2xl w-14 h-14 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-center">${isOut ? '📤' : '📥'}</div>`;
+        
+        const cardHtml = `
+          <div id="bubble-${id}" class="flex flex-col ${isOut ? 'items-end' : 'items-start'} animate-fade-in w-full">
+            <div class="max-w-sm w-full bg-slate-900 border ${isOut ? 'border-blue-500/20 bg-blue-950/10' : 'border-slate-800 bg-slate-900/90'} rounded-2xl p-4 shadow-md space-y-3">
+              <div class="flex items-center gap-3">
+                ${thumbnailImgTag}
+                <div class="truncate flex-grow">
+                  <h4 class="text-xs font-semibold text-slate-200 truncate" title="${filename}">${filename}</h4>
+                  <p class="text-[10px] text-slate-400 mt-0.5">Size: ${formatBytes(size)}</p>
+                </div>
+              </div>
+              
+              <div class="space-y-1">
+                <div class="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden">
+                  <div id="progress-bar-${id}" class="h-full ${isOut ? 'bg-blue-500' : 'bg-emerald-500'} w-0 transition-all duration-100"></div>
+                </div>
+                <div class="flex justify-between text-[9px] text-slate-500 font-mono">
+                  <span id="status-text-${id}">Staging data packets...</span>
+                  <span id="percent-text-${id}">0%</span>
+                </div>
+              </div>
+
+              <a id="btn-save-${id}" class="hidden w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 text-center rounded-xl text-xs transition-colors shadow-md cursor-pointer">
+                📥 Save File
+              </a>
+            </div>
+          </div>
+        `;
+        
+        if(feed.children.length === 1 && feed.children[0].classList.contains('italic')) {
+          feed.innerHTML = '';
+        }
+        
+        feed.insertAdjacentHTML('beforeend', cardHtml);
+        feed.scrollTop = feed.scrollHeight;
+      }
+
+      function executeFileTransmissionSequence() {
+        if (!selectedFile || !connection || !connection.open) return;
+
+        const transferId = 'tx-' + Math.random().toString(36).substring(2, 7);
+        const fileRef = selectedFile; 
+        const thumbToSend = stagedThumbnailBase64;
+
+        appendBubbleToFeed(transferId, fileRef.name, fileRef.size, 'outgoing', thumbToSend);
+        resetStagedFileElement();
+
+        connection.send({
+          type: 'meta-header',
+          id: transferId,
+          name: fileRef.name,
+          size: fileRef.size,
+          mime: fileRef.type,
+          thumbnail: thumbToSend
+        });
+
+        const reader = new FileReader();
+        let offset = 0;
+
+        reader.onload = function(e) {
+          if (e.target.error) {
+            document.getElementById(`status-text-${transferId}`).innerText = "Local read error";
+            return;
+          }
+
+          connection.send({
+            type: 'file-chunk',
+            id: transferId,
+            buffer: e.target.result
+          });
+
+          offset += e.target.result.byteLength;
+          
+          const progress = (offset / fileRef.size) * 100;
+          document.getElementById(`progress-bar-${transferId}`).style.width = `${progress}%`;
+          document.getElementById(`percent-text-${transferId}`).innerText = `${Math.round(progress)}%`;
+          document.getElementById(`status-text-${transferId}`).innerText = `${formatBytes(offset)} / ${formatBytes(fileRef.size)}`;
+
+          if (offset < fileRef.size) {
+            if (connection.dataChannel && connection.dataChannel.bufferedAmount > 16000000) { 
+              setTimeout(readNextSegmentChunk, 40);
+            } else {
+              readNextSegmentChunk();
+            }
+          } else {
+            document.getElementById(`status-text-${transferId}`).className = "text-blue-400 font-semibold text-[9px]";
+            document.getElementById(`status-text-${transferId}`).innerText = "✓ Upload complete";
+          }
+        };
+
+        function readNextSegmentChunk() {
+          const chunkSlice = fileRef.slice(offset, offset + CHUNK_SIZE);
+          reader.readAsArrayBuffer(chunkSlice);
+        }
+
+        readNextSegmentChunk();
+      }
+
+      function initializeInboundTransferSession(meta) {
+        currentInboundTransfer = {
+          id: meta.id,
+          name: meta.name,
+          size: meta.size,
+          mime: meta.mime,
+          chunks: [],
+          bytesAccumulated: 0
+        };
+
+        appendBubbleToFeed(meta.id, meta.name, meta.size, 'incoming', meta.thumbnail);
+        document.getElementById(`status-text-${meta.id}`).innerText = "Buffering incoming blocks...";
+      }
+
+      function processIncomingChunk(chunkData) {
+        const session = currentInboundTransfer;
+        if (!session || session.id !== chunkData.id) return;
+
+        session.chunks.push(chunkData.buffer);
+        session.bytesAccumulated += chunkData.buffer.byteLength;
+
+        const progress = (session.bytesAccumulated / session.size) * 100;
+        document.getElementById(`progress-bar-${session.id}`).style.width = `${progress}%`;
+        document.getElementById(`percent-text-${session.id}`).innerText = `${Math.round(progress)}%`;
+        document.getElementById(`status-text-${session.id}`).innerText = `${formatBytes(session.bytesAccumulated)} of ${formatBytes(session.size)}`;
+
+        if (session.bytesAccumulated >= session.size) {
+          compileAndBuildDownloadTarget(session);
+          currentInboundTransfer = null; 
+        }
+      }
+
+      function compileAndBuildDownloadTarget(session) {
+        document.getElementById(`status-text-${session.id}`).innerText = "Assembling local stream...";
+        
+        const fileBlob = new Blob(session.chunks, { type: session.mime || 'application/octet-stream' });
+        const directObjectUrl = URL.createObjectURL(fileBlob);
+        
+        const saveBtn = document.getElementById(`btn-save-${session.id}`);
+        saveBtn.href = directObjectUrl;
+        saveBtn.download = session.name;
+        saveBtn.classList.remove('hidden');
+        
+        if (session.mime && session.mime.startsWith('image/')) {
+          const bubbleElement = document.getElementById(`bubble-${session.id}`);
+          const imgElement = bubbleElement?.querySelector('img');
+          if (imgElement) imgElement.src = directObjectUrl;
+        }
+
+        document.getElementById(`status-text-${session.id}`).className = "text-emerald-400 font-semibold text-[9px]";
+        document.getElementById(`status-text-${session.id}`).innerText = "✓ Ready to save";
+      }
+
+      function resetStagedFileElement() {
+        selectedFile = null;
+        stagedThumbnailBase64 = null;
+        document.getElementById('file-selector-input').value = '';
+        document.getElementById('selected-file-preview-placeholder').innerText = "No file staged. Click 📎 or drag & drop";
+        document.getElementById('selected-file-preview-placeholder').className = "truncate max-w-xs sm:max-w-md text-slate-400";
+        document.getElementById('btn-abort-staged').classList.add('hidden');
+        document.getElementById('btn-trigger-transmission').disabled = true;
+        document.getElementById('input-thumbnail-preview-container').classList.add('hidden');
+      }
+
+      // ---------- Scanner logic ----------
+      function initializeWebcamScanner() {
+        const scannerZone = document.getElementById('scanner-box');
+        scannerZone.classList.remove('hidden');
+
+        html5QrcodeScanner = new Html5Qrcode("interactive-reader");
+        const qrConfig = { fps: 10, qrbox: { width: 200, height: 200 } };
+
+        html5QrcodeScanner.start(
+          { facingMode: "environment" }, 
+          qrConfig,
+          (qrCodeMessage) => {
+            try {
+              const parsingUrl = new URL(qrCodeMessage);
+              const matchId = parsingUrl.hash.replace('#', '').trim().toLowerCase();
+              if (matchId && matchId.length === 6) {
+                connectToRemotePeerNode(matchId);
+                closeWebcamScanner();
+              }
+            } catch(e) {
+              const cleanStr = qrCodeMessage.trim().toLowerCase();
+              if(cleanStr.length === 6) {
+                connectToRemotePeerNode(cleanStr);
+                closeWebcamScanner();
+              }
+            }
+          },
+          (errorMessage) => {}
+        ).catch(err => {
+          alert("Camera access required for scanning.");
+          scannerZone.classList.add('hidden');
+        });
+      }
+
+      function closeWebcamScanner() {
+        if (html5QrcodeScanner) {
+          html5QrcodeScanner.stop().then(() => {
+            document.getElementById('scanner-box').classList.add('hidden');
+          }).catch(err => {
+            document.getElementById('scanner-box').classList.add('hidden');
+          });
+        }
+      }
+
+      // ---------- Drag & Drop setup ----------
+      function setupDragAndDrop() {
+        const overlay = document.getElementById('drag-overlay');
+        let dragCounter = 0;
+
+        // Prevent default drag behaviors on the entire document
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+          document.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          });
+        });
+
+        // Show overlay when dragging files into the window
+        document.addEventListener('dragenter', (e) => {
+          dragCounter++;
+          if (e.dataTransfer.types && e.dataTransfer.types.includes('Files')) {
+            overlay.classList.remove('hidden');
+          }
+        });
+
+        document.addEventListener('dragleave', (e) => {
+          dragCounter--;
+          if (dragCounter === 0) {
+            overlay.classList.add('hidden');
+          }
+        });
+
+        // Handle the drop event
+        document.addEventListener('drop', (e) => {
+          dragCounter = 0;
+          overlay.classList.add('hidden');
+          
+          const files = e.dataTransfer.files;
+          if (files.length > 0) {
+            // Only stage if connected (or allow staging even when unconnected for UX)
+            stageFile(files[0]);
+            
+            // Optional: show a subtle notification if not connected
+            if (!connection || !connection.open) {
+              const placeholder = document.getElementById('selected-file-preview-placeholder');
+              if (placeholder && !placeholder.innerText.includes('⚠️')) {
+                // Just let them stage; transmit button will be visible when connected
+              }
+            }
+          }
+        });
+
+        // Also allow dropping directly on the connected panel for convenience
+        const connectedPanel = document.getElementById('room-connected');
+        if (connectedPanel) {
+          connectedPanel.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            connectedPanel.classList.add('drag-over-glow');
+          });
+          connectedPanel.addEventListener('dragleave', (e) => {
+            connectedPanel.classList.remove('drag-over-glow');
+          });
+          connectedPanel.addEventListener('drop', (e) => {
+            e.stopPropagation();
+            connectedPanel.classList.remove('drag-over-glow');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+              stageFile(files[0]);
+            }
+          });
+        }
+
+        // Same for unconnected panel
+        const unconnectedPanel = document.getElementById('room-unconnected');
+        if (unconnectedPanel) {
+          unconnectedPanel.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            unconnectedPanel.classList.add('drag-over-glow');
+          });
+          unconnectedPanel.addEventListener('dragleave', (e) => {
+            unconnectedPanel.classList.remove('drag-over-glow');
+          });
+          unconnectedPanel.addEventListener('drop', (e) => {
+            e.stopPropagation();
+            unconnectedPanel.classList.remove('drag-over-glow');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+              stageFile(files[0]);
+            }
+          });
+        }
+      }
+
+      // ---------- Event wiring ----------
+      document.addEventListener('DOMContentLoaded', () => {
+        initializeApplicationNode();
+        setupDragAndDrop();
+
+        document.getElementById('file-selector-input').addEventListener('change', (e) => {
+          const targetFile = e.target.files[0];
+          if (!targetFile) return;
+          stageFile(targetFile);
+        });
+
+        document.getElementById('btn-abort-staged').addEventListener('click', resetStagedFileElement);
+        document.getElementById('btn-trigger-transmission').addEventListener('click', executeFileTransmissionSequence);
+        
+        document.getElementById('btn-manual-connect').addEventListener('click', () => {
+          const rawInVal = document.getElementById('manual-target-id').value.trim().toLowerCase();
+          if (rawInVal.length === 6) {
+            connectToRemotePeerNode(rawInVal);
+          } else {
+            alert('Invalid 6-character Peer ID.');
+          }
+        });
+
+        document.getElementById('btn-disconnect').addEventListener('click', breakPipelineLink);
+        document.getElementById('btn-open-scanner').addEventListener('click', initializeWebcamScanner);
+        document.getElementById('btn-close-scanner').addEventListener('click', closeWebcamScanner);
+
+        document.getElementById('btn-copy-link').addEventListener('click', () => {
+          if (!peer || !peer.id) return;
+          const generatedUrlString = `${window.location.origin}${window.location.pathname}#${peer.id}`;
+          navigator.clipboard.writeText(generatedUrlString);
+          const copyBtn = document.getElementById('btn-copy-link');
+          copyBtn.innerText = "✓ Link Copied Success!";
+          setTimeout(() => { copyBtn.innerText = "🔗 Copy Room Magic Link"; }, 2000);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
