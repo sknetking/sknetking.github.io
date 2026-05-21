@@ -318,7 +318,27 @@
             </div>
         </div>
     </section>
-
+    
+ <section id="contact" class="py-24 bg-slate-900/50">
+        <div class="container mx-auto px-6 max-w-2xl">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold mb-4">Let's <span class="text-blue-500">Connect</span></h2>
+                <p class="text-gray-400">Fill the form to send a message directly to my WhatsApp.</p>
+            </div>
+            <form id="contactForm" class="space-y-4">
+                <div class="grid md:grid-cols-2 gap-4">
+                    <input type="text" id="name" placeholder="Name" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition">
+                    <input type="text" id="subject" placeholder="Subject" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition">
+                </div>
+                <textarea id="message" rows="5" placeholder="Your Message" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition"></textarea>
+                <button type="button" onclick="sendToWhatsApp()" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition flex items-center justify-center space-x-2">
+                    <i class="fab fa-whatsapp text-2xl"></i>
+                    <span>Send to WhatsApp</span>
+                </button>
+            </form>
+        </div>
+    </section>
+    
     <!-- Footer / Contact -->
     <footer id="contact" class="pt-24 pb-12 bg-slate-950 border-t border-slate-800">
         <div class="container mx-auto px-6 text-center">
@@ -431,6 +451,17 @@
             }
         });
 
+        //whatsapp contact us form
+        function sendToWhatsApp() {
+            const phone = "917398113232";
+            const name = document.getElementById('name').value;
+            const sub = document.getElementById('subject').value;
+            const msg = document.getElementById('message').value;
+            if(!name || !sub || !msg) return alert("Please fill all fields.");
+            const url = `https://api.whatsapp.com/send?phone=${phone}&text=*New Portfolio Lead*%0A*Name:* ${name}%0A*Subject:* ${sub}%0A*Message:* ${msg}`;
+            window.open(url, '_blank');
+        }
+        
         // Mobile Menu Logic
         const menu = document.getElementById('mobile-menu');
         const openBtn = document.getElementById('mobile-btn');
