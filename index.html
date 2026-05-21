@@ -8,85 +8,187 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #0f172a; color: #f8fafc; }
-        .nav-blur { @apply bg-slate-900/80 backdrop-blur-md border-b border-slate-800; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: #0b0f19; 
+            color: #f8fafc; 
+            overflow-x: hidden;
+        }
         
-        /* Tool Card Styles */
-        .tool-card { @apply bg-slate-800/40 border border-slate-700/50 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-500/10 hover:border-blue-500/50; }
+        /* Modernized Custom Glassmorphism Styles */
+        .nav-blur { 
+            background-color: rgba(11, 15, 25, 0.85); 
+            backdrop-filter: blur(16px); 
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
+        }
         
-        /* Portfolio/Client Card Styles */
-        .glass-card { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(71, 85, 105, 0.3); }
+        .tool-card { 
+            background-color: rgba(17, 24, 39, 0.4); 
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+            border-radius: 1.5rem; 
+            overflow: hidden; 
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+        }
+        .tool-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px -15px rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+        
+        .glass-card { 
+            background: rgba(17, 24, 39, 0.5); 
+            border: 1px solid rgba(255, 255, 255, 0.06); 
+        }
+        
         .website-card-overlay { 
-            background: linear-gradient(0deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.4) 50%, rgba(15, 23, 42, 0) 100%);
+            background: linear-gradient(0deg, rgba(11, 15, 25, 0.98) 0%, rgba(11, 15, 25, 0.7) 60%, rgba(11, 15, 25, 0.1) 100%);
         }
 
-        .whatsapp-float { position: fixed; bottom: 30px; right: 30px; z-index: 100; transition: transform 0.3s ease; }
-        .whatsapp-float:hover { transform: scale(1.1); }
-        .gradient-text { @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400; }
+        .whatsapp-float { 
+            position: fixed; 
+            bottom: 30px; 
+            right: 30px; 
+            z-index: 100; 
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
+        }
+        .whatsapp-float:hover { 
+            transform: scale(1.15) rotate(5deg); 
+        }
+        
+        .gradient-text { 
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent; 
+            background-image: linear-gradient(135deg, #60a5fa 0%, #34d399 100%); 
+        }
+
+        /* Responsive Safe Overlays for Mobile Tap Interaction */
+        @media (max-width: 768px) {
+            .mobile-overlay-active {
+                opacity: 1 !important;
+                transform: translateY(0) !important;
+            }
+        }
     </style>
 </head>
-<body>
+<body class="relative">
+
+    <!-- TOAST NOTIFICATION CONTAINER (Alternative to alert) -->
+    <div id="toastContainer" class="fixed top-24 right-6 z-[100] flex flex-col gap-3 pointer-events-none max-w-sm w-full px-4 sm:px-0"></div>
 
     <!-- NAVBAR -->
-    <nav class="fixed w-full z-50 nav-blur">
-        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <a href="#home" class="text-2xl font-bold tracking-tighter text-white">SK<span class="text-blue-500">NetKing</span></a>
-            <div class="hidden md:flex space-x-8 text-sm font-medium">
-                <a href="#home" class="hover:text-blue-400 transition">Home</a>
-                <a href="#about" class="hover:text-blue-400 transition">About</a>
-                <a href="#portfolio" class="hover:text-blue-400 transition">Portfolio</a>
-                <a href="#tools" class="hover:text-blue-400 transition">Tools</a>
-                <a href="https://sknetking9.blogspot.com/" target="_blank" class="hover:text-blue-400 transition">Blog</a>
-                <a href="#contact" class="hover:text-blue-400 transition">Contact</a>
+    <nav class="fixed w-full z-50 nav-blur transition-all duration-300">
+        <div class="container mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+            <a href="#home" class="text-2xl font-black tracking-tight text-white flex items-center gap-1">
+                SK<span class="text-blue-500 font-bold">NetKing</span>
+            </a>
+            
+            <!-- Desktop Menu Links -->
+            <div class="hidden md:flex space-x-8 text-sm font-medium items-center">
+                <a href="#home" class="hover:text-blue-400 transition-colors duration-200">Home</a>
+                <a href="#about" class="hover:text-blue-400 transition-colors duration-200">About</a>
+                <a href="#portfolio" class="hover:text-blue-400 transition-colors duration-200">Portfolio</a>
+                <a href="#tools" class="hover:text-blue-400 transition-colors duration-200">Tools</a>
+                <a href="https://sknetking9.blogspot.com/" target="_blank" class="hover:text-blue-400 transition-colors duration-200">Blog</a>
+                <a href="#contact" class="hover:text-blue-400 transition-colors duration-200">Contact</a>
             </div>
-            <a href="#contact" class="hidden md:block px-5 py-2 bg-blue-600 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-blue-700 transition">Hire Me</a>
+            
+            <a href="#contact" class="hidden md:block px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 rounded-xl text-xs font-bold uppercase tracking-widest transition-all duration-200 shadow-lg shadow-blue-500/15">Hire Me</a>
+
+            <!-- Mobile Hamburger Menu Button -->
+            <button id="mobileMenuBtn" aria-label="Toggle Menu" class="md:hidden flex items-center justify-center w-11 h-11 rounded-xl bg-slate-800/60 border border-slate-700 text-slate-200 hover:text-white transition-all">
+                <i class="fas fa-bars text-xl" id="hamburgerIcon"></i>
+            </button>
         </div>
     </nav>
 
+    <!-- Mobile Slide-Out Drawer Overlay -->
+    <div id="mobileDrawerOverlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[45] hidden opacity-0 transition-opacity duration-300"></div>
+
+    <!-- Mobile Navigation Drawer -->
+    <div id="mobileDrawer" class="fixed top-0 right-0 h-full w-[280px] sm:w-[320px] bg-slate-900 border-l border-slate-800 z-[48] shadow-2xl p-6 flex flex-col justify-between transform translate-x-full transition-transform duration-300 ease-out">
+        <div>
+            <!-- Header of drawer -->
+            <div class="flex justify-between items-center mb-8 pb-4 border-b border-slate-800">
+                <span class="text-lg font-black text-white">SK<span class="text-blue-500">NetKing</span></span>
+                <button id="closeDrawerBtn" class="w-10 h-10 rounded-lg bg-slate-800/80 hover:bg-slate-800 flex items-center justify-center text-slate-300 hover:text-white">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Drawer Links -->
+            <div class="flex flex-col space-y-4">
+                <a href="#home" class="mobile-nav-link text-base font-medium text-slate-300 hover:text-blue-400 py-2.5 px-3 rounded-lg hover:bg-slate-800/40 transition">Home</a>
+                <a href="#about" class="mobile-nav-link text-base font-medium text-slate-300 hover:text-blue-400 py-2.5 px-3 rounded-lg hover:bg-slate-800/40 transition">About</a>
+                <a href="#portfolio" class="mobile-nav-link text-base font-medium text-slate-300 hover:text-blue-400 py-2.5 px-3 rounded-lg hover:bg-slate-800/40 transition">Portfolio</a>
+                <a href="#tools" class="mobile-nav-link text-base font-medium text-slate-300 hover:text-blue-400 py-2.5 px-3 rounded-lg hover:bg-slate-800/40 transition">Tools</a>
+                <a href="https://sknetking9.blogspot.com/" target="_blank" class="mobile-nav-link text-base font-medium text-slate-300 hover:text-blue-400 py-2.5 px-3 rounded-lg hover:bg-slate-800/40 transition">Blog</a>
+                <a href="#contact" class="mobile-nav-link text-base font-medium text-slate-300 hover:text-blue-400 py-2.5 px-3 rounded-lg hover:bg-slate-800/40 transition">Contact</a>
+            </div>
+        </div>
+
+        <!-- Hire Me & Social links inside Drawer -->
+        <div class="space-y-6 pt-6 border-t border-slate-800">
+            <a href="#contact" class="mobile-nav-link block w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-center text-white font-bold rounded-xl text-sm transition">Hire Me</a>
+            <div class="flex justify-center space-x-5">
+                <a href="https://www.youtube.com/sknetking" target="_blank" class="text-slate-400 hover:text-red-500 transition-colors"><i class="fab fa-youtube text-lg"></i></a>
+                <a href="https://linkedin.com/in/sknetking" target="_blank" class="text-slate-400 hover:text-blue-400 transition-colors"><i class="fab fa-linkedin text-lg"></i></a>
+                <a href="https://github.com/sknetking" target="_blank" class="text-slate-400 hover:text-white transition-colors"><i class="fab fa-github text-lg"></i></a>
+            </div>
+        </div>
+    </div>
+
     <!-- HERO SECTION -->
-    <section id="home" class="min-h-screen flex items-center pt-20 px-6">
+    <section id="home" class="min-h-screen flex items-center pt-24 pb-16 px-4 sm:px-6">
         <div class="container mx-auto grid md:grid-cols-2 gap-12 items-center">
-            <div>
-                <h2 class="text-blue-500 font-bold mb-4 tracking-widest uppercase text-sm">Expert WordPress Developer</h2>
-                <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+            <div class="order-2 md:order-1 text-center md:text-left">
+                <h2 class="text-blue-500 font-bold mb-4 tracking-widest uppercase text-xs sm:text-sm">Expert WordPress Developer</h2>
+                <h1 class="text-4xl sm:text-5xl lg:text-7xl font-bold mb-6 leading-tight">
                     I Am <span class="gradient-text">Shyam Sahani</span>
                 </h1>
-                <p class="text-gray-400 text-lg mb-8 max-w-lg leading-relaxed">
+                <p class="text-slate-400 text-base sm:text-lg mb-8 max-w-lg mx-auto md:mx-0 leading-relaxed">
                     Building custom WordPress plugins, Micro-SaaS tools, and responsive digital experiences with over 4 years of professional expertise.
                 </p>
-                <div class="flex space-x-4">
-                    <a href="#portfolio" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl font-bold transition shadow-lg shadow-blue-900/20">View Work</a>
-                    <a href="#tools" class="px-8 py-3 border border-slate-700 hover:bg-slate-800 rounded-xl font-bold transition">Launch Tools</a>
+                <div class="flex flex-col sm:flex-row justify-center md:justify-start gap-4">
+                    <a href="#portfolio" class="px-8 py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white rounded-xl font-bold transition shadow-lg shadow-blue-500/20 text-center">View Work</a>
+                    <a href="#tools" class="px-8 py-3.5 border border-slate-700 hover:bg-slate-800/40 rounded-xl font-bold transition text-center text-slate-300 hover:text-white">Launch Tools</a>
                 </div>
             </div>
-            <div class="relative flex justify-center">
-                <div class="w-64 h-64 md:w-80 md:h-80 rounded-3xl overflow-hidden border-4 border-slate-800 rotate-3 hover:rotate-0 transition-all duration-500 shadow-2xl">
+            
+            <div class="order-1 md:order-2 relative flex justify-center mt-6 md:mt-0">
+                <!-- Glowing background dynamic decorative blob -->
+                <div class="absolute w-64 h-64 bg-blue-500/10 rounded-full filter blur-3xl -top-4 -left-4"></div>
+                <div class="absolute w-64 h-64 bg-emerald-500/10 rounded-full filter blur-3xl -bottom-4 -right-4"></div>
+                
+                <div class="relative w-56 h-56 sm:w-64 sm:h-64 md:w-80 md:h-80 rounded-3xl overflow-hidden border-4 border-slate-800 rotate-3 hover:rotate-0 transition-all duration-500 shadow-2xl">
                     <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgEJByjx_Ts7QO_3-Q7_x32vuCYRSl7dxyl_ff0Tc6gTzvW-OHKlibSwbVk4P-Zmeys95zZQMqa9PyLmOGIkSHgbi36Wd63zFxZbvKJGBNB8QvMy0wKigF3jYz_8VS_gLUjuLuefC_LJWwFFMbC0g0gjusY-fIPTJbxOnwBpRhzRU4l1-VIzOXFUI6K/s343/IMG_20210213_223135_414.jpg" 
-                         alt="Profile" class="w-full h-full object-cover">
+                         alt="Shyam Sahani Profile" class="w-full h-full object-cover">
                 </div>
             </div>
         </div>
     </section>
 
     <!-- ABOUT SECTION -->
-    <section id="about" class="py-24 bg-slate-900/50 border-y border-slate-800">
-        <div class="container mx-auto px-6">
+    <section id="about" class="py-20 sm:py-24 bg-slate-900/30 border-y border-slate-800/80">
+        <div class="container mx-auto px-4 sm:px-6">
             <div class="max-w-4xl mx-auto">
-                <div class="text-center mb-16">
+                <div class="text-center mb-12 sm:mb-16">
                     <h2 class="text-3xl font-bold mb-2 uppercase tracking-wide">About <span class="text-blue-500">MySelf</span></h2>
-                    <div class="h-1 w-16 bg-blue-500 mx-auto rounded-full"></div>
+                    <div class="h-1 w-16 bg-gradient-to-r from-blue-500 to-emerald-500 mx-auto rounded-full"></div>
                 </div>
-                <div class="grid md:grid-cols-2 gap-12 items-center">
-                    <div class="text-gray-300 space-y-4 text-sm leading-relaxed">
+                <div class="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+                    <div class="text-slate-300 space-y-4 text-sm sm:text-base leading-relaxed text-center md:text-left">
                         <p>I specialize in crafting immersive online experiences tailored to business needs. With a commitment to clean code and innovation, I transform complex ideas into functional web tools.</p>
                         <p>From custom theme development to integrating modern APIs, I focus on delivering scalable and high-performance solutions for global clients.</p>
                     </div>
-                    <div class="bg-slate-800/40 p-6 rounded-2xl border border-slate-700 space-y-3 text-sm">
-                        <div class="flex justify-between"><span class="text-blue-400 font-bold uppercase">Location</span><span>Surat, Gujarat, India</span></div>
-                        <div class="flex justify-between"><span class="text-blue-400 font-bold uppercase">Experience</span><span>4+ Years</span></div>
-                        <div class="flex justify-between"><span class="text-blue-400 font-bold uppercase">Specialization</span><span>WordPress & Micro-SaaS</span></div>
-                        <div class="flex justify-between"><span class="text-blue-400 font-bold uppercase">Contact</span><span>sknetkingseo@gmail.com</span></div>
+                    <div class="bg-slate-900/50 p-6 sm:p-8 rounded-2xl border border-slate-800 space-y-4 text-sm">
+                        <div class="flex flex-col sm:flex-row justify-between border-b border-slate-800/80 pb-3 gap-1"><span class="text-blue-400 font-bold uppercase text-xs tracking-wider">Location</span><span class="text-slate-300">Surat, Gujarat, India</span></div>
+                        <div class="flex flex-col sm:flex-row justify-between border-b border-slate-800/80 pb-3 gap-1"><span class="text-blue-400 font-bold uppercase text-xs tracking-wider">Experience</span><span class="text-slate-300">4+ Years Professional</span></div>
+                        <div class="flex flex-col sm:flex-row justify-between border-b border-slate-800/80 pb-3 gap-1"><span class="text-blue-400 font-bold uppercase text-xs tracking-wider">Specialization</span><span class="text-slate-300">WordPress & Micro-SaaS</span></div>
+                        <div class="flex flex-col sm:flex-row justify-between gap-1"><span class="text-blue-400 font-bold uppercase text-xs tracking-wider">Contact</span><span class="text-slate-300 break-all">sknetkingseo@gmail.com</span></div>
                     </div>
                 </div>
             </div>
@@ -94,11 +196,11 @@
     </section>
 
     <!-- CLIENT WEBSITES (PORTFOLIO) -->
-    <section id="portfolio" class="py-24 bg-slate-950">
-        <div class="container mx-auto px-6">
-            <div class="mb-16 text-center md:text-left">
-                <h2 class="text-4xl font-bold mb-4">Crafting Professional <span class="text-blue-500">Websites</span></h2>
-                <p class="text-slate-400 max-w-xl">A collection of premium websites built for performance, scale, and seamless user experiences.</p>
+    <section id="portfolio" class="py-20 sm:py-24 bg-slate-950">
+        <div class="container mx-auto px-4 sm:px-6">
+            <div class="mb-12 sm:mb-16 text-center md:text-left">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4">Crafting Professional <span class="text-blue-500">Websites</span></h2>
+                <p class="text-slate-400 max-w-xl text-sm sm:text-base">A collection of premium websites built for performance, scale, and seamless user experiences.</p>
             </div>
             
             <div id="projectGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -108,34 +210,34 @@
     </section>
 
     <!-- TOOLS GRID SECTION -->
-    <section id="tools" class="py-24 bg-slate-900/30 border-t border-slate-800">
-        <div class="container mx-auto px-6 text-center">
-            <div class="mb-16">
-                <h2 class="text-4xl font-bold mb-4">⚙️ Dev Tools <span class="text-emerald-400">Universe</span></h2>
-                <p class="text-gray-400 max-w-2xl mx-auto">Handcrafted utilities and productivity boosters designed for a modern workspace.</p>
+    <section id="tools" class="py-20 sm:py-24 bg-slate-900/10 border-t border-slate-800/80">
+        <div class="container mx-auto px-4 sm:px-6 text-center">
+            <div class="mb-12 sm:mb-16">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4">⚙️ Dev Tools <span class="text-emerald-400">Universe</span></h2>
+                <p class="text-slate-400 max-w-2xl mx-auto text-sm sm:text-base">Handcrafted utilities and productivity boosters designed for a modern workspace.</p>
             </div>
             
-            <div id="toolsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <div id="toolsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
                 <!-- Tools Injected via JavaScript -->
             </div>
         </div>
     </section>
 
     <!-- CONTACT SECTION -->
-    <section id="contact" class="py-24 bg-slate-900/50">
-        <div class="container mx-auto px-6 max-w-2xl">
+    <section id="contact" class="py-20 sm:py-24 bg-slate-900/30">
+        <div class="container mx-auto px-4 sm:px-6 max-w-2xl">
             <div class="text-center mb-12">
                 <h2 class="text-3xl font-bold mb-4">Let's <span class="text-blue-500">Connect</span></h2>
-                <p class="text-gray-400">Fill the form to send a message directly to my WhatsApp.</p>
+                <p class="text-slate-400 text-sm sm:text-base">Fill out the form below to initiate an instant secure chat via WhatsApp.</p>
             </div>
             <form id="contactForm" class="space-y-4">
                 <div class="grid md:grid-cols-2 gap-4">
-                    <input type="text" id="name" placeholder="Name" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition">
-                    <input type="text" id="subject" placeholder="Subject" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition">
+                    <input type="text" id="name" placeholder="Your Name" required class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-4 py-3.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors">
+                    <input type="text" id="subject" placeholder="Subject" required class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-4 py-3.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors">
                 </div>
-                <textarea id="message" rows="5" placeholder="Your Message" required class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition"></textarea>
-                <button type="button" onclick="sendToWhatsApp()" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition flex items-center justify-center space-x-2">
-                    <i class="fab fa-whatsapp text-2xl"></i>
+                <textarea id="message" rows="5" placeholder="Your Message details..." required class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-4 py-3.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"></textarea>
+                <button type="button" onclick="sendToWhatsApp()" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold rounded-xl transition flex items-center justify-center space-x-2 shadow-lg shadow-emerald-500/10">
+                    <i class="fab fa-whatsapp text-xl"></i>
                     <span>Send to WhatsApp</span>
                 </button>
             </form>
@@ -143,22 +245,22 @@
     </section>
 
     <!-- MODERN FOOTER -->
-    <footer class="py-16 bg-slate-950 border-t border-slate-800 text-center">
-        <div class="container mx-auto px-6">
-            <h3 class="text-xl font-bold mb-6 tracking-wide">STAY CONNECTED</h3>
+    <footer class="py-16 bg-slate-950 border-t border-slate-900 text-center">
+        <div class="container mx-auto px-4 sm:px-6">
+            <h3 class="text-xs font-semibold text-slate-500 mb-6 tracking-widest uppercase">STAY CONNECTED</h3>
             <div class="flex justify-center space-x-6 mb-12">
-                <a href="https://www.youtube.com/sknetking" target="_blank" class="text-gray-400 hover:text-red-500 transition text-2xl"><i class="fab fa-youtube"></i></a>
-                <a href="https://linkedin.com/in/sknetking" target="_blank" class="text-gray-400 hover:text-blue-400 transition text-2xl"><i class="fab fa-linkedin"></i></a>
-                <a href="https://github.com/sknetking" target="_blank" class="text-gray-400 hover:text-white transition text-2xl"><i class="fab fa-github"></i></a>
-                <a href="mailto:sknetkingseo@gmail.com" class="text-gray-400 hover:text-emerald-400 transition text-2xl"><i class="fa-regular fa-envelope"></i></a>
+                <a href="https://www.youtube.com/sknetking" target="_blank" class="text-slate-400 hover:text-red-500 transition-colors duration-200 text-2xl"><i class="fab fa-youtube"></i></a>
+                <a href="https://linkedin.com/in/sknetking" target="_blank" class="text-slate-400 hover:text-blue-400 transition-colors duration-200 text-2xl"><i class="fab fa-linkedin"></i></a>
+                <a href="https://github.com/sknetking" target="_blank" class="text-slate-400 hover:text-white transition-colors duration-200 text-2xl"><i class="fab fa-github"></i></a>
+                <a href="mailto:sknetkingseo@gmail.com" class="text-slate-400 hover:text-emerald-400 transition-colors duration-200 text-2xl"><i class="fa-regular fa-envelope"></i></a>
             </div>
-            <p id="copyright" class="text-xs text-gray-600 uppercase tracking-widest">© 2026 SKNetKing — Built with precision in Surat.</p>
+            <p id="copyright" class="text-xs text-slate-600 uppercase tracking-widest">© 2026 SKNetKing — Built with precision in Surat.</p>
         </div>
     </footer>
 
     <!-- FLOATING WHATSAPP -->
-    <a href="https://wa.me/+917398113232" class="whatsapp-float" target="_blank">
-        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjMzEertTJJZI5qUzjeKqMjEat92wFeAc3YsyDz6KwRvImpOYxFCQ5QD8XKyZcDCSDi-bF_3NX_ManUsSjlrJ5QvXmYZKMfPz8SLiaGORdc_Zq2-f45CmsABDX_0TS1_-NjsyaihRZ7jJg75XmpdVwT0RxkjuSiMRO_JB7w_er6NbaRixJMNp8tLC-7y74/s1600/whatsapp-icon.png" alt="WhatsApp" width="60">
+    <a href="https://wa.me/+917398113232" class="whatsapp-float w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center bg-emerald-500 rounded-full shadow-xl shadow-emerald-500/20" target="_blank">
+        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjMzEertTJJZI5qUzjeKqMjEat92wFeAc3YsyDz6KwRvImpOYxFCQ5QD8XKyZcDCSDi-bF_3NX_ManUsSjlrJ5QvXmYZKMfPz8SLiaGORdc_Zq2-f45CmsABDX_0TS1_-NjsyaihRZ7jJg75XmpdVwT0RxkjuSiMRO_JB7w_er6NbaRixJMNp8tLC-7y74/s1600/whatsapp-icon.png" alt="WhatsApp" class="w-8 h-8 sm:w-9 sm:h-9">
     </a>
 
     <script>
@@ -185,7 +287,6 @@
             { title: "4K Screen Recorder", description: "Capture your screen, facecam or both with high-quality export.", link: "screen-recorder.html", image: "https://i.ibb.co/QWDYdX8/image.png" },
             { title: "Instant Live Chat", description: "Real-time rooms, instant messaging, seamless communication.", link: "live-chat.html", image: "https://images.unsplash.com/photo-1577563908411-5077b6dc7624?w=600&auto=format" },
             { title: "Live File Share", description: "Real-time rooms, instant file share, seamless communication.", link: "https://sknetking.github.io/tools/fileshare.html", image: "https://raw.githubusercontent.com/sknetking/sknetking.github.io/main/images/instant-file-share-without-login.jpg" },
-          
             { title: "Live Clock", description: "Clock with minute, second, hour, and date visualization.", link: "/tools/live-clock.html", image: "https://i.ibb.co/kVGrD0gq/image.png" },
             { title: "PixelPilot Compressor", description: "Compress images from MB to KB without quality loss.", link: "https://sknetking.github.io/tools/image-Compression.html", image: "https://i.ibb.co/V5N2CRj/image.png" },
             { title: "PL Live Calculator", description: "Calculate your live running trades instantly.", link: "https://sknetking.github.io/tools/share-pl-calculator.html", image: "https://i.ibb.co/MDwMj2SM/image.png" },
@@ -203,57 +304,164 @@
             { title: "Number Learning", description: "Count and play—audio recognition for early learners.", link: "/tools/number-learning-tool.html", image: "https://i.ibb.co/B2TSwhm6/image.png" }
         ];
 
+        // RENDER PORTFOLIO PROJECTS
         function renderPortfolio() {
             const container = document.getElementById('projectGrid');
-            container.innerHTML = projects.map(p => {
+            container.innerHTML = projects.map((p, idx) => {
                 const screenshot = `https://s0.wp.com/mshots/v1/${encodeURIComponent(p.url)}?w=600`;
                 return `
-                    <div class="group relative aspect-[4/5] rounded-3xl overflow-hidden glass-card transition-all duration-500 hover:scale-[1.02]">
-                     <a href="${p.url}" target="_blank">    <img src="${screenshot}" alt="${p.name}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div class="group relative aspect-[4/5] rounded-3xl overflow-hidden glass-card transition-all duration-500 hover:scale-[1.02] shadow-lg" onclick="handleProjectCardTap(event, ${idx})">
+                        <img src="${screenshot}" alt="${p.name}" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" onerror="this.src='https://placehold.co/600x750/1e293b/94a3b8?text=${encodeURIComponent(p.name)}'">
                         <div class="absolute inset-0 website-card-overlay flex flex-col justify-end p-6">
-                            <h4 class="text-xl font-bold text-white translate-y-2 transition-transform duration-300 group-hover:translate-y-0">${p.name}</h4>
-                            <p class="text-slate-300 text-sm mb-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">${p.desc}</p>
-                            <a href="${p.url}" target="_blank" class="w-10 h-10 bg-white text-slate-950 rounded-full flex items-center justify-center translate-y-4 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 hover:bg-blue-500 hover:text-white">
-                                <i class="fas fa-external-link-alt text-xs"></i>
-                            </a>
+                            <!-- Mobile Friendly Header Layer -->
+                            <div class="transform transition-transform duration-300 translate-y-4 md:translate-y-8 group-hover:translate-y-0 mobile-overlay-active flex flex-col">
+                                <h4 class="text-lg sm:text-xl font-bold text-white mb-1">${p.name}</h4>
+                                <p class="text-slate-300 text-xs sm:text-sm mb-4 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 line-clamp-2 md:line-clamp-none">${p.desc}</p>
+                            </div>
+                            <div class="flex items-center justify-between mt-1">
+                                <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="w-10 h-10 bg-white text-slate-950 rounded-full flex items-center justify-center opacity-100 md:opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-blue-500 hover:text-white">
+                                    <i class="fas fa-external-link-alt text-xs"></i>
+                                </a>
+                                <span class="md:hidden text-[10px] text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-full font-medium">Click to Launch</span>
+                            </div>
                         </div>
-                        </a>
                     </div>
                 `;
             }).join('');
         }
 
+        // Handle Touch Screen Taps for hover/interaction state on mobile
+        function handleProjectCardTap(event, index) {
+            if (window.innerWidth <= 768) {
+                const cards = document.querySelectorAll('#projectGrid > div');
+                cards.forEach((card, idx) => {
+                    const textOverlay = card.querySelector('.transform');
+                    const linkIcon = card.querySelector('.fa-external-link-alt')?.parentElement;
+                    if (idx === index) {
+                        textOverlay.classList.add('mobile-overlay-active');
+                        if (linkIcon) linkIcon.classList.add('opacity-100');
+                    } else {
+                        textOverlay.classList.remove('mobile-overlay-active');
+                        if (linkIcon) linkIcon.classList.remove('opacity-100');
+                    }
+                });
+            }
+        }
+
+        // RENDER TOOLS
         function renderTools() {
             const grid = document.getElementById('toolsGrid');
             grid.innerHTML = toolsCatalog.map(tool => `
-                <div class="tool-card group">
-                 <a href="${tool.link}" target="_blank">
-                 <div class="h-44 rounded-3xl overflow-hidden">
-                        <img src="${tool.image}" alt="${tool.title}" class="w-full h-full object-cover group-hover:scale-110 transition-all duration-500">
-                    </div>
-                </a>
-                    <div class="p-5 text-left">
-                        <h3 class="font-bold text-lg mb-2 group-hover:text-blue-400 transition">${tool.title}</h3>
-                        <p class="text-xs text-gray-400 mb-4 line-clamp-2 leading-relaxed">${tool.description}</p>
-                        <a href="${tool.link}" target="_blank" class="text-xs font-bold uppercase tracking-wider text-blue-500 hover:text-blue-300 flex items-center space-x-1">
+                <div class="tool-card group flex flex-col h-full bg-slate-900/40">
+                    <a href="${tool.link}" target="_blank" rel="noopener noreferrer" class="block aspect-video w-full overflow-hidden relative">
+                        <img src="${tool.image}" alt="${tool.title}" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-500" loading="lazy" onerror="this.src='https://placehold.co/600x337/111827/4b5563?text=${encodeURIComponent(tool.title)}'">
+                    </a>
+                    <div class="p-5 flex-grow flex flex-col justify-between text-left">
+                        <div>
+                            <h3 class="font-bold text-base sm:text-lg mb-2 text-slate-100 group-hover:text-blue-400 transition-colors">${tool.title}</h3>
+                            <p class="text-xs text-slate-400 mb-4 line-clamp-2 leading-relaxed">${tool.description}</p>
+                        </div>
+                        <a href="${tool.link}" target="_blank" rel="noopener noreferrer" class="text-xs font-bold uppercase tracking-wider text-blue-500 hover:text-blue-300 flex items-center space-x-1 mt-auto">
                             <span>Launch Tool</span>
-                            <i class="fas fa-arrow-right"></i>
+                            <i class="fas fa-arrow-right text-[10px] transform group-hover:translate-x-1 transition-transform"></i>
                         </a>
                     </div>
                 </div>
             `).join('');
         }
 
-        function sendToWhatsApp() {
-            const phone = "917398113232";
-            const name = document.getElementById('name').value;
-            const sub = document.getElementById('subject').value;
-            const msg = document.getElementById('message').value;
-            if(!name || !sub || !msg) return alert("Please fill all fields.");
-            const url = `https://api.whatsapp.com/send?phone=${phone}&text=*New Portfolio Lead*%0A*Name:* ${name}%0A*Subject:* ${sub}%0A*Message:* ${msg}`;
-            window.open(url, '_blank');
+        // DYNAMIC CUSTOM TOAST ALERTS (Beautiful visual alternative to alert)
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const bgColor = type === 'success' ? 'bg-emerald-950/90 border-emerald-500/30' : 'bg-red-950/90 border-red-500/30';
+            const iconColor = type === 'success' ? 'text-emerald-400' : 'text-red-400';
+            const icon = type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation';
+
+            toast.className = `flex items-center p-4 rounded-xl border ${bgColor} backdrop-blur-md shadow-2xl transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `
+                <div class="flex-shrink-0 ${iconColor} text-lg mr-3">
+                    <i class="fa-solid ${icon}"></i>
+                </div>
+                <div class="text-sm font-medium text-slate-200">${message}</div>
+                <button class="ml-auto text-slate-400 hover:text-white transition-colors pl-3" onclick="this.parentElement.remove()">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Trigger animation frame for transition effects
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            // Auto dismiss toast after 4 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
         }
 
+        // WHATSAPP REDIRECTION LOGIC
+        function sendToWhatsApp() {
+            const phone = "917398113232";
+            const name = document.getElementById('name').value.trim();
+            const sub = document.getElementById('subject').value.trim();
+            const msg = document.getElementById('message').value.trim();
+            
+            if(!name || !sub || !msg) {
+                showToast("Please fill all contact form fields.", "error");
+                return;
+            }
+            
+            showToast("Opening WhatsApp Messenger...", "success");
+            const url = `https://api.whatsapp.com/send?phone=${phone}&text=*New Portfolio Lead*%0A*Name:* ${encodeURIComponent(name)}%0A*Subject:* ${encodeURIComponent(sub)}%0A*Message:* ${encodeURIComponent(msg)}`;
+            
+            // Redirect after a slight delay to allow toast visibility
+            setTimeout(() => {
+                window.open(url, '_blank');
+            }, 1000);
+        }
+
+        // RESPONSIVE MOBILE DRAWER MENU STATE LOGIC
+        document.addEventListener('DOMContentLoaded', () => {
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const closeDrawerBtn = document.getElementById('closeDrawerBtn');
+            const mobileDrawer = document.getElementById('mobileDrawer');
+            const mobileDrawerOverlay = document.getElementById('mobileDrawerOverlay');
+            const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+
+            function openDrawer() {
+                mobileDrawerOverlay.classList.remove('hidden');
+                setTimeout(() => {
+                    mobileDrawerOverlay.classList.remove('opacity-0');
+                    mobileDrawer.classList.remove('translate-x-full');
+                }, 50);
+                document.body.classList.add('overflow-hidden');
+            }
+
+            function closeDrawer() {
+                mobileDrawer.classList.add('translate-x-full');
+                mobileDrawerOverlay.classList.add('opacity-0');
+                document.body.classList.remove('overflow-hidden');
+                setTimeout(() => {
+                    mobileDrawerOverlay.classList.add('hidden');
+                }, 300);
+            }
+
+            mobileMenuBtn.addEventListener('click', openDrawer);
+            closeDrawerBtn.addEventListener('click', closeDrawer);
+            mobileDrawerOverlay.addEventListener('click', closeDrawer);
+
+            // Auto-collapse when a section link is tapped in mobile view
+            mobileNavLinks.forEach(link => {
+                link.addEventListener('click', closeDrawer);
+            });
+        });
+
+        // WINDOW LOAD INITS
         window.onload = () => {
             renderPortfolio();
             renderTools();
