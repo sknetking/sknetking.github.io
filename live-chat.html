@@ -1,1220 +1,1425 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>WhatsApp-Style P2P Chat | Video Calls + Contact Manager</title>
-    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <title>Sleek P2P Chat & Media Calls</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PeerJS Library CDN -->
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        /* Custom scrollbar configurations */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
-
-      body {
-            background: linear-gradient(135deg, #0b3b3a, #075e54);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px 5px;
-            overflow: hidden;
+        ::-webkit-scrollbar-track {
+            background: transparent;
         }
-
-        .app-container {
-            width: 100%;
-            max-width: 1400px;
-            height: 100vh;
-            display: flex;
-            background: #f0f2f5;
-            overflow: hidden;
+        ::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.4);
+            border-radius: 9999px;
         }
-
-        .sidebar {
-            width: 30%;
-            background: white;
-            border-right: 1px solid #e9edef;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            transition: transform 0.3s ease;
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(156, 163, 175, 0.6);
         }
-
-        .profile-header {
-            background: #075e54;
-            padding: 18px 16px;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: #25d366;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 20px;
-            margin-right: 14px;
-            color: white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .profile-name {
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .profile-id {
-            font-size: 11px;
-            opacity: 0.85;
-        }
-
-        .connection-panel {
-            padding: 14px;
-            background: #ffffff;
-            border-bottom: 1px solid #e9edef;
-        }
-
-        .input-group {
-            display: flex;
-            margin-bottom: 12px;
-            gap: 8px;
-        }
-
-        .input-group input {
-            flex: 1;
-            padding: 10px 12px;
-            border: 1px solid #ddd;
-            border-radius: 28px;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .input-group input:focus {
-            border-color: #25d366;
-        }
-
-        .input-group button {
-            background: #128C7E;
-            color: white;
-            border: none;
-            padding: 0 18px;
-            border-radius: 28px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background 0.2s;
-        }
-
-        .input-group button:hover {
-            background: #075e54;
-        }
-
-        .peer-status {
-            font-size: 13px;
-            display: flex;
-            justify-content: space-between;
-            background: #f8f9fa;
-            padding: 8px 12px;
-            border-radius: 20px;
-        }
-
-        .chats-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px;
-        }
-
-        .chat-item {
-            display: flex;
-            padding: 12px;
-            border-radius: 12px;
-            margin-bottom: 4px;
-            cursor: pointer;
-            transition: 0.15s;
-            background: white;
-            align-items: center;
-        }
-
-        .chat-item:hover {
-            background: #f5f6f6;
-        }
-
-        .chat-item.active {
-            background: #e8f5e9;
-            border-left: 4px solid #25d366;
-        }
-
-        .chat-avatar {
-            width: 52px;
-            height: 52px;
-            border-radius: 50%;
-            background: #d9f0ec;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 20px;
-            margin-right: 14px;
-        }
-
-        .chat-info {
-            flex: 1;
-        }
-
-        .chat-name {
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .chat-preview {
-            font-size: 12px;
-            color: #777;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .delete-contact {
-            color: #e34040;
-            cursor: pointer;
-            padding: 8px;
-            opacity: 0.6;
-            transition: opacity 0.2s;
-        }
-
-        .delete-contact:hover {
-            opacity: 1;
-        }
-
-        .main-chat {
-            width: 70%;
-            display: flex;
-            flex-direction: column;
-            background: #e7e9eb;
-            background-image: radial-gradient(#c4c9cc1a 1.5px, transparent 1px);
-            background-size: 28px 28px;
-            position: relative;
-        }
-
-        .chat-header {
-            background: #f0f2f5;
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .chat-contact {
-            display: flex;
-            align-items: center;
-        }
-
-        .contact-name {
-            font-weight: 600;
-            margin-left: 12px;
-            font-size: 16px;
-        }
-
-        .chat-controls {
-            display: flex;
-            gap: 22px;
-            color: #54656f;
-        }
-
-        .chat-controls i {
-            font-size: 20px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .chat-controls i:hover {
-            color: #128C7E;
-        }
-
-        .messages-container {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .message {
-            max-width: 70%;
-            padding: 8px 12px;
-            margin-bottom: 10px;
-            border-radius: 18px;
-            word-wrap: break-word;
-            animation: fadeUp 0.2s ease;
-        }
-
+        /* Fade up animations for message insertions */
         @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(6px);}
-            to { opacity: 1; transform: translateY(0);}
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        .sent {
-            background: #dcf8c5;
-            align-self: flex-end;
-            border-bottom-right-radius: 4px;
-        }
-
-        .received {
-            background: white;
-            align-self: flex-start;
-            border-bottom-left-radius: 4px;
-            box-shadow: 0 1px 1px rgba(0,0,0,0.08);
-        }
-
-        .message-time {
-            font-size: 10px;
-            color: #8696a0;
-            text-align: right;
-            margin-top: 4px;
-        }
-
-        .file-message {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .file-icon {
-            font-size: 32px;
-            color: #128C7E;
-        }
-
-        .download-btn {
-            background: #128C7E;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 20px;
-            color: white;
-            cursor: pointer;
-            font-size: 12px;
-            transition: background 0.2s;
-        }
-
-        .download-btn:hover {
-            background: #075e54;
-        }
-
-        .video-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            z-index: 100;
-            display: none;
-            flex-direction: column;
-        }
-
-        .remote-video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .local-video {
-            position: absolute;
-            bottom: 90px;
-            right: 16px;
-            width: 120px;
-            height: 160px;
-            border-radius: 12px;
-            border: 2px solid white;
-            object-fit: cover;
-            background: #1e1e1e;
-            cursor: pointer;
-            z-index: 102;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-
-        .video-controls {
-            position: absolute;
-            bottom: 20px;
-            left: 0;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-            z-index: 102;
-            padding: 0 16px;
-            flex-wrap: wrap;
-        }
-
-        .video-control-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: rgba(30,30,40,0.85);
-            backdrop-filter: blur(8px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 22px;
-            cursor: pointer;
-            transition: 0.2s;
-            border: none;
-        }
-
-        .video-control-btn:active {
-            transform: scale(0.95);
-        }
-
-        .video-control-btn:hover {
-            background: rgba(18,140,126,0.9);
-        }
-
-        .end-video-call-btn {
-            background: #e34040;
-        }
-
-        .end-video-call-btn:hover {
-            background: #cc0000;
-        }
-
-        .fullscreen-btn {
-            background: rgba(0,0,0,0.7);
-        }
-
-        .call-notification {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 28px;
-            border-radius: 28px;
-            text-align: center;
-            z-index: 200;
-            display: none;
-            box-shadow: 0 12px 32px rgba(0,0,0,0.2);
-            width: 300px;
-        }
-
-        .call-notification button {
-            transition: opacity 0.2s;
-            cursor: pointer;
-        }
-
-        .call-notification button:hover {
-            opacity: 0.9;
-        }
-
-        .input-area {
-            background: #ffffff;
-            padding: 10px 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border-top: 1px solid #e9edef;
-        }
-
-        .message-input {
-            flex: 1;
-            padding: 12px 16px;
-            border: none;
-            border-radius: 30px;
-            background: #f0f2f5;
-            font-size: 15px;
-            outline: none;
-        }
-
-        .send-btn {
-            background: #128C7E;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .send-btn:hover {
-            background: #075e54;
-        }
-
-        .send-btn i {
-            color: white;
-            font-size: 20px;
-        }
-
-        #fileInput {
-            display: none;
-        }
-
-        .menu-toggle {
-            font-size: 24px;
-            cursor: pointer;
-            margin-right: 15px;
-            color: #075e54;
-            display: none;
-        }
-
-        @media (max-width: 768px) {
-              .app-container {
-                width: 100%;
-                max-width: 1400px;
-                height:100vh;
-                display: flex;
-                background: #f0f2f5;
-                overflow: hidden;
-                padding-top:10px;
-                padding-bottom:40px;
-            }
-          
-            .sidebar {
-                width: 0;
-                transform: translateX(-100%);
-                position: absolute;
-                z-index: 10;
-                height: 100%;
-                transition: transform 0.3s ease;
-            }
-            .sidebar.open {
-                width:75%;
-                transform: translateX(0);
-            }
-            .main-chat {
-                width: 100%;
-            }
-            .local-video {
-                width: 90px;
-                height: 120px;
-                bottom: 80px;
-                right: 10px;
-            }
-            .video-control-btn {
-                width: 44px;
-                height: 44px;
-                font-size: 18px;
-            }
-            .menu-toggle {
-                display: block;
-            }
-            .message {
-                max-width: 85%;
-            }
+        .message-bubble {
+            animation: fadeUp 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
     </style>
 </head>
-<body>
-<div class="app-container">
-    <div class="sidebar" id="sidebar">
-        <div class="profile-header">
-            <div class="profile-info">
-                <div class="avatar" id="userAvatar">U</div>
-                <div>
-                    <div class="profile-name" id="userName">You</div>
-                    <div class="profile-id">ID: <span id="yourId">...</span></div>
+<body class="bg-[#0b141a] text-gray-100 font-sans h-screen flex items-center justify-center p-0 md:p-4 overflow-hidden select-none">
+
+    <!-- Global Layout Wrapper -->
+    <div class="w-full h-full max-w-[1600px] md:h-[95vh] md:rounded-2xl md:shadow-2xl overflow-hidden flex bg-[#111b21] border border-gray-800/40">
+        
+        <!-- SIDEBAR -->
+        <div id="sidebar" class="fixed inset-y-0 left-0 z-40 w-full sm:w-[360px] md:w-[400px] bg-[#111b21] border-r border-[#222e35] flex flex-col transform translate-x-0 md:transform-none md:relative md:flex transition-transform duration-300 ease-in-out">
+            
+            <!-- User Profile Header -->
+            <div class="p-4 bg-[#202c33] flex items-center justify-between border-b border-[#2a3942]">
+                <div class="flex items-center space-x-3">
+                    <div id="userAvatar" class="w-10 h-10 rounded-full bg-[#00a884] text-white flex items-center justify-center font-bold text-lg shadow-md">
+                        U
+                    </div>
+                    <div class="min-w-0">
+                        <h2 id="userName" class="font-semibold text-sm text-gray-100 truncate">User</h2>
+                        <p class="text-[11px] text-[#8696a0] flex items-center">
+                            <span id="networkPulse" class="inline-block w-2 h-2 rounded-full bg-green-500 mr-1.5 animate-pulse"></span>
+                            My ID: <span id="yourId" class="font-mono ml-1 text-gray-300">Generating...</span>
+                        </p>
+                    </div>
+                </div>
+                <!-- Profile Action Menu -->
+                <div class="flex items-center space-x-2">
+                    <button onclick="openConfigModal()" class="w-9 h-9 rounded-full hover:bg-[#374248] text-[#aebac1] transition flex items-center justify-center" title="Edit Profile">
+                        <i class="fa-solid fa-user-pen text-sm"></i>
+                    </button>
                 </div>
             </div>
-            <i class="fas fa-address-book" style="font-size: 20px; opacity:0.8"></i>
-        </div>
-        <div class="connection-panel">
-            <div class="input-group">
-                <input type="text" id="customIdInput" placeholder="Your name">
-                <button id="setCustomIdBtn">Set</button>
-            </div>
-            <div class="input-group">
-                <input type="text" id="peerIdInput" placeholder="Friend's ID">
-                <button id="connectBtn">Connect + Save</button>
-            </div>
-            <div class="peer-status">
-                <span>👤 <span id="peerName">None</span></span>
-                <span id="connectionStatus" style="color:#dc3545;">⚫ Disconnected</span>
-            </div>
-        </div>
-        <div class="chats-container" id="contactsList">
-            <div style="padding: 12px; text-align: center; color: #777;">💾 Saved contacts will appear here</div>
-        </div>
-    </div>
 
-    <div class="main-chat">
-        <div class="chat-header">
-            <div style="display: flex; align-items: center;">
-                <div class="menu-toggle" id="menuToggle">
-                    <i class="fas fa-bars"></i>
+            <!-- Connection & Dynamic Peer Settings Panel -->
+            <div class="p-4 bg-[#111b21] border-b border-[#222e35] space-y-3">
+                <div class="flex items-center space-x-2">
+                    <input type="text" id="peerIdInput" placeholder="Enter friend's ID..." class="flex-1 bg-[#202c33] border border-transparent focus:border-[#00a884] rounded-lg px-3 py-2.5 text-xs text-gray-200 placeholder-gray-500 outline-none transition" />
+                    <button id="connectBtn" class="bg-[#00a884] hover:bg-[#008f72] active:scale-95 text-white font-medium text-xs px-4 py-2.5 rounded-lg transition-all flex items-center space-x-1.5 shadow-md">
+                        <i class="fa-solid fa-plus text-[10px]"></i>
+                        <span>Add</span>
+                    </button>
                 </div>
-                <div class="chat-contact">
-                    <div class="avatar" id="peerAvatar">👤</div>
-                    <div class="contact-name" id="currentPeer">Offline</div>
-                </div>
-            </div>
-            <div class="chat-controls">
-                <i class="fas fa-phone-alt" id="callBtn" title="Audio call"></i>
-                <i class="fas fa-video" id="videoCallBtn" title="Video call"></i>
-                <i class="fas fa-phone-slash" id="endCallBtn" style="display:none; color:#e34040;" title="End call"></i>
-            </div>
-        </div>
-
-        <div class="messages-container" id="messages">
-            <div class="message received" style="background:#e9edef;">✨ Welcome! Set your name, add contacts, and start chatting.</div>
-        </div>
-
-        <div class="input-area">
-            <i class="fas fa-paperclip" id="attachBtn" style="font-size: 24px; cursor:pointer;"></i>
-            <input type="text" class="message-input" id="messageInput" placeholder="Type a message" disabled>
-            <div class="send-btn" id="sendBtn">
-                <i class="fas fa-paper-plane"></i>
-            </div>
-        </div>
-        <input type="file" id="fileInput">
-
-        <div class="video-container" id="videoContainer">
-            <video class="remote-video" id="remoteVideo" autoplay playsinline></video>
-            <video class="local-video" id="localVideo" autoplay muted playsinline></video>
-            <div class="video-controls">
-                <div class="video-control-btn" id="toggleMicBtn" title="Mute/Unmute"><i class="fas fa-microphone"></i></div>
-                <div class="video-control-btn" id="toggleCameraBtn" title="Camera On/Off"><i class="fas fa-video"></i></div>
-                <div class="video-control-btn" id="switchCameraBtn" title="Switch Camera"><i class="fas fa-sync-alt"></i></div>
-                <div class="video-control-btn fullscreen-btn" id="fullscreenBtn" title="Fullscreen"><i class="fas fa-expand"></i></div>
-                <div class="video-control-btn end-video-call-btn" id="hangupCallBtn" title="End call"><i class="fas fa-phone-slash"></i></div>
-            </div>
-        </div>
-
-        <div class="call-notification" id="callNotification">
-            <i class="fas fa-phone-alt fa-3x" style="color:#128C7E;"></i>
-            <p style="margin:12px 0"><strong id="callerName">Someone</strong> is calling <span id="callTypeText">(audio)</span></p>
-            <div style="display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;">
-                <button id="acceptCallBtn" style="background:#128C7E; border:none; padding:8px 20px; border-radius:40px; color:white; cursor:pointer;">Accept</button>
-                <button id="acceptVideoBtn" style="background:#4A89DC; border:none; padding:8px 20px; border-radius:40px; color:white; cursor:pointer;">Video</button>
-                <button id="rejectCallBtn" style="background:#e34040; border:none; padding:8px 20px; border-radius:40px; color:white; cursor:pointer;">Reject</button>
-            </div>
-        </div>
-    </div>
-</div>
-<audio id="ringtone" loop style="display:none;">
-    <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" type="audio/mpeg">
-</audio>
-<audio id="remoteAudio" style="display:none;"></audio>
-
-<script>
-    // ==================== IndexedDB Contact Manager ====================
-    const DB_NAME = 'P2PChatDB';
-    const DB_VERSION = 1;
-    const STORE_NAME = 'contacts';
-    let db = null;
-
-    function openDB() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB_NAME, DB_VERSION);
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => {
-                db = request.result;
-                resolve(db);
-            };
-            request.onupgradeneeded = (event) => {
-                const db = event.target.result;
-                if (!db.objectStoreNames.contains(STORE_NAME)) {
-                    db.createObjectStore(STORE_NAME, { keyPath: 'peerId' });
-                }
-            };
-        });
-    }
-
-    async function saveContact(peerId, name) {
-        await openDB();
-        const transaction = db.transaction([STORE_NAME], 'readwrite');
-        const store = transaction.objectStore(STORE_NAME);
-        const contact = { peerId: peerId, name: name, lastSeen: Date.now(), avatar: name.charAt(0).toUpperCase() };
-        store.put(contact);
-        transaction.oncomplete = () => loadContacts();
-    }
-
-    async function loadContacts() {
-        await openDB();
-        const transaction = db.transaction([STORE_NAME], 'readonly');
-        const store = transaction.objectStore(STORE_NAME);
-        const contacts = await new Promise((resolve) => {
-            const request = store.getAll();
-            request.onsuccess = () => resolve(request.result);
-        });
-        renderContactsList(contacts);
-    }
-
-    async function deleteContact(peerId) {
-        await openDB();
-        const transaction = db.transaction([STORE_NAME], 'readwrite');
-        const store = transaction.objectStore(STORE_NAME);
-        store.delete(peerId);
-        transaction.oncomplete = () => loadContacts();
-    }
-
-    function renderContactsList(contacts) {
-        const container = document.getElementById('contactsList');
-        if (!contacts || contacts.length === 0) {
-            container.innerHTML = '<div style="padding: 12px; text-align: center; color: #777;">📒 No saved contacts. Connect to someone to save.</div>';
-            return;
-        }
-        container.innerHTML = contacts.map(contact => `
-            <div class="chat-item" data-peerid="${escapeHtml(contact.peerId)}" data-name="${escapeHtml(contact.name)}">
-                <div class="chat-avatar">${escapeHtml(contact.avatar)}</div>
-                <div class="chat-info">
-                    <div class="chat-name">${escapeHtml(contact.name)}</div>
-                    <div class="chat-preview">ID: ${escapeHtml(contact.peerId)}</div>
-                </div>
-                <div class="delete-contact" data-peerid="${contact.peerId}">
-                    <i class="fas fa-trash-alt"></i>
-                </div>
-            </div>
-        `).join('');
-
-        document.querySelectorAll('.chat-item').forEach(el => {
-            const peerId = el.dataset.peerid;
-            const name = el.dataset.name;
-            el.addEventListener('click', (e) => {
-                if (e.target.closest('.delete-contact')) return;
-                peerIdInput.value = peerId;
-                connectToPeer(peerId, name);
-                if (window.innerWidth <= 768) sidebar.classList.remove('open');
-            });
-            const deleteBtn = el.querySelector('.delete-contact');
-            if (deleteBtn) {
-                deleteBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (confirm('Delete this contact?')) deleteContact(peerId);
-                });
-            }
-        });
-    }
-
-    function escapeHtml(str) { 
-        return String(str).replace(/[&<>]/g, function(m) { 
-            if(m === '&') return '&amp;'; 
-            if(m === '<') return '&lt;'; 
-            if(m === '>') return '&gt;'; 
-            return m;
-        }); 
-    }
-
-    // ==================== PeerJS & Call Logic ====================
-    let peer = null;
-    let dataConn = null;
-    let activeCall = null;
-    let localStream = null;
-    let incomingCallObj = null;
-    let isVideoActive = false;
-    let myUserName = localStorage.getItem('wa_username') || 'User';
-    let remoteUserName = 'Peer';
-    let usingFrontCamera = true;
-    let isMicMuted = false;
-    let isCameraOff = false;
-    let currentConnectedPeerId = null;
-
-    // DOM elements
-    const yourIdSpan = document.getElementById('yourId');
-    const peerNameSpan = document.getElementById('peerName');
-    const connectBtn = document.getElementById('connectBtn');
-    const peerIdInput = document.getElementById('peerIdInput');
-    const messageInput = document.getElementById('messageInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const messagesDiv = document.getElementById('messages');
-    const customIdInput = document.getElementById('customIdInput');
-    const setCustomIdBtn = document.getElementById('setCustomIdBtn');
-    const callBtn = document.getElementById('callBtn');
-    const videoCallBtn = document.getElementById('videoCallBtn');
-    const endCallBtn = document.getElementById('endCallBtn');
-    const connectionStatusSpan = document.getElementById('connectionStatus');
-    const currentPeerSpan = document.getElementById('currentPeer');
-    const peerAvatarDiv = document.getElementById('peerAvatar');
-    const attachBtn = document.getElementById('attachBtn');
-    const fileInputEl = document.getElementById('fileInput');
-    const userNameSpan = document.getElementById('userName');
-    const userAvatar = document.getElementById('userAvatar');
-    const menuToggle = document.getElementById('menuToggle');
-    const sidebar = document.getElementById('sidebar');
-
-    const videoContainer = document.getElementById('videoContainer');
-    const remoteVideo = document.getElementById('remoteVideo');
-    const localVideo = document.getElementById('localVideo');
-    const toggleMicBtn = document.getElementById('toggleMicBtn');
-    const toggleCameraBtn = document.getElementById('toggleCameraBtn');
-    const switchCameraBtn = document.getElementById('switchCameraBtn');
-    const hangupCallBtn = document.getElementById('hangupCallBtn');
-    const fullscreenBtn = document.getElementById('fullscreenBtn');
-
-    const callNotificationDiv = document.getElementById('callNotification');
-    const callerNameSpan = document.getElementById('callerName');
-    const acceptCallBtn = document.getElementById('acceptCallBtn');
-    const acceptVideoBtn = document.getElementById('acceptVideoBtn');
-    const rejectCallBtn = document.getElementById('rejectCallBtn');
-    const callTypeTextSpan = document.getElementById('callTypeText');
-    const ringtone = document.getElementById('ringtone');
-    const remoteAudio = document.getElementById('remoteAudio');
-
-    userNameSpan.innerText = myUserName;
-    userAvatar.innerText = myUserName.charAt(0).toUpperCase();
-
-    function addMessage(text, isSent) {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `message ${isSent ? 'sent' : 'received'}`;
-        const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-        msgDiv.innerHTML = `<div>${escapeHtml(text)}</div><div class="message-time">${time}</div>`;
-        messagesDiv.appendChild(msgDiv);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-
-    function addSystemMessage(text) { addMessage(`🔔 ${text}`, false); }
-
-    function formatBytes(bytes) { 
-        if(bytes === 0) return '0 B'; 
-        const k = 1024; 
-        const sizes = ['B', 'KB', 'MB']; 
-        const i = Math.floor(Math.log(bytes) / Math.log(k)); 
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]; 
-    }
-
-    function displayFileMessage(fileInfo, isSent) {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `message ${isSent ? 'sent' : 'received'}`;
-        const time = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-        let icon = 'fa-file';
-        if(fileInfo.type?.startsWith('image/')) icon = 'fa-file-image';
-        else if(fileInfo.type?.startsWith('audio/')) icon = 'fa-file-audio';
-        else icon = 'fa-file-alt';
-        msgDiv.innerHTML = `<div class="file-message"><i class="fas ${icon} file-icon"></i><div><strong>${escapeHtml(fileInfo.name)}</strong><br><span style="font-size:11px;">${formatBytes(fileInfo.size)}</span></div><button class="download-btn" data-url="${fileInfo.data}"><i class="fas fa-download"></i> Download</button></div><div class="message-time">${time}</div>`;
-        const btn = msgDiv.querySelector('.download-btn');
-        btn.addEventListener('click', () => { 
-            const a = document.createElement('a'); 
-            a.href = fileInfo.data; 
-            a.download = fileInfo.name; 
-            document.body.appendChild(a); 
-            a.click(); 
-            document.body.removeChild(a); 
-        });
-        messagesDiv.appendChild(msgDiv);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-
-    function sendFile(file) {
-        if(!dataConn || !dataConn.open) { addSystemMessage("Not connected!"); return; }
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const filePacket = { type: 'file_transfer', name: file.name, size: file.size, mime: file.type, data: e.target.result };
-            dataConn.send(JSON.stringify(filePacket));
-            displayFileMessage(filePacket, true);
-        };
-        reader.readAsDataURL(file);
-    }
-
-    attachBtn.onclick = () => fileInputEl.click();
-    fileInputEl.onchange = (e) => { if(e.target.files[0]) sendFile(e.target.files[0]); fileInputEl.value = ''; };
-
-    function initPeer(customId = null) {
-        if(peer && !peer.destroyed) peer.destroy();
-        let idToUse = customId || localStorage.getItem('wa_custom_id') || `user${Math.floor(Math.random()*9000+1000)}`;
-        peer = new Peer(idToUse, { host: '0.peerjs.com', port: 443, path: '/', secure: true, debug: 1 });
-        peer.on('open', id => { 
-            yourIdSpan.innerText = id; 
-            addSystemMessage(`✅ Your ID: ${id}`); 
-            localStorage.setItem('wa_custom_id', id); 
-        });
-        peer.on('connection', conn => { 
-            dataConn = conn; 
-            setupDataConnection(conn); 
-            conn.send(JSON.stringify({ type: 'name', name: myUserName })); 
-        });
-        peer.on('call', callObj => { 
-            incomingCallObj = callObj; 
-            const isVideoIncoming = callObj.metadata?.isVideo || false; 
-            callTypeTextSpan.innerText = isVideoIncoming ? "📹 video call" : "📞 audio call"; 
-            callerNameSpan.innerText = remoteUserName || callObj.peer; 
-            callNotificationDiv.style.display = 'block'; 
-            ringtone.play().catch(e => console.log); 
-        });
-        peer.on('error', err => addSystemMessage(`Peer error: ${err.type}`));
-    }
-
-    function setupDataConnection(conn) {
-        dataConn = conn;
-        conn.on('open', () => {
-            addSystemMessage(`🔗 Connected to ${remoteUserName}`);
-            connectionStatusSpan.innerHTML = '🟢 Connected';
-            connectionStatusSpan.style.color = '#25D366';
-            messageInput.disabled = false;
-            currentPeerSpan.innerText = remoteUserName;
-            peerAvatarDiv.innerText = remoteUserName.charAt(0).toUpperCase();
-            if(myUserName) conn.send(JSON.stringify({ type: 'name', name: myUserName }));
-        });
-        conn.on('data', raw => {
-            try {
-                const data = JSON.parse(raw);
-                if(data.type === 'name') { 
-                    remoteUserName = data.name; 
-                    peerNameSpan.innerText = remoteUserName; 
-                    currentPeerSpan.innerText = remoteUserName; 
-                    peerAvatarDiv.innerText = remoteUserName.charAt(0).toUpperCase(); 
-                } else if(data.type === 'file_transfer') {
-                    displayFileMessage(data, false);
-                } else if(data.type === 'call_end') {
-                    // Remote peer ended the call - trigger end call on this side
-                    addSystemMessage(`📞 ${remoteUserName} ended the call`);
-                    endCall();
-                } else {
-                    addMessage(data, false);
-                }
-            } catch(e) { 
-                addMessage(raw, false); 
-            }
-        });
-        conn.on('close', () => {
-            addSystemMessage("❌ Disconnected from peer");
-            messageInput.disabled = true;
-            connectionStatusSpan.innerHTML = '⚫ Disconnected';
-            connectionStatusSpan.style.color = '#dc3545';
-            currentPeerSpan.innerText = 'Offline';
-            peerNameSpan.innerText = 'None';
-            endCall();
-        });
-    }
-
-    async function connectToPeer(peerId, savedName = null) {
-        if(!peer || !peer.open) { addSystemMessage("Peer not ready"); return; }
-        if(dataConn) dataConn.close();
-        const newConn = peer.connect(peerId);
-        setupDataConnection(newConn);
-        newConn.on('error', err => addSystemMessage(`Connection failed: ${err}`));
-        currentConnectedPeerId = peerId;
-        if(savedName) { 
-            remoteUserName = savedName; 
-            currentPeerSpan.innerText = savedName; 
-            peerAvatarDiv.innerText = savedName.charAt(0).toUpperCase(); 
-            peerNameSpan.innerText = savedName; 
-        }
-        await saveContact(peerId, savedName || peerId);
-    }
-
-    connectBtn.onclick = async () => { 
-        const pid = peerIdInput.value.trim(); 
-        if(pid) { 
-            await connectToPeer(pid, pid); 
-            sidebar.classList.remove('open'); 
-        } 
-    };
-
-    // ========== CALL FUNCTIONS WITH BIDIRECTIONAL END EVENT ==========
-    async function startCall(isVideo) {
-        if(!dataConn || !dataConn.open) { addSystemMessage("No active data connection"); return; }
-        if(activeCall) { addSystemMessage("Already in a call"); return; }
-        const constraints = { audio: true, video: isVideo ? { facingMode: usingFrontCamera ? "user" : "environment" } : false };
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
-            localStream = stream;
-            isVideoActive = isVideo;
-            isMicMuted = false;
-            isCameraOff = false;
-            if(isVideo) { 
-                videoContainer.style.display = 'flex'; 
-                localVideo.srcObject = stream; 
-                updateVideoIcons(); 
-            }
-            const callOptions = { metadata: { isVideo: isVideo, callerName: myUserName } };
-            activeCall = peer.call(dataConn.peer, stream, callOptions);
-            setupCallEvents(activeCall, isVideo);
-            updateCallButtons(true);
-            addSystemMessage(`📞 Starting ${isVideo ? 'video' : 'audio'} call...`);
-        } catch(err) { 
-            addSystemMessage(`Media error: ${err.message}`); 
-        }
-    }
-
-    function setupCallEvents(callObj, isVideoCall) {
-        callObj.on('stream', remoteStream => {
-            if(isVideoCall) { 
-                remoteVideo.srcObject = remoteStream; 
-                remoteVideo.play().catch(e => console.log); 
-            } else { 
-                remoteAudio.srcObject = remoteStream; 
-                remoteAudio.play().catch(e => console.log); 
-            }
-            ringtone.pause(); 
-            ringtone.currentTime = 0;
-            callNotificationDiv.style.display = 'none';
-            addSystemMessage(`📞 Call connected`);
-        });
-        
-        callObj.on('close', () => { 
-            addSystemMessage("📞 Call ended by remote peer");
-            endCall(); 
-        });
-        
-        callObj.on('error', err => { 
-            addSystemMessage(`Call error: ${err.message}`); 
-            endCall(); 
-        });
-    }
-
-    async function answerCall(useVideo) {
-        if(!incomingCallObj) return;
-        ringtone.pause(); 
-        ringtone.currentTime = 0;
-        const isVideoAnswer = useVideo || incomingCallObj.metadata?.isVideo;
-        const constraints = { audio: true, video: isVideoAnswer ? { facingMode: usingFrontCamera ? "user" : "environment" } : false };
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
-            localStream = stream;
-            isVideoActive = isVideoAnswer;
-            isMicMuted = false;
-            isCameraOff = false;
-            if(isVideoAnswer) { 
-                videoContainer.style.display = 'flex'; 
-                localVideo.srcObject = stream; 
-                updateVideoIcons(); 
-            }
-            incomingCallObj.answer(stream);
-            setupCallEvents(incomingCallObj, isVideoAnswer);
-            updateCallButtons(true);
-            callNotificationDiv.style.display = 'none';
-            activeCall = incomingCallObj;
-            incomingCallObj = null;
-            addSystemMessage(`📞 Call answered`);
-        } catch(e) { 
-            addSystemMessage(`Cannot answer: ${e.message}`); 
-            callNotificationDiv.style.display = 'none'; 
-        }
-    }
-
-    function endCall() {
-        // Send call end notification to remote peer if data connection exists
-        if(dataConn && dataConn.open && activeCall) {
-            try {
-                dataConn.send(JSON.stringify({ type: 'call_end' }));
-            } catch(e) { console.log("Send call_end error:", e); }
-        }
-        
-        // Close active call if exists
-        if(activeCall) { 
-            try { 
-                activeCall.close(); 
-            } catch(e) { console.log("Call close error:", e); }
-            activeCall = null; 
-        }
-        
-        // Stop local media tracks
-        if(localStream) { 
-            localStream.getTracks().forEach(track => {
-                track.stop();
-            });
-            localStream = null;
-        }
-        
-        // Reset video UI
-        videoContainer.style.display = 'none';
-        if(remoteVideo.srcObject) {
-            const tracks = remoteVideo.srcObject.getTracks();
-            if(tracks) tracks.forEach(t => t.stop());
-            remoteVideo.srcObject = null;
-        }
-        if(localVideo.srcObject) {
-            localVideo.srcObject = null;
-        }
-        if(remoteAudio.srcObject) {
-            const tracks = remoteAudio.srcObject.getTracks();
-            if(tracks) tracks.forEach(t => t.stop());
-            remoteAudio.srcObject = null;
-        }
-        
-        isVideoActive = false;
-        isMicMuted = false;
-        isCameraOff = false;
-        
-        updateCallButtons(false);
-        
-        // Close any incoming call notification
-        callNotificationDiv.style.display = 'none';
-        ringtone.pause();
-        ringtone.currentTime = 0;
-    }
-
-    function updateCallButtons(inCall) {
-        if(inCall) {
-            callBtn.style.display = 'none';
-            videoCallBtn.style.display = 'none';
-            endCallBtn.style.display = 'inline-block';
-        } else {
-            callBtn.style.display = 'inline-block';
-            videoCallBtn.style.display = 'inline-block';
-            endCallBtn.style.display = 'none';
-        }
-    }
-
-    // ========== WORKING VIDEO CONTROLS ==========
-    function toggleMic() {
-        if(!localStream) { addSystemMessage("No active call"); return; }
-        const audioTrack = localStream.getAudioTracks()[0];
-        if(audioTrack) {
-            isMicMuted = !isMicMuted;
-            audioTrack.enabled = !isMicMuted;
-            toggleMicBtn.innerHTML = isMicMuted ? '<i class="fas fa-microphone-slash"></i>' : '<i class="fas fa-microphone"></i>';
-        }
-    }
-
-    function toggleCameraVideo() {
-        if(!localStream || !isVideoActive) { addSystemMessage("No active video call"); return; }
-        const videoTrack = localStream.getVideoTracks()[0];
-        if(videoTrack) {
-            isCameraOff = !isCameraOff;
-            videoTrack.enabled = !isCameraOff;
-            toggleCameraBtn.innerHTML = isCameraOff ? '<i class="fas fa-video-slash"></i>' : '<i class="fas fa-video"></i>';
-        }
-    }
-
-    async function switchCamera() {
-        if(!isVideoActive || !localStream) { addSystemMessage("No active video stream"); return; }
-        
-        // Store current mute state
-        const wasMicMuted = isMicMuted;
-        const wasCameraOff = isCameraOff;
-        
-        usingFrontCamera = !usingFrontCamera;
-        const newConstraints = { 
-            video: { facingMode: usingFrontCamera ? "user" : "environment" }, 
-            audio: true 
-        };
-        
-        try {
-            const newStream = await navigator.mediaDevices.getUserMedia(newConstraints);
-            
-            // Get new tracks
-            const newVideoTrack = newStream.getVideoTracks()[0];
-            const newAudioTrack = newStream.getAudioTracks()[0];
-            
-            // Get old tracks
-            const oldVideoTrack = localStream.getVideoTracks()[0];
-            const oldAudioTrack = localStream.getAudioTracks()[0];
-            
-            // Replace video track
-            if(oldVideoTrack) localStream.removeTrack(oldVideoTrack);
-            localStream.addTrack(newVideoTrack);
-            
-            // Replace audio track if needed (to maintain audio)
-            if(oldAudioTrack && newAudioTrack) {
-                localStream.removeTrack(oldAudioTrack);
-                localStream.addTrack(newAudioTrack);
-            }
-            
-            // Update local video preview
-            localVideo.srcObject = localStream;
-            
-            // Update remote peer's stream
-            if(activeCall) {
-                const senders = activeCall.peerConnection?.getSenders();
-                const videoSender = senders?.find(s => s.track?.kind === 'video');
-                if(videoSender) await videoSender.replaceTrack(newVideoTrack);
                 
-                const audioSender = senders?.find(s => s.track?.kind === 'audio');
-                if(audioSender && newAudioTrack) await audioSender.replaceTrack(newAudioTrack);
-            }
+                <div class="flex items-center justify-between text-xs bg-[#202c33] p-3 rounded-lg border border-[#2a3942]">
+                    <span class="text-gray-400 flex items-center min-w-0 pr-2">
+                        <i class="fa-solid fa-link mr-2 text-gray-500 flex-shrink-0"></i> Active: <strong id="peerName" class="ml-1 text-[#00a884] truncate">None</strong>
+                    </span>
+                    <span id="connectionStatus" class="flex-shrink-0 flex items-center text-red-400 font-semibold text-[10px] uppercase tracking-wider bg-red-500/10 px-2 py-0.5 rounded">
+                        <span class="w-1.5 h-1.5 rounded-full bg-red-500 mr-1"></span> Offline
+                    </span>
+                </div>
+            </div>
+
+            <!-- Contacts/Chats List Container -->
+            <div class="flex-1 overflow-y-auto bg-[#111b21]">
+                <div class="p-3 text-xs font-semibold text-[#8696a0] uppercase tracking-wider bg-[#111b21]/80 sticky top-0 backdrop-blur-sm z-10">Chats</div>
+                <div id="contactsList" class="divide-y divide-[#222e35]">
+                    <!-- Populated dynamically via IndexedDB -->
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CHAT INTERFACE -->
+        <div class="flex-1 flex flex-col bg-[#0b141a] relative h-full">
             
-            // Clean up old tracks
-            if(oldVideoTrack) oldVideoTrack.stop();
-            if(oldAudioTrack && oldAudioTrack !== newAudioTrack) oldAudioTrack.stop();
-            
-            // Restore mute/camera states
-            if(wasMicMuted && localStream.getAudioTracks()[0]) {
-                localStream.getAudioTracks()[0].enabled = false;
-                isMicMuted = true;
-                toggleMicBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>';
-            }
-            if(wasCameraOff && localStream.getVideoTracks()[0]) {
-                localStream.getVideoTracks()[0].enabled = false;
-                isCameraOff = true;
-                toggleCameraBtn.innerHTML = '<i class="fas fa-video-slash"></i>';
-            }
-            
-            addSystemMessage(`🔄 Switched to ${usingFrontCamera ? "front" : "back"} camera`);
-        } catch(err) { 
-            addSystemMessage(`Camera switch failed: ${err.message}`); 
-            usingFrontCamera = !usingFrontCamera;
+            <!-- Chat Header -->
+            <div class="p-3 bg-[#202c33] flex items-center justify-between border-b border-[#2a3942] z-10">
+                <div class="flex items-center space-x-3 min-w-0">
+                    <button id="menuToggle" class="w-9 h-9 rounded-full hover:bg-[#374248] flex items-center justify-center text-gray-400 transition-colors" title="Toggle Chats">
+                        <i id="menuToggleIcon" class="fa-solid fa-chevron-left text-sm md:hidden"></i>
+                        <i class="fa-solid fa-bars text-sm hidden md:inline"></i>
+                    </button>
+                    <div id="peerAvatar" class="w-10 h-10 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold text-lg shadow-md flex-shrink-0">
+                        👤
+                    </div>
+                    <div class="min-w-0">
+                        <h3 id="currentPeer" class="font-semibold text-sm text-gray-100 truncate">No Active Chat</h3>
+                        <p id="chatSubtitle" class="text-xs text-[#8696a0] truncate">Connect to a contact to begin communicating</p>
+                    </div>
+                </div>
+
+                <!-- Call Control Actions -->
+                <div id="callControls" class="flex items-center space-x-1 opacity-50 pointer-events-none transition-opacity duration-300">
+                    <button id="callBtn" class="w-10 h-10 rounded-full hover:bg-[#374248] text-gray-300 transition flex items-center justify-center" title="Voice Call">
+                        <i class="fa-solid fa-phone"></i>
+                    </button>
+                    <button id="videoCallBtn" class="w-10 h-10 rounded-full hover:bg-[#374248] text-[#00a884] transition flex items-center justify-center" title="Video Call">
+                        <i class="fa-solid fa-video"></i>
+                    </button>
+                    <button id="endCallBtn" class="w-10 h-10 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20 hidden transition flex items-center justify-center animate-pulse" title="End Call">
+                        <i class="fa-solid fa-phone-slash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Interactive Messages Log -->
+            <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-3 flex flex-col bg-opacity-[0.05] bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:20px_20px]">
+                <div class="mx-auto my-auto max-w-sm text-center bg-[#182229] border border-[#2a3942] p-5 rounded-2xl shadow-xl">
+                    <div class="w-12 h-12 bg-[#00a884]/10 text-[#00a884] rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fa-solid fa-lock text-lg"></i>
+                    </div>
+                    <h4 class="font-semibold text-sm text-gray-200">End-to-End Encrypted Peer Connection</h4>
+                    <p class="text-xs text-[#8696a0] mt-2 leading-relaxed">Your messages, calls, and file transfers are direct between devices. None of your data is ever hosted on a signaling database.</p>
+                </div>
+            </div>
+
+            <!-- Bottom Interactive Input Area -->
+            <div class="p-3 bg-[#202c33] flex items-center space-x-3 border-t border-[#2a3942]">
+                <button id="attachBtn" class="w-10 h-10 rounded-full hover:bg-[#374248] text-gray-300 transition flex items-center justify-center flex-shrink-0" title="Attach Document/File">
+                    <i class="fa-solid fa-paperclip text-lg"></i>
+                </button>
+                <input type="file" id="fileInput" class="hidden" />
+
+                <input type="text" id="messageInput" placeholder="Type a message..." disabled class="flex-1 bg-[#2a3942] focus:bg-[#2f3b43] border border-transparent focus:border-gray-700 text-sm text-gray-100 placeholder-gray-500 rounded-lg px-4 py-3 outline-none transition" />
+                
+                <button id="sendBtn" class="w-10 h-10 rounded-full bg-[#00a884] hover:bg-[#008f72] active:scale-95 text-white flex items-center justify-center shadow-lg transition-all flex-shrink-0">
+                    <i class="fa-solid fa-paper-plane text-sm"></i>
+                </button>
+            </div>
+
+            <!-- VIDEO OVERLAY CONTAINER -->
+            <div id="videoContainer" class="absolute inset-0 bg-black z-30 hidden flex-col items-center justify-center">
+                <!-- Remote User Live Camera Fullscreen stream -->
+                <video id="remoteVideo" class="w-full h-full object-cover" autoplay playsinline></video>
+                <!-- Self Face-cam (PIP Layout) -->
+                <video id="localVideo" class="absolute bottom-28 right-4 w-28 h-40 border-2 border-white/20 rounded-xl shadow-2xl object-cover bg-[#202c33]" autoplay muted playsinline></video>
+                
+                <!-- Bottom In-Call Navigation Control Dashboard -->
+                <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center space-x-3 px-6 py-3 rounded-full bg-[#111b21]/90 backdrop-blur-md border border-gray-800 shadow-2xl">
+                    <button id="toggleMicBtn" class="w-12 h-12 rounded-full bg-[#202c33] text-gray-300 hover:bg-[#374248] flex items-center justify-center transition" title="Mute/Unmute Mic">
+                        <i class="fa-solid fa-microphone text-base"></i>
+                    </button>
+                    <button id="toggleCameraBtn" class="w-12 h-12 rounded-full bg-[#202c33] text-gray-300 hover:bg-[#374248] flex items-center justify-center transition" title="Toggle Camera">
+                        <i class="fa-solid fa-video text-base"></i>
+                    </button>
+                    <button id="switchCameraBtn" class="w-12 h-12 rounded-full bg-[#202c33] text-gray-300 hover:bg-[#374248] flex items-center justify-center transition" title="Flip Camera Orientation">
+                        <i class="fa-solid fa-camera-rotate text-base"></i>
+                    </button>
+                    <button id="fullscreenBtn" class="w-12 h-12 rounded-full bg-[#202c33] text-gray-300 hover:bg-[#374248] flex items-center justify-center transition" title="Fullscreen Toggle">
+                        <i class="fa-solid fa-expand text-base"></i>
+                    </button>
+                    <button id="hangupCallBtn" class="w-12 h-12 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center shadow-lg transition-transform active:scale-90" title="End Call">
+                        <i class="fa-solid fa-phone-slash text-base"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- INCOMING CALL MODAL NOTIFICATION -->
+            <div id="callNotification" class="absolute top-6 left-1/2 -translate-x-1/2 bg-[#1f2c34] border border-[#2a3942] rounded-2xl shadow-2xl p-4 w-[340px] max-w-[95%] z-50 hidden transition-all">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-full bg-[#00a884]/20 text-[#00a884] flex items-center justify-center animate-bounce">
+                        <i class="fa-solid fa-phone text-lg"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 id="callerName" class="font-bold text-sm text-gray-200 truncate">Incoming Call</h4>
+                        <p class="text-xs text-[#8696a0]">Type: <span id="callTypeText" class="text-gray-300 font-semibold">Audio Call</span></p>
+                    </div>
+                </div>
+                <div class="mt-4 flex space-x-2">
+                    <button id="acceptCallBtn" class="flex-1 bg-[#00a884] hover:bg-[#008f72] py-2.5 px-3 rounded-lg text-xs font-semibold text-white transition active:scale-95">
+                        Answer
+                    </button>
+                    <button id="acceptVideoBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 py-2.5 px-3 rounded-lg text-xs font-semibold text-white transition active:scale-95">
+                        Video
+                    </button>
+                    <button id="rejectCallBtn" class="flex-1 bg-red-600 hover:bg-red-700 py-2.5 px-3 rounded-lg text-xs font-semibold text-white transition active:scale-95">
+                        Decline
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODERN MODAL: Profile / Name Settings -->
+    <div id="configModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#1f2c34] border border-[#2a3942] rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-4 animate-fade-in">
+            <div class="flex justify-between items-center border-b border-[#2a3942] pb-3">
+                <h3 class="font-bold text-base text-gray-100">Configure Identity</h3>
+                <button onclick="closeConfigModal()" class="text-gray-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Display Name</label>
+                    <input type="text" id="customNameInput" placeholder="e.g. Shyam" class="w-full bg-[#2a3942] border border-transparent focus:border-[#00a884] rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-500 outline-none transition" />
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Custom Peer ID (Optional)</label>
+                    <input type="text" id="customIdInput" placeholder="Leave empty for auto-generation" class="w-full bg-[#2a3942] border border-transparent focus:border-[#00a884] rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-500 outline-none font-mono transition" />
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeConfigModal()" class="px-4 py-2.5 rounded-lg text-xs text-gray-400 hover:bg-[#2a3942] transition">Cancel</button>
+                <button id="saveConfigBtn" class="bg-[#00a884] hover:bg-[#008f72] text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition active:scale-95">Apply Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODERN MODAL: Delete Confirmation -->
+    <div id="confirmDeleteModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#1f2c34] border border-[#2a3942] rounded-2xl p-5 w-full max-w-xs shadow-2xl text-center space-y-4">
+            <div class="w-12 h-12 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto">
+                <i class="fa-solid fa-trash-can text-lg"></i>
+            </div>
+            <div>
+                <h4 class="font-bold text-base text-gray-100">Delete Conversation?</h4>
+                <p class="text-xs text-[#8696a0] mt-2 leading-relaxed">This action removes this contact and all associated messages permanently from IndexedDB.</p>
+            </div>
+            <div class="flex space-x-2 pt-2">
+                <button id="cancelDeleteBtn" class="flex-1 bg-transparent hover:bg-[#2a3942] text-xs font-semibold py-2.5 rounded-lg transition text-gray-400">Cancel</button>
+                <button id="confirmDeleteBtn" class="flex-1 bg-red-600 hover:bg-red-700 text-xs font-semibold py-2.5 text-white rounded-lg transition active:scale-95">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-[#202c33] border-l-4 border-[#00a884] text-gray-200 text-xs px-4 py-3.5 rounded-lg shadow-2xl z-50 transform translate-y-20 opacity-0 transition-all duration-300 max-w-sm flex items-center space-x-3">
+        <span id="toastIcon"><i class="fa-solid fa-circle-check text-[#00a884] text-sm"></i></span>
+        <span id="toastMsg" class="font-medium">Ready</span>
+    </div>
+
+    <!-- Native Audios -->
+    <audio id="ringtone" loop style="display:none;">
+        <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="remoteAudio" style="display:none;"></audio>
+
+    <script>
+        // ==================== BACKGROUND UNTHROTTLED WEB WORKER HEARTBEAT ====================
+        // Inline Web Worker prevents background tab suspends when the app is running in the background.
+        const workerBlobCode = `
+            let timer = null;
+            self.onmessage = function(e) {
+                if (e.data === 'start') {
+                    if (timer) clearInterval(timer);
+                    timer = setInterval(() => {
+                        self.postMessage('ping');
+                    }, 8000); // 8-second interval checks
+                } else if (e.data === 'stop') {
+                    if (timer) {
+                        clearInterval(timer);
+                        timer = null;
+                    }
+                }
+            };
+        `;
+        const blob = new Blob([workerBlobCode], { type: 'application/javascript' });
+        const worker = new Worker(URL.createObjectURL(blob));
+
+        // ==================== GLOBAL APP STATE ====================
+        let peer = null;
+        let dataConn = null;
+        let activeCall = null;
+        let localStream = null;
+        let incomingCallObj = null;
+        let isVideoActive = false;
+        let usingFrontCamera = true;
+        let isMicMuted = false;
+        let isCameraOff = false;
+        let currentConnectedPeerId = null;
+        let targetDeletePeerId = null;
+
+        let myUserName = localStorage.getItem('p2p_chat_name') || 'User';
+        let remoteUserName = 'Peer';
+
+        // Base ID generation if missing
+        let myIdOverride = localStorage.getItem('p2p_my_id') || `user${Math.floor(Math.random() * 9000 + 1000)}`;
+        localStorage.setItem('p2p_my_id', myIdOverride);
+
+        // ==================== INDEXEDDB SYSTEM ====================
+        const DB_NAME = 'WhatsAppStyleP2P_v3';
+        const DB_VERSION = 1;
+        let db = null;
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('contacts')) {
+                        db.createObjectStore('contacts', { keyPath: 'peerId' });
+                    }
+                    if (!db.objectStoreNames.contains('chat_logs')) {
+                        const messageStore = db.createObjectStore('chat_logs', { keyPath: 'id', autoIncrement: true });
+                        messageStore.createIndex('peerId', 'peerId', { unique: false });
+                    }
+                };
+            });
         }
-    }
 
-    function toggleFullscreen() { 
-        if(!document.fullscreenElement) 
-            videoContainer.requestFullscreen().catch(e => {}); 
-        else 
-            document.exitFullscreen(); 
-    }
+        async function dbSaveContact(peerId, name) {
+            const transaction = db.transaction(['contacts'], 'readwrite');
+            const store = transaction.objectStore('contacts');
+            const contact = { 
+                peerId: peerId, 
+                name: name, 
+                avatar: name.charAt(0).toUpperCase(), 
+                lastTimestamp: Date.now() 
+            };
+            store.put(contact);
+            transaction.oncomplete = () => loadContactsFromDB();
+        }
 
-    function updateVideoIcons() { 
-        toggleMicBtn.innerHTML = '<i class="fas fa-microphone"></i>'; 
-        toggleCameraBtn.innerHTML = '<i class="fas fa-video"></i>'; 
-        isMicMuted = false; 
-        isCameraOff = false; 
-    }
+        async function dbSaveMessage(peerId, text, isSent, type = 'text', fileData = null) {
+            const transaction = db.transaction(['chat_logs'], 'readwrite');
+            const store = transaction.objectStore('chat_logs');
+            const logEntry = {
+                peerId: peerId,
+                text: text,
+                isSent: isSent,
+                type: type,
+                fileData: fileData,
+                timestamp: Date.now()
+            };
+            store.add(logEntry);
+        }
 
-    // Event bindings
-    sendBtn.onclick = () => { 
-        if(messageInput.value.trim() && dataConn?.open) { 
-            dataConn.send(messageInput.value); 
-            addMessage(messageInput.value, true); 
-            messageInput.value = ''; 
-        } 
-    };
-    
-    messageInput.addEventListener('keypress', e => { 
-        if(e.key === 'Enter') sendBtn.click(); 
-    });
-    
-    setCustomIdBtn.onclick = () => { 
-        const newName = customIdInput.value.trim(); 
-        if(newName) { 
-            myUserName = newName; 
-            userNameSpan.innerText = newName; 
-            userAvatar.innerText = newName.charAt(0).toUpperCase(); 
-            localStorage.setItem('wa_username', newName); 
-            if(dataConn?.open) dataConn.send(JSON.stringify({ type:'name', name:myUserName })); 
-            addSystemMessage(`Name changed to ${newName}`); 
-        } 
-    };
-    
-    callBtn.onclick = () => startCall(false);
-    videoCallBtn.onclick = () => startCall(true);
-    endCallBtn.onclick = endCall;
-    hangupCallBtn.onclick = endCall;
-    
-    acceptCallBtn.onclick = () => answerCall(false);
-    acceptVideoBtn.onclick = () => answerCall(true);
-    rejectCallBtn.onclick = () => { 
-        ringtone.pause(); 
-        ringtone.currentTime = 0; 
-        if(incomingCallObj) incomingCallObj.close(); 
-        callNotificationDiv.style.display = 'none'; 
-        incomingCallObj = null; 
-        addSystemMessage("Call rejected");
-    };
-    
-    toggleMicBtn.onclick = toggleMic;
-    toggleCameraBtn.onclick = toggleCameraVideo;
-    switchCameraBtn.onclick = switchCamera;
-    fullscreenBtn.onclick = toggleFullscreen;
-    
-    menuToggle.onclick = () => sidebar.classList.toggle('open');
-    
-    document.addEventListener('click', (e) => { 
-        if(window.innerWidth <= 768 && sidebar.classList.contains('open') && !sidebar.contains(e.target) && !menuToggle.contains(e.target)) 
-            sidebar.classList.remove('open'); 
-    });
+        async function dbGetChatLogs(peerId) {
+            return new Promise((resolve) => {
+                const transaction = db.transaction(['chat_logs'], 'readonly');
+                const store = transaction.objectStore('chat_logs');
+                const index = store.index('peerId');
+                const request = index.getAll(peerId);
+                request.onsuccess = () => resolve(request.result);
+            });
+        }
 
-    // Initialize
-    initPeer();
-    loadContacts();
-</script>
+        async function dbDeleteContactHistory(peerId) {
+            const tx1 = db.transaction(['contacts'], 'readwrite');
+            tx1.objectStore('contacts').delete(peerId);
+            
+            const tx2 = db.transaction(['chat_logs'], 'readwrite');
+            const store = tx2.objectStore('chat_logs');
+            const index = store.index('peerId');
+            const request = index.openCursor(peerId);
+            request.onsuccess = (e) => {
+                const cursor = e.target.result;
+                if (cursor) {
+                    cursor.delete();
+                    cursor.continue();
+                }
+            };
+            tx2.oncomplete = () => {
+                loadContactsFromDB();
+                if (currentConnectedPeerId === peerId) {
+                    clearChatUI();
+                }
+            };
+        }
+
+        // ==================== TOAST & DIALOG COMPONENTS ====================
+        function showToast(message, isError = false) {
+            const toastEl = document.getElementById('toast');
+            const iconEl = document.getElementById('toastIcon');
+            const msgEl = document.getElementById('toastMsg');
+            
+            msgEl.textContent = message;
+            if (isError) {
+                toastEl.classList.remove('border-[#00a884]');
+                toastEl.classList.add('border-red-500');
+                iconEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-red-500 text-sm animate-bounce"></i>';
+            } else {
+                toastEl.classList.add('border-[#00a884]');
+                toastEl.classList.remove('border-red-500');
+                iconEl.innerHTML = '<i class="fa-solid fa-circle-check text-[#00a884] text-sm"></i>';
+            }
+
+            toastEl.classList.remove('translate-y-20', 'opacity-0');
+            toastEl.classList.add('translate-y-0', 'opacity-100');
+            
+            setTimeout(() => {
+                toastEl.classList.add('translate-y-20', 'opacity-0');
+                toastEl.classList.remove('translate-y-0', 'opacity-100');
+            }, 3500);
+        }
+
+        // ==================== UI RENDERING LAYER ====================
+        const contactsListDiv = document.getElementById('contactsList');
+        const messagesDiv = document.getElementById('messages');
+        const currentPeerHeader = document.getElementById('currentPeer');
+        const peerAvatarDiv = document.getElementById('peerAvatar');
+        const chatSubtitle = document.getElementById('chatSubtitle');
+        const messageInput = document.getElementById('messageInput');
+        const sidebar = document.getElementById('sidebar');
+
+        async function loadContactsFromDB() {
+            if (!db) await initDB();
+            const transaction = db.transaction(['contacts'], 'readonly');
+            const store = transaction.objectStore('contacts');
+            const request = store.getAll();
+            request.onsuccess = () => {
+                renderContacts(request.result);
+            };
+        }
+
+        function renderContacts(contacts) {
+            if (!contacts || contacts.length === 0) {
+                contactsListDiv.innerHTML = `
+                    <div class="p-6 text-center text-gray-500 text-xs flex flex-col items-center justify-center space-y-3">
+                        <i class="fa-regular fa-comment-dots text-4xl opacity-20"></i>
+                        <span>Start direct P2P connection by adding a friend's ID.</span>
+                    </div>`;
+                return;
+            }
+
+            contactsListDiv.innerHTML = contacts.map(c => `
+                <div class="chat-item flex items-center justify-between p-3.5 hover:bg-[#202c33]/50 cursor-pointer transition-all duration-150 relative group ${currentConnectedPeerId === c.peerId ? 'bg-[#202c33]' : ''}" data-peerid="${escapeHtml(c.peerId)}">
+                    <div class="flex items-center space-x-3 flex-1 min-w-0" onclick="handleContactClick('${escapeHtml(c.peerId)}', '${escapeHtml(c.name)}')">
+                        <div class="w-11 h-11 rounded-full bg-teal-800 text-teal-100 flex items-center justify-center font-bold text-lg shadow-sm flex-shrink-0">
+                            ${escapeHtml(c.avatar)}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-semibold text-sm text-gray-200 truncate">${escapeHtml(c.name)}</h4>
+                            <p class="text-[11px] text-[#8696a0] font-mono truncate">ID: ${escapeHtml(c.peerId)}</p>
+                        </div>
+                    </div>
+                    <button onclick="requestDeleteContact(event, '${escapeHtml(c.peerId)}')" class="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-black/20 transition-all flex items-center justify-center flex-shrink-0" title="Delete conversation">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function clearChatUI() {
+            currentConnectedPeerId = null;
+            currentPeerHeader.textContent = "No Active Chat";
+            peerAvatarDiv.textContent = "👤";
+            chatSubtitle.textContent = "Select or connect to a contact to begin";
+            messagesDiv.innerHTML = `
+                <div class="mx-auto my-auto max-w-sm text-center bg-[#182229] border border-[#2a3942] p-5 rounded-2xl shadow-xl">
+                    <div class="w-12 h-12 bg-[#00a884]/10 text-[#00a884] rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fa-solid fa-lock text-lg"></i>
+                    </div>
+                    <h4 class="font-semibold text-sm text-gray-200">End-to-End Encrypted Peer Connection</h4>
+                    <p class="text-xs text-[#8696a0] mt-2 leading-relaxed">Your messages, calls, and file transfers are direct between devices. None of your data is ever hosted on a signaling database.</p>
+                </div>`;
+            messageInput.disabled = true;
+            document.getElementById('callControls').classList.add('opacity-50', 'pointer-events-none');
+            
+            // Revert Toggle Icon to Menu on mobile
+            setMobileSidebarToggleIcon(true);
+        }
+
+        async function handleContactClick(peerId, name) {
+            // Close mobile sidebar if screen is small
+            if (window.innerWidth < 768) {
+                sidebar.classList.add('-translate-x-full');
+                setMobileSidebarToggleIcon(false);
+            }
+            document.getElementById('peerIdInput').value = peerId;
+            remoteUserName = name;
+            await connectToPeer(peerId, name);
+        }
+
+        function requestDeleteContact(e, peerId) {
+            e.stopPropagation();
+            targetDeletePeerId = peerId;
+            document.getElementById('confirmDeleteModal').classList.remove('hidden');
+            document.getElementById('confirmDeleteModal').classList.add('flex');
+        }
+
+        document.getElementById('cancelDeleteBtn').onclick = () => {
+            document.getElementById('confirmDeleteModal').classList.add('hidden');
+            document.getElementById('confirmDeleteModal').classList.remove('flex');
+            targetDeletePeerId = null;
+        };
+
+        document.getElementById('confirmDeleteBtn').onclick = async () => {
+            if (targetDeletePeerId) {
+                await dbDeleteContactHistory(targetDeletePeerId);
+                showToast("Chat permanently deleted.");
+            }
+            document.getElementById('confirmDeleteModal').classList.add('hidden');
+            document.getElementById('confirmDeleteModal').classList.remove('flex');
+            targetDeletePeerId = null;
+        };
+
+        function addMessageToUI(text, isSent, type = 'text', fileData = null) {
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const messageWrapper = document.createElement('div');
+            messageWrapper.className = `flex w-full ${isSent ? 'justify-end' : 'justify-start'} message-bubble`;
+
+            let innerHTML = '';
+            if (type === 'file_transfer' && fileData) {
+                let iconClass = 'fa-file';
+                if (fileData.mime?.startsWith('image/')) iconClass = 'fa-file-image';
+                else if (fileData.mime?.startsWith('audio/')) iconClass = 'fa-file-audio';
+                else if (fileData.mime?.startsWith('video/')) iconClass = 'fa-file-video';
+                
+                innerHTML = `
+                    <div class="max-w-[85%] sm:max-w-md rounded-2xl p-3.5 shadow-md ${isSent ? 'bg-[#005c4b] text-white' : 'bg-[#202c33] text-gray-100'}">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center text-lg text-[#00a884] flex-shrink-0">
+                                <i class="fa-solid ${iconClass}"></i>
+                            </div>
+                            <div class="flex-1 min-w-0 pr-2">
+                                <p class="text-xs font-semibold truncate text-gray-100">${escapeHtml(fileData.name)}</p>
+                                <p class="text-[10px] text-gray-400 mt-0.5">${formatBytes(fileData.size)}</p>
+                            </div>
+                            <button class="download-btn w-9 h-9 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center text-white transition-all flex-shrink-0" data-url="${fileData.data}" data-name="${fileData.name}">
+                                <i class="fa-solid fa-download text-xs"></i>
+                            </button>
+                        </div>
+                        <p class="text-[9px] text-right mt-2 ${isSent ? 'text-gray-300' : 'text-gray-400'}">${time}</p>
+                    </div>
+                `;
+            } else {
+                innerHTML = `
+                    <div class="max-w-[85%] sm:max-w-md rounded-2xl p-3 px-4 shadow-md ${isSent ? 'bg-[#005c4b] text-white' : 'bg-[#202c33] text-gray-100'}">
+                        <p class="text-sm leading-relaxed">${escapeHtml(text)}</p>
+                        <p class="text-[9px] text-right mt-1.5 ${isSent ? 'text-gray-300' : 'text-gray-400'}">${time}</p>
+                    </div>
+                `;
+            }
+
+            messageWrapper.innerHTML = innerHTML;
+            messagesDiv.appendChild(messageWrapper);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            // Secure download binding
+            const downloadBtn = messageWrapper.querySelector('.download-btn');
+            if (downloadBtn) {
+                downloadBtn.onclick = () => {
+                    const dataUrl = downloadBtn.getAttribute('data-url');
+                    const fileName = downloadBtn.getAttribute('data-name');
+                    const link = document.createElement('a');
+                    link.href = dataUrl;
+                    link.download = fileName;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                };
+            }
+        }
+
+        function addSystemMessageToUI(message) {
+            const wrapper = document.createElement('div');
+            wrapper.className = "w-full flex justify-center";
+            wrapper.innerHTML = `
+                <div class="bg-[#182229] border border-[#2a3942] text-gray-400 text-[10px] uppercase font-semibold tracking-wider px-3.5 py-1.5 rounded-full flex items-center space-x-2 shadow-md">
+                    <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#00a884] animate-pulse"></span>
+                    <span>${escapeHtml(message)}</span>
+                </div>
+            `;
+            messagesDiv.appendChild(wrapper);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // ==================== PEERJS CONNECTIONS ENGINE ====================
+        
+        function initPeer() {
+            if (peer && !peer.destroyed) {
+                peer.destroy();
+            }
+
+            const targetId = localStorage.getItem('p2p_my_id');
+            myUserName = localStorage.getItem('p2p_chat_name') || 'User';
+            
+            document.getElementById('userName').textContent = myUserName;
+            document.getElementById('userAvatar').textContent = myUserName.charAt(0).toUpperCase();
+
+            // WebRTC direct-connect configurations
+            peer = new Peer(targetId, {
+                host: '0.peerjs.com',
+                port: 443,
+                path: '/',
+                secure: true,
+                debug: 1,
+                config: {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' }
+                    ]
+                }
+            });
+
+            peer.on('open', (id) => {
+                document.getElementById('yourId').textContent = id;
+                sessionStorage.setItem('last_active_p2p_session', id);
+                document.getElementById('networkPulse').className = "inline-block w-2 h-2 rounded-full bg-green-500 mr-1.5 animate-pulse";
+                
+                // Keep the signaling connection alive actively
+                if (peer.socket) {
+                    setInterval(() => {
+                        if (peer && !peer.destroyed && peer.socket && !peer.socket.disconnected) {
+                            peer.socket.send({ type: 'HEARTBEAT' });
+                        }
+                    }, 15000);
+                }
+            });
+
+            peer.on('connection', (conn) => {
+                // Safeguard duplicates
+                if (dataConn && dataConn.open && dataConn.peer === conn.peer) {
+                    return;
+                }
+                dataConn = conn;
+                setupDataConnection(conn);
+            });
+
+            peer.on('call', (callObj) => {
+                incomingCallObj = callObj;
+                const isVideo = callObj.metadata?.isVideo || false;
+                document.getElementById('callerName').textContent = remoteUserName || callObj.peer;
+                document.getElementById('callTypeText').textContent = isVideo ? "📹 Video Call" : "📞 Audio Call";
+                document.getElementById('callNotification').classList.remove('hidden');
+                
+                const ringtone = document.getElementById('ringtone');
+                ringtone.play().catch(() => {
+                    showToast("Incoming call received.");
+                });
+            });
+
+            peer.on('error', (err) => {
+                console.error("PeerJS Core Error: ", err);
+                if (err.type === 'peer-unavailable') {
+                    showToast("Target peer is currently offline.", true);
+                    clearChatUI();
+                } else if (err.type === 'network') {
+                    showToast("Signaling dropped. Reconnecting...", true);
+                    document.getElementById('networkPulse').className = "inline-block w-2 h-2 rounded-full bg-red-500 mr-1.5";
+                    setTimeout(() => peer.reconnect(), 4000);
+                } else {
+                    showToast(`Alert: ${err.message}`, true);
+                }
+            });
+
+            peer.on('disconnected', () => {
+                document.getElementById('networkPulse').className = "inline-block w-2 h-2 rounded-full bg-yellow-500 mr-1.5";
+                peer.reconnect();
+            });
+        }
+
+        // ==================== DATA CHANNEL HEARTBEAT & HEALERS ====================
+        let lastReceivedHeartbeat = Date.now();
+        let pingIntervalHandle = null;
+
+        function startWorkerHeartbeat() {
+            lastReceivedHeartbeat = Date.now();
+            worker.postMessage('start');
+            
+            if (pingIntervalHandle) clearInterval(pingIntervalHandle);
+            
+            pingIntervalHandle = setInterval(() => {
+                if (!dataConn || !dataConn.open) {
+                    stopWorkerHeartbeat();
+                    return;
+                }
+                const silenceDuration = Date.now() - lastReceivedHeartbeat;
+                if (silenceDuration > 30000) { // If silent for over 30 seconds
+                    console.log("No responsive background heartbeat detected. Triggering silent reconnect...");
+                    handleDataChannelLost();
+                }
+            }, 8000);
+        }
+
+        function stopWorkerHeartbeat() {
+            worker.postMessage('stop');
+            if (pingIntervalHandle) {
+                clearInterval(pingIntervalHandle);
+                pingIntervalHandle = null;
+            }
+        }
+
+        worker.onmessage = function(e) {
+            if (e.data === 'ping') {
+                if (dataConn && dataConn.open) {
+                    try {
+                        dataConn.send(JSON.stringify({ type: '_SYS_PING' }));
+                    } catch (err) {
+                        console.error("Failed to send background ping: ", err);
+                    }
+                }
+            }
+        };
+
+        // ==================== LIFECYCLE RECOVERY ENGINGE (CHROME SWAP FIX) ====================
+        // Monitors state whenever the window gains focus or visibility (meaning user switched back to Chrome from WhatsApp)
+        
+        async function runActiveResumptionHeal() {
+            console.log("Running lifecycle resume check...");
+
+            // 1. Heal Signaling Server Connection
+            if (peer) {
+                if (peer.destroyed) {
+                    initPeer();
+                } else if (peer.disconnected) {
+                    console.log("Re-establishing signaling node socket connection...");
+                    peer.reconnect();
+                }
+            }
+
+            // 2. Proactively Check Peer Connection
+            if (currentConnectedPeerId) {
+                let shouldRebuild = false;
+
+                if (!dataConn || !dataConn.open || dataConn.label === null) {
+                    shouldRebuild = true;
+                } else {
+                    // Send an instant test-probe. 
+                    // If we do not receive a response within 1.5 seconds, we know the channel is a dead zombie.
+                    lastReceivedHeartbeat = Date.now();
+                    try {
+                        dataConn.send(JSON.stringify({ type: '_SYS_PING', forceProbe: true }));
+                        
+                        setTimeout(() => {
+                            if (Date.now() - lastReceivedHeartbeat > 2000) {
+                                console.log("Responsive probe failed. Rebuilding socket channels...");
+                                forceSilentReconnection();
+                            }
+                        }, 1500);
+                    } catch (err) {
+                        shouldRebuild = true;
+                    }
+                }
+
+                if (shouldRebuild) {
+                    forceSilentReconnection();
+                }
+            }
+        }
+
+        async function forceSilentReconnection() {
+            if (!currentConnectedPeerId) return;
+            console.log("Initiating silent handshakes to restore session...");
+            
+            // Do not clean UI, just reconstruct data layers
+            if (dataConn) {
+                try { dataConn.close(); } catch(e) {}
+            }
+
+            const connectionOptions = {
+                reliable: true,
+                serialization: 'json'
+            };
+
+            const conn = peer.connect(currentConnectedPeerId, connectionOptions);
+            setupDataConnection(conn);
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                runActiveResumptionHeal();
+            }
+        });
+
+        window.addEventListener('focus', () => {
+            runActiveResumptionHeal();
+        });
+
+        // ==================== DATA CHANNELS CONFIGURATION ====================
+        
+        function setupDataConnection(conn) {
+            dataConn = conn;
+            currentConnectedPeerId = conn.peer;
+
+            conn.on('open', async () => {
+                showToast(`Session established with ${remoteUserName}`);
+                
+                // Cache to automatically heal if browser suspends
+                sessionStorage.setItem('active_chat_peer_id', currentConnectedPeerId);
+                sessionStorage.setItem('active_chat_peer_name', remoteUserName);
+
+                // UI Changes
+                document.getElementById('connectionStatus').innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1 animate-pulse"></span> Online';
+                document.getElementById('connectionStatus').classList.remove('text-red-400');
+                document.getElementById('connectionStatus').classList.add('text-green-400');
+                
+                document.getElementById('peerName').textContent = remoteUserName;
+                currentPeerHeader.textContent = remoteUserName;
+                peerAvatarDiv.textContent = remoteUserName.charAt(0).toUpperCase();
+                chatSubtitle.textContent = "End2End Encrypted ";
+                
+                messageInput.disabled = false;
+                document.getElementById('callControls').classList.remove('opacity-50', 'pointer-events-none');
+                
+                await dbSaveContact(conn.peer, remoteUserName);
+                await renderChatLogs(conn.peer);
+                
+                // Exchange display configurations
+                conn.send(JSON.stringify({ type: 'profile_sync', name: myUserName }));
+
+                startWorkerHeartbeat();
+            });
+
+            conn.on('data', async (raw) => {
+                try {
+                    const data = JSON.parse(raw);
+                    
+                    if (data.type === '_SYS_PING') {
+                        lastReceivedHeartbeat = Date.now();
+                        conn.send(JSON.stringify({ type: '_SYS_PONG' }));
+                        return;
+                    }
+                    if (data.type === '_SYS_PONG') {
+                        lastReceivedHeartbeat = Date.now();
+                        return;
+                    }
+
+                    if (data.type === 'profile_sync') {
+                        remoteUserName = data.name;
+                        document.getElementById('peerName').textContent = remoteUserName;
+                        currentPeerHeader.textContent = remoteUserName;
+                        peerAvatarDiv.textContent = remoteUserName.charAt(0).toUpperCase();
+                        await dbSaveContact(conn.peer, remoteUserName);
+                        return;
+                    }
+
+                    if (data.type === 'call_ended') {
+                        addSystemMessageToUI("Call ended.");
+                        cleanupMediaCall();
+                        return;
+                    }
+
+                    if (data.type === 'file_transfer') {
+                        addMessageToUI(null, false, 'file_transfer', data.file);
+                        await dbSaveMessage(conn.peer, null, false, 'file_transfer', data.file);
+                        return;
+                    }
+
+                    // Direct Chat text processing
+                    addMessageToUI(data.text, false);
+                    await dbSaveMessage(conn.peer, data.text, false);
+
+                } catch (e) {
+                    addMessageToUI(raw, false);
+                    await dbSaveMessage(conn.peer, raw, false);
+                }
+            });
+
+            conn.on('close', () => {
+                handleDataChannelLost();
+            });
+
+            conn.on('error', (err) => {
+                console.error("P2P Socket Connection Error: ", err);
+                handleDataChannelLost();
+            });
+        }
+
+        async function connectToPeer(peerId, customName = null) {
+            if (!peer || !peer.open) {
+                showToast("Cannot establish:User offline.", true);
+                return;
+            }
+
+            if (dataConn) {
+                dataConn.close();
+            }
+
+            remoteUserName = customName || peerId;
+            currentPeerHeader.textContent = remoteUserName;
+            peerAvatarDiv.textContent = remoteUserName.charAt(0).toUpperCase();
+
+            const connectionOptions = {
+                reliable: true,
+                serialization: 'json'
+            };
+
+            const conn = peer.connect(peerId, connectionOptions);
+            setupDataConnection(conn);
+        }
+
+        function handleDataChannelLost() {
+            stopWorkerHeartbeat();
+            
+            document.getElementById('connectionStatus').innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-red-500 mr-1"></span> Disconnected';
+            document.getElementById('connectionStatus').classList.remove('text-green-400');
+            document.getElementById('connectionStatus').classList.add('text-red-400');
+            
+            cleanupMediaCall();
+            
+            messageInput.disabled = true;
+            document.getElementById('callControls').classList.add('opacity-50', 'pointer-events-none');
+            chatSubtitle.textContent = "Offline. Connection standby...";
+        }
+
+        async function renderChatLogs(peerId) {
+            messagesDiv.innerHTML = '';
+            const logs = await dbGetChatLogs(peerId);
+            if (logs && logs.length > 0) {
+                logs.forEach(msg => {
+                    addMessageToUI(msg.text, msg.isSent, msg.type, msg.fileData);
+                });
+            } else {
+                addSystemMessageToUI("Messages are direct between devices.");
+            }
+        }
+
+        // ==================== DISPATCHING TEXT MESSAGES ====================
+        
+        async function handleSendMessage() {
+            const text = messageInput.value.trim();
+            if (!text) return;
+            if (!dataConn || !dataConn.open) {
+                showToast("Cannot send: P2P connection lost.", true);
+                return;
+            }
+
+            try {
+                const payload = { type: 'chat_msg', text: text };
+                dataConn.send(JSON.stringify(payload));
+                
+                addMessageToUI(text, true);
+                await dbSaveMessage(currentConnectedPeerId, text, true);
+                messageInput.value = '';
+            } catch (err) {
+                showToast("Failed to send message.", true);
+            }
+        }
+
+        // ==================== DISPATCHING FILES ====================
+        
+        async function handleSendFile(file) {
+            if (!dataConn || !dataConn.open) {
+                showToast("Cannot transfer files: Connection offline.", true);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const fileObj = {
+                    name: file.name,
+                    size: file.size,
+                    mime: file.type,
+                    data: e.target.result
+                };
+
+                try {
+                    dataConn.send(JSON.stringify({
+                        type: 'file_transfer',
+                        file: fileObj
+                    }));
+
+                    addMessageToUI(null, true, 'file_transfer', fileObj);
+                    await dbSaveMessage(currentConnectedPeerId, null, true, 'file_transfer', fileObj);
+                    showToast("File sent successfully.");
+                } catch (err) {
+                    showToast("Transfer failed: Size limit exceeded.", true);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // ==================== RTC VOIP & VIDEO STACKS ====================
+        
+        async function startMediaCall(requestVideo) {
+            if (!dataConn || !dataConn.open) {
+                showToast("Call failed: Contact is offline.", true);
+                return;
+            }
+            if (activeCall) {
+                showToast("Another call context active.", true);
+                return;
+            }
+
+            const constraints = {
+                audio: true,
+                video: requestVideo ? { facingMode: usingFrontCamera ? "user" : "environment" } : false
+            };
+
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                isVideoActive = requestVideo;
+                isMicMuted = false;
+                isCameraOff = false;
+
+                if (requestVideo) {
+                    document.getElementById('videoContainer').classList.remove('hidden');
+                    document.getElementById('videoContainer').classList.add('flex');
+                    document.getElementById('localVideo').srcObject = localStream;
+                }
+
+                const options = {
+                    metadata: { isVideo: requestVideo, callerName: myUserName }
+                };
+
+                activeCall = peer.call(dataConn.peer, localStream, options);
+                setupMediaCallEvents(activeCall, requestVideo);
+                
+                toggleCallButtonState(true);
+                addSystemMessageToUI(`Starting ${requestVideo ? 'Video' : 'Audio'} Call...`);
+            } catch (err) {
+                showToast(`Hardware acquisition failed: ${err.message}`, true);
+            }
+        }
+
+        function setupMediaCallEvents(callObj, expectVideo) {
+            callObj.on('stream', (remoteStream) => {
+                if (expectVideo) {
+                    const rVideo = document.getElementById('remoteVideo');
+                    rVideo.srcObject = remoteStream;
+                    rVideo.play().catch(console.error);
+                } else {
+                    const rAudio = document.getElementById('remoteAudio');
+                    rAudio.srcObject = remoteStream;
+                    rAudio.play().catch(console.error);
+                }
+
+                document.getElementById('ringtone').pause();
+                document.getElementById('callNotification').classList.add('hidden');
+                addSystemMessageToUI("Call active.");
+            });
+
+            callObj.on('close', () => {
+                addSystemMessageToUI("Call disconnected.");
+                cleanupMediaCall();
+            });
+
+            callObj.on('error', (err) => {
+                showToast(`VoIP context error: ${err.message}`, true);
+                cleanupMediaCall();
+            });
+        }
+
+        async function answerIncomingCall(forceVideo) {
+            if (!incomingCallObj) return;
+            
+            document.getElementById('ringtone').pause();
+            const shouldIncludeVideo = forceVideo || incomingCallObj.metadata?.isVideo;
+
+            const constraints = {
+                audio: true,
+                video: shouldIncludeVideo ? { facingMode: usingFrontCamera ? "user" : "environment" } : false
+            };
+
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                isVideoActive = shouldIncludeVideo;
+                isMicMuted = false;
+                isCameraOff = false;
+
+                if (shouldIncludeVideo) {
+                    document.getElementById('videoContainer').classList.remove('hidden');
+                    document.getElementById('videoContainer').classList.add('flex');
+                    document.getElementById('localVideo').srcObject = localStream;
+                }
+
+                incomingCallObj.answer(localStream);
+                setupMediaCallEvents(incomingCallObj, shouldIncludeVideo);
+                
+                toggleCallButtonState(true);
+                document.getElementById('callNotification').classList.add('hidden');
+                activeCall = incomingCallObj;
+                incomingCallObj = null;
+            } catch (err) {
+                showToast(`Answer failure: ${err.message}`, true);
+                document.getElementById('callNotification').classList.add('hidden');
+            }
+        }
+
+        function triggerManualHangup() {
+            if (dataConn && dataConn.open && activeCall) {
+                try {
+                    dataConn.send(JSON.stringify({ type: 'call_ended' }));
+                } catch (e) {
+                    console.error("Failed sending hangup signals: ", e);
+                }
+            }
+            addSystemMessageToUI("Call ended.");
+            cleanupMediaCall();
+        }
+
+        function cleanupMediaCall() {
+            document.getElementById('ringtone').pause();
+            document.getElementById('callNotification').classList.add('hidden');
+
+            if (activeCall) {
+                try {
+                    activeCall.close();
+                } catch (e) {
+                    console.error("Error closing active call: ", e);
+                }
+                activeCall = null;
+            }
+
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+
+            const rVideo = document.getElementById('remoteVideo');
+            const lVideo = document.getElementById('localVideo');
+            const rAudio = document.getElementById('remoteAudio');
+
+            if (rVideo.srcObject) {
+                rVideo.srcObject.getTracks().forEach(t => t.stop());
+                rVideo.srcObject = null;
+            }
+            if (lVideo.srcObject) {
+                lVideo.srcObject = null;
+            }
+            if (rAudio.srcObject) {
+                rAudio.srcObject.getTracks().forEach(t => t.stop());
+                rAudio.srcObject = null;
+            }
+
+            document.getElementById('videoContainer').classList.add('hidden');
+            document.getElementById('videoContainer').classList.remove('flex');
+            
+            isVideoActive = false;
+            isMicMuted = false;
+            isCameraOff = false;
+
+            toggleCallButtonState(false);
+        }
+
+        function toggleCallButtonState(inCall) {
+            if (inCall) {
+                document.getElementById('callBtn').classList.add('hidden');
+                document.getElementById('videoCallBtn').classList.add('hidden');
+                document.getElementById('endCallBtn').classList.remove('hidden');
+            } else {
+                document.getElementById('callBtn').classList.remove('hidden');
+                document.getElementById('videoCallBtn').classList.remove('hidden');
+                document.getElementById('endCallBtn').classList.add('hidden');
+            }
+        }
+
+        // ==================== CALL CONTROLS HANDLERS ====================
+        
+        function toggleMicrophoneMute() {
+            if (!localStream) return;
+            const audioTrack = localStream.getAudioTracks()[0];
+            if (audioTrack) {
+                isMicMuted = !isMicMuted;
+                audioTrack.enabled = !isMicMuted;
+                const icon = document.getElementById('toggleMicBtn').querySelector('i');
+                if (isMicMuted) {
+                    icon.className = 'fa-solid fa-microphone-slash text-red-500';
+                    showToast("Microphone muted.");
+                } else {
+                    icon.className = 'fa-solid fa-microphone text-gray-300';
+                    showToast("Microphone active.");
+                }
+            }
+        }
+
+        function toggleCameraState() {
+            if (!localStream || !isVideoActive) return;
+            const videoTrack = localStream.getVideoTracks()[0];
+            if (videoTrack) {
+                isCameraOff = !isCameraOff;
+                videoTrack.enabled = !isCameraOff;
+                const icon = document.getElementById('toggleCameraBtn').querySelector('i');
+                if (isCameraOff) {
+                    icon.className = 'fa-solid fa-video-slash text-red-500';
+                    showToast("Camera stream stopped.");
+                } else {
+                    icon.className = 'fa-solid fa-video text-gray-300';
+                    showToast("Camera stream running.");
+                }
+            }
+        }
+
+        async function triggerCameraFlip() {
+            if (!localStream || !isVideoActive) return;
+            
+            const wasMicMuted = isMicMuted;
+            const wasCamOff = isCameraOff;
+            
+            usingFrontCamera = !usingFrontCamera;
+            const constraints = {
+                audio: true,
+                video: { facingMode: usingFrontCamera ? "user" : "environment" }
+            };
+
+            try {
+                const freshStream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                const freshVideoTrack = freshStream.getVideoTracks()[0];
+                const freshAudioTrack = freshStream.getAudioTracks()[0];
+
+                const oldVideoTrack = localStream.getVideoTracks()[0];
+                const oldAudioTrack = localStream.getAudioTracks()[0];
+
+                if (oldVideoTrack) localStream.removeTrack(oldVideoTrack);
+                localStream.addTrack(freshVideoTrack);
+
+                if (oldAudioTrack) localStream.removeTrack(oldAudioTrack);
+                localStream.addTrack(freshAudioTrack);
+
+                document.getElementById('localVideo').srcObject = localStream;
+
+                if (activeCall) {
+                    const senders = activeCall.peerConnection?.getSenders();
+                    const vSender = senders?.find(s => s.track?.kind === 'video');
+                    if (vSender) await vSender.replaceTrack(freshVideoTrack);
+
+                    const aSender = senders?.find(s => s.track?.kind === 'audio');
+                    if (aSender) await aSender.replaceTrack(freshAudioTrack);
+                }
+
+                if (oldVideoTrack) oldVideoTrack.stop();
+                if (oldAudioTrack) oldAudioTrack.stop();
+
+                localStream.getAudioTracks()[0].enabled = !wasMicMuted;
+                localStream.getVideoTracks()[0].enabled = !wasCamOff;
+                
+                showToast(`Rear camera flipped.`);
+            } catch (err) {
+                showToast("Failed to flip camera hardware.", true);
+                usingFrontCamera = !usingFrontCamera;
+            }
+        }
+
+        function triggerVideoFullscreen() {
+            const el = document.getElementById('videoContainer');
+            if (!document.fullscreenElement) {
+                el.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // ==================== SETTINGS & NAVIGATION MODALS ====================
+        
+        function openConfigModal() {
+            document.getElementById('customNameInput').value = myUserName;
+            document.getElementById('customIdInput').value = localStorage.getItem('p2p_my_id') || '';
+            document.getElementById('configModal').classList.remove('hidden');
+        }
+
+        function closeConfigModal() {
+            document.getElementById('configModal').classList.add('hidden');
+        }
+
+        function setMobileSidebarToggleIcon(isMenuIcon) {
+            const icon = document.getElementById('menuToggleIcon');
+            if (isMenuIcon) {
+                icon.className = 'fa-solid fa-bars text-sm md:hidden';
+            } else {
+                icon.className = 'fa-solid fa-chevron-left text-sm md:hidden';
+            }
+        }
+
+        // ==================== DOM EVENT BINDINGS ====================
+        
+        document.getElementById('saveConfigBtn').onclick = () => {
+            const rawName = document.getElementById('customNameInput').value.trim();
+            const rawId = document.getElementById('customIdInput').value.trim();
+
+            if (!rawName) {
+                showToast("Name parameter cannot be blank.", true);
+                return;
+            }
+
+            localStorage.setItem('p2p_chat_name', rawName);
+            if (rawId) {
+                localStorage.setItem('p2p_my_id', rawId);
+            } else {
+                localStorage.removeItem('p2p_my_id');
+            }
+
+            closeConfigModal();
+            showToast("System configurations saved. Connecting...");
+            initPeer();
+        };
+
+        document.getElementById('connectBtn').onclick = () => {
+            const target = document.getElementById('peerIdInput').value.trim();
+            if (target) {
+                connectToPeer(target);
+            } else {
+                showToast("Please enter a valid peer ID.", true);
+            }
+        };
+
+        document.getElementById('sendBtn').onclick = handleSendMessage;
+        
+        document.getElementById('messageInput').onkeydown = (e) => {
+            if (e.key === 'Enter') {
+                handleSendMessage();
+            }
+        };
+
+        document.getElementById('attachBtn').onclick = () => document.getElementById('fileInput').click();
+        
+        document.getElementById('fileInput').onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleSendFile(file);
+            }
+            e.target.value = '';
+        };
+
+        // Call button allocations
+        document.getElementById('callBtn').onclick = () => startMediaCall(false);
+        document.getElementById('videoCallBtn').onclick = () => startMediaCall(true);
+        document.getElementById('endCallBtn').onclick = triggerManualHangup;
+        document.getElementById('hangupCallBtn').onclick = triggerManualHangup;
+
+        // Overlay control nodes
+        document.getElementById('toggleMicBtn').onclick = toggleMicrophoneMute;
+        document.getElementById('toggleCameraBtn').onclick = toggleCameraState;
+        document.getElementById('switchCameraBtn').onclick = triggerCameraFlip;
+        document.getElementById('fullscreenBtn').onclick = triggerVideoFullscreen;
+
+        // In-call actions
+        document.getElementById('acceptCallBtn').onclick = () => answerIncomingCall(false);
+        document.getElementById('acceptVideoBtn').onclick = () => answerIncomingCall(true);
+        document.getElementById('rejectCallBtn').onclick = () => {
+            document.getElementById('ringtone').pause();
+            if (incomingCallObj) {
+                try { incomingCallObj.close(); } catch(e) {}
+            }
+            document.getElementById('callNotification').classList.add('hidden');
+            incomingCallObj = null;
+            showToast("Inbound call rejected.");
+        };
+
+        // Sidebar adaptive menu toggler
+        document.getElementById('menuToggle').onclick = () => {
+            const isClosed = sidebar.classList.contains('-translate-x-full');
+            if (isClosed) {
+                sidebar.classList.remove('-translate-x-full');
+                setMobileSidebarToggleIcon(false);
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                setMobileSidebarToggleIcon(true);
+            }
+        };
+
+        // Close sidebar on clicking background mask
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth < 768) {
+                if (!sidebar.contains(e.target) && !document.getElementById('menuToggle').contains(e.target)) {
+                    sidebar.classList.add('-translate-x-full');
+                    setMobileSidebarToggleIcon(true);
+                }
+            }
+        });
+
+        // ==================== RUNTIME HELPER UTILITIES ====================
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // ==================== ONLOAD LIFECYCLE INITIALIZER ====================
+        
+        window.onload = async () => {
+            // Initiate Mobile Responsive View constraints on startup
+            if (window.innerWidth < 768) {
+                sidebar.classList.add('-translate-x-full');
+                setMobileSidebarToggleIcon(true);
+            }
+
+            // 1. Initialize DB Persistence Layer
+            await initDB();
+            await loadContactsFromDB();
+
+            // 2. Spawn Peer Network Stack
+            initPeer();
+
+            // 3. Gracefully recover previous active P2P conversations on accidental reload
+            const recoveredPeerId = sessionStorage.getItem('active_chat_peer_id');
+            const recoveredPeerName = sessionStorage.getItem('active_chat_peer_name');
+            
+            if (recoveredPeerId && recoveredPeerName) {
+                document.getElementById('peerIdInput').value = recoveredPeerId;
+                showToast(`Recovering connection state...`);
+                setTimeout(() => {
+                    connectToPeer(recoveredPeerId, recoveredPeerName);
+                }, 1200);
+            }
+        };
+    </script>
 </body>
 </html>
