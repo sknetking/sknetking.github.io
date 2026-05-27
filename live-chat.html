@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -140,15 +139,16 @@
             </div>
 
             <!-- Bottom Interactive Input Area -->
-            <div class="p-3 bg-[#202c33] flex items-center space-x-3 border-t border-[#2a3942] md:mb-0 mb-4">
-                <button id="attachBtn" class="w-10 h-10 rounded-full hover:bg-[#374248] text-gray-300 transition flex items-center justify-center flex-shrink-0" title="Attach Document/File">
+            <div class="p-3 bg-[#202c33] flex items-end space-x-3 border-t border-[#2a3942] md:mb-0 mb-4">
+                <button id="attachBtn" class="w-10 h-10 rounded-full hover:bg-[#374248] text-gray-300 transition flex items-center justify-center flex-shrink-0 mb-1" title="Attach Document/File">
                     <i class="fa-solid fa-paperclip text-lg"></i>
                 </button>
                 <input type="file" id="fileInput" class="hidden" />
 
-                <input type="text" id="messageInput" placeholder="Type a message..." disabled class="flex-1 bg-[#2a3942] focus:bg-[#2f3b43] border border-transparent focus:border-gray-700 text-sm text-gray-100 placeholder-gray-500 rounded-lg px-4 py-3 outline-none transition" />
+                <!-- Upgraded: Flexible Auto-Growing Textarea -->
+                <textarea id="messageInput" placeholder="Type a message..." disabled class="flex-1 bg-[#2a3942] focus:bg-[#2f3b43] border border-transparent focus:border-gray-700 text-sm text-gray-100 placeholder-gray-500 rounded-xl px-4 py-3 outline-none transition resize-none max-h-[120px] overflow-y-hidden" rows="1"></textarea>
                 
-                <button id="sendBtn" class="w-10 h-10 rounded-full bg-[#00a884] hover:bg-[#008f72] active:scale-95 text-white flex items-center justify-center shadow-lg transition-all flex-shrink-0">
+                <button id="sendBtn" class="w-10 h-10 rounded-full bg-[#00a884] hover:bg-[#008f72] active:scale-95 text-white flex items-center justify-center shadow-lg transition-all flex-shrink-0 mb-1">
                     <i class="fa-solid fa-paper-plane text-sm"></i>
                 </button>
             </div>
@@ -203,7 +203,6 @@
                     </button>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -261,8 +260,8 @@
     <audio id="remoteAudio" style="display:none;"></audio>
 
     <script>
-        // ==================== BACKGROUND UNTHROTTLED WEB WORKER HEARTBEAT ====================
-        // Inline Web Worker prevents background tab suspends when the app is running in the background.
+        /** ==================== BACKGROUND UNTHROTTLED WEB WORKER HEARTBEAT ==================== **/
+        /** Inline Web Worker prevents background tab suspends when the app is running in the background. **/
         const workerBlobCode = `
             let timer = null;
             self.onmessage = function(e) {
@@ -270,7 +269,7 @@
                     if (timer) clearInterval(timer);
                     timer = setInterval(() => {
                         self.postMessage('ping');
-                    }, 8000); // 8-second interval checks
+                    }, 8000); /** 8-second interval checks **/
                 } else if (e.data === 'stop') {
                     if (timer) {
                         clearInterval(timer);
@@ -282,7 +281,7 @@
         const blob = new Blob([workerBlobCode], { type: 'application/javascript' });
         const worker = new Worker(URL.createObjectURL(blob));
 
-        // ==================== GLOBAL APP STATE ====================
+        /** ==================== GLOBAL APP STATE ==================== **/
         let peer = null;
         let dataConn = null;
         let activeCall = null;
@@ -298,11 +297,11 @@
         let myUserName = localStorage.getItem('p2p_chat_name') || 'User';
         let remoteUserName = 'Peer';
 
-        // Base ID generation if missing
+        /** Base ID generation if missing **/
         let myIdOverride = localStorage.getItem('p2p_my_id') || `user${Math.floor(Math.random() * 9000 + 1000)}`;
         localStorage.setItem('p2p_my_id', myIdOverride);
 
-        // ==================== INDEXEDDB SYSTEM ====================
+        /** ==================== INDEXEDDB SYSTEM ==================== **/
         const DB_NAME = 'WhatsAppStyleP2P_v3';
         const DB_VERSION = 1;
         let db = null;
@@ -331,12 +330,12 @@
         async function dbSaveContact(peerId, name) {
             const transaction = db.transaction(['contacts'], 'readwrite');
             const store = transaction.objectStore('contacts');
-            const contact = { 
-                peerId: peerId, 
-                name: name, 
-                avatar: name.charAt(0).toUpperCase(), 
-                lastTimestamp: Date.now() 
-            };
+            const contact = {
+                 peerId: peerId,
+                 name: name,
+                 avatar: name.charAt(0).toUpperCase(),
+                 lastTimestamp: Date.now()
+             };
             store.put(contact);
             transaction.oncomplete = () => loadContactsFromDB();
         }
@@ -352,7 +351,11 @@
                 fileData: fileData,
                 timestamp: Date.now()
             };
-            store.add(logEntry);
+            const request = store.add(logEntry);
+            return new Promise((resolve, reject) => {
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(request.error);
+            });
         }
 
         async function dbGetChatLogs(peerId) {
@@ -368,7 +371,7 @@
         async function dbDeleteContactHistory(peerId) {
             const tx1 = db.transaction(['contacts'], 'readwrite');
             tx1.objectStore('contacts').delete(peerId);
-            
+
             const tx2 = db.transaction(['chat_logs'], 'readwrite');
             const store = tx2.objectStore('chat_logs');
             const index = store.index('peerId');
@@ -388,12 +391,23 @@
             };
         }
 
-        // ==================== TOAST & DIALOG COMPONENTS ====================
+        /** Deletes a single message by Primary Key (id) in IndexedDB **/
+        async function dbDeleteSingleMessage(msgId) {
+            if (!db) return;
+            const transaction = db.transaction(['chat_logs'], 'readwrite');
+            const store = transaction.objectStore('chat_logs');
+            const numericId = Number(msgId);
+            if (!isNaN(numericId)) {
+                store.delete(numericId);
+            }
+        }
+
+        /** ==================== TOAST & DIALOG COMPONENTS ==================== **/
         function showToast(message, isError = false) {
             const toastEl = document.getElementById('toast');
             const iconEl = document.getElementById('toastIcon');
             const msgEl = document.getElementById('toastMsg');
-            
+
             msgEl.textContent = message;
             if (isError) {
                 toastEl.classList.remove('border-[#00a884]');
@@ -407,14 +421,53 @@
 
             toastEl.classList.remove('translate-y-20', 'opacity-0');
             toastEl.classList.add('translate-y-0', 'opacity-100');
-            
+
             setTimeout(() => {
                 toastEl.classList.add('translate-y-20', 'opacity-0');
                 toastEl.classList.remove('translate-y-0', 'opacity-100');
             }, 3500);
         }
 
-        // ==================== UI RENDERING LAYER ====================
+        /** Copy Message Utility with Robust Iframe Safe System Fallback **/
+        function copyMessageText(text) {
+            if (!text) return;
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed'; /** Avoid page scrolling **/
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast("Message copied to clipboard!");
+            } catch (err) {
+                showToast("Failed to copy message.", true);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        /** Delete Message Utility from DOM and DB **/
+        async function deleteSingleMessage(msgId, element) {
+            if (!msgId) {
+                element.remove();
+                return;
+            }
+            await dbDeleteSingleMessage(msgId);
+            element.classList.add('transition-all', 'duration-300', 'ease-in-out');
+            element.style.opacity = '0';
+            element.style.transform = 'scale(0.9)';
+            element.style.maxHeight = '0px';
+            element.style.margin = '0px';
+            element.style.padding = '0px';
+            setTimeout(() => {
+                element.remove();
+                if (messagesDiv.children.length === 0) {
+                    addSystemMessageToUI("Messages are direct between devices.");
+                }
+            }, 300);
+            showToast("Message deleted.");
+        }
+
+        /** ==================== UI RENDERING LAYER ==================== **/
         const contactsListDiv = document.getElementById('contactsList');
         const messagesDiv = document.getElementById('messages');
         const currentPeerHeader = document.getElementById('currentPeer');
@@ -477,12 +530,12 @@
             messageInput.disabled = true;
             document.getElementById('callControls').classList.add('opacity-50', 'pointer-events-none');
             
-            // Revert Toggle Icon to Menu on mobile
+            /** Revert Toggle Icon to Menu on mobile **/
             setMobileSidebarToggleIcon(true);
         }
 
         async function handleContactClick(peerId, name) {
-            // Close mobile sidebar if screen is small
+            /** Close mobile sidebar if screen is small **/
             if (window.innerWidth < 768) {
                 sidebar.classList.add('-translate-x-full');
                 setMobileSidebarToggleIcon(false);
@@ -515,20 +568,36 @@
             targetDeletePeerId = null;
         };
 
-        function addMessageToUI(text, isSent, type = 'text', fileData = null) {
+        /** Upgraded: Programmatic interactive event binding for custom context nodes **/
+        function addMessageToUI(text, isSent, type = 'text', fileData = null, msgId = null) {
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const messageWrapper = document.createElement('div');
-            messageWrapper.className = `flex w-full ${isSent ? 'justify-end' : 'justify-start'} message-bubble`;
+            messageWrapper.className = `flex w-full ${isSent ? 'justify-end' : 'justify-start'} items-center message-bubble group relative my-1`;
+            messageWrapper.setAttribute('data-msgid', msgId || '');
 
-            let innerHTML = '';
+            /** Sleek hover action toolbar matching WhatsApp Web (Copy & Delete) **/
+            const actionsHtml = `
+                <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-[#1f2c34] rounded-lg p-1 border border-[#2a3942] shadow-lg ${isSent ? 'order-1 mr-2' : 'order-2 ml-2'}">
+                    ${type !== 'file_transfer' ? `
+                    <button class="copy-msg-btn p-1.5 text-gray-400 hover:text-white hover:bg-[#2a3942] rounded transition-all" title="Copy Message text">
+                        <i class="fa-regular fa-copy text-[11px]"></i>
+                    </button>
+                    ` : ''}
+                    <button class="delete-msg-btn p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-all" title="Delete Message">
+                        <i class="fa-regular fa-trash-can text-[11px]"></i>
+                    </button>
+                </div>
+            `;
+
+            let bubbleHtml = '';
             if (type === 'file_transfer' && fileData) {
                 let iconClass = 'fa-file';
                 if (fileData.mime?.startsWith('image/')) iconClass = 'fa-file-image';
                 else if (fileData.mime?.startsWith('audio/')) iconClass = 'fa-file-audio';
                 else if (fileData.mime?.startsWith('video/')) iconClass = 'fa-file-video';
                 
-                innerHTML = `
-                    <div class="max-w-[85%] sm:max-w-md rounded-2xl p-3.5 shadow-md ${isSent ? 'bg-[#005c4b] text-white' : 'bg-[#202c33] text-gray-100'}">
+                bubbleHtml = `
+                    <div class="max-w-[80%] sm:max-w-md rounded-2xl p-3.5 shadow-md ${isSent ? 'bg-[#005c4b] text-white order-2' : 'bg-[#202c33] text-gray-100 order-1'}">
                         <div class="flex items-center space-x-3">
                             <div class="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center text-lg text-[#00a884] flex-shrink-0">
                                 <i class="fa-solid ${iconClass}"></i>
@@ -545,19 +614,35 @@
                     </div>
                 `;
             } else {
-                innerHTML = `
-                    <div class="max-w-[85%] sm:max-w-md rounded-2xl p-3 px-4 shadow-md ${isSent ? 'bg-[#005c4b] text-white' : 'bg-[#202c33] text-gray-100'}">
-                        <p class="text-sm leading-relaxed">${escapeHtml(text)}</p>
+                /** Preserves linebreaks & layouts using white-space pre-wrap & break-words **/
+                bubbleHtml = `
+                    <div class="max-w-[80%] sm:max-w-md rounded-2xl p-3 px-4 shadow-md ${isSent ? 'bg-[#005c4b] text-white order-2' : 'bg-[#202c33] text-gray-100 order-1'}">
+                        <p class="text-sm leading-relaxed whitespace-pre-wrap break-words">${escapeHtml(text)}</p>
                         <p class="text-[9px] text-right mt-1.5 ${isSent ? 'text-gray-300' : 'text-gray-400'}">${time}</p>
                     </div>
                 `;
             }
 
-            messageWrapper.innerHTML = innerHTML;
+            if (isSent) {
+                messageWrapper.innerHTML = actionsHtml + bubbleHtml;
+            } else {
+                messageWrapper.innerHTML = bubbleHtml + actionsHtml;
+            }
             messagesDiv.appendChild(messageWrapper);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-            // Secure download binding
+            /** Wire up actions programmatically (fully robust, zero character parsing bugs) **/
+            const copyBtn = messageWrapper.querySelector('.copy-msg-btn');
+            if (copyBtn) {
+                copyBtn.onclick = () => copyMessageText(text);
+            }
+
+            const deleteBtn = messageWrapper.querySelector('.delete-msg-btn');
+            if (deleteBtn) {
+                deleteBtn.onclick = () => deleteSingleMessage(msgId, messageWrapper);
+            }
+
+            /** Secure download bindings for file transactions **/
             const downloadBtn = messageWrapper.querySelector('.download-btn');
             if (downloadBtn) {
                 downloadBtn.onclick = () => {
@@ -586,8 +671,7 @@
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
-        // ==================== PEERJS CONNECTIONS ENGINE ====================
-        
+        /** ==================== PEERJS CONNECTIONS ENGINE ==================== **/
         function initPeer() {
             if (peer && !peer.destroyed) {
                 peer.destroy();
@@ -595,11 +679,10 @@
 
             const targetId = localStorage.getItem('p2p_my_id');
             myUserName = localStorage.getItem('p2p_chat_name') || 'User';
-            
             document.getElementById('userName').textContent = myUserName;
             document.getElementById('userAvatar').textContent = myUserName.charAt(0).toUpperCase();
 
-            // WebRTC direct-connect configurations
+            /** WebRTC direct-connect configurations **/
             peer = new Peer(targetId, {
                 host: '0.peerjs.com',
                 port: 443,
@@ -620,7 +703,7 @@
                 sessionStorage.setItem('last_active_p2p_session', id);
                 document.getElementById('networkPulse').className = "inline-block w-2 h-2 rounded-full bg-green-500 mr-1.5 animate-pulse";
                 
-                // Keep the signaling connection alive actively
+                /** Keep the signaling connection alive actively **/
                 if (peer.socket) {
                     setInterval(() => {
                         if (peer && !peer.destroyed && peer.socket && !peer.socket.disconnected) {
@@ -631,7 +714,7 @@
             });
 
             peer.on('connection', (conn) => {
-                // Safeguard duplicates
+                /** Safeguard duplicates **/
                 if (dataConn && dataConn.open && dataConn.peer === conn.peer) {
                     return;
                 }
@@ -672,7 +755,7 @@
             });
         }
 
-        // ==================== DATA CHANNEL HEARTBEAT & HEALERS ====================
+        /** ==================== DATA CHANNEL HEARTBEAT & HEALERS ==================== **/
         let lastReceivedHeartbeat = Date.now();
         let pingIntervalHandle = null;
 
@@ -688,7 +771,7 @@
                     return;
                 }
                 const silenceDuration = Date.now() - lastReceivedHeartbeat;
-                if (silenceDuration > 30000) { // If silent for over 30 seconds
+                if (silenceDuration > 30000) { /** If silent for over 30 seconds **/
                     console.log("No responsive background heartbeat detected. Triggering silent reconnect...");
                     handleDataChannelLost();
                 }
@@ -715,13 +798,12 @@
             }
         };
 
-        // ==================== LIFECYCLE RECOVERY ENGINGE (CHROME SWAP FIX) ====================
-        // Monitors state whenever the window gains focus or visibility (meaning user switched back to Chrome from WhatsApp)
-        
+        /** ==================== LIFECYCLE RECOVERY ENGINES (CHROME SWAP FIX) ==================== **/
+        /** Monitors state whenever the window gains focus or visibility (meaning user switched back to Chrome from WhatsApp) **/
         async function runActiveResumptionHeal() {
             console.log("Running lifecycle resume check...");
 
-            // 1. Heal Signaling Server Connection
+            /** 1. Heal Signaling Server Connection **/
             if (peer) {
                 if (peer.destroyed) {
                     initPeer();
@@ -731,15 +813,14 @@
                 }
             }
 
-            // 2. Proactively Check Peer Connection
+            /** 2. Proactively Check Peer Connection **/
             if (currentConnectedPeerId) {
                 let shouldRebuild = false;
 
                 if (!dataConn || !dataConn.open || dataConn.label === null) {
                     shouldRebuild = true;
                 } else {
-                    // Send an instant test-probe. 
-                    // If we do not receive a response within 1.5 seconds, we know the channel is a dead zombie.
+                    /** Send an instant test-probe. If we do not receive a response within 1.5 seconds, we know the channel is a dead zombie. **/
                     lastReceivedHeartbeat = Date.now();
                     try {
                         dataConn.send(JSON.stringify({ type: '_SYS_PING', forceProbe: true }));
@@ -765,7 +846,7 @@
             if (!currentConnectedPeerId) return;
             console.log("Initiating silent handshakes to restore session...");
             
-            // Do not clean UI, just reconstruct data layers
+            /** Do not clean UI, just reconstruct data layers **/
             if (dataConn) {
                 try { dataConn.close(); } catch(e) {}
             }
@@ -789,8 +870,7 @@
             runActiveResumptionHeal();
         });
 
-        // ==================== DATA CHANNELS CONFIGURATION ====================
-        
+        /** ==================== DATA CHANNELS CONFIGURATION ==================== **/
         function setupDataConnection(conn) {
             dataConn = conn;
             currentConnectedPeerId = conn.peer;
@@ -798,27 +878,27 @@
             conn.on('open', async () => {
                 showToast(`Session established with ${remoteUserName}`);
                 
-                // Cache to automatically heal if browser suspends
+                /** Cache to automatically heal if browser suspends **/
                 sessionStorage.setItem('active_chat_peer_id', currentConnectedPeerId);
                 sessionStorage.setItem('active_chat_peer_name', remoteUserName);
 
-                // UI Changes
+                /** UI Changes **/
                 document.getElementById('connectionStatus').innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1 animate-pulse"></span> Online';
                 document.getElementById('connectionStatus').classList.remove('text-red-400');
                 document.getElementById('connectionStatus').classList.add('text-green-400');
-                
+
                 document.getElementById('peerName').textContent = remoteUserName;
                 currentPeerHeader.textContent = remoteUserName;
                 peerAvatarDiv.textContent = remoteUserName.charAt(0).toUpperCase();
                 chatSubtitle.textContent = "End2End Encrypted ";
-                
+
                 messageInput.disabled = false;
                 document.getElementById('callControls').classList.remove('opacity-50', 'pointer-events-none');
-                
+
                 await dbSaveContact(conn.peer, remoteUserName);
                 await renderChatLogs(conn.peer);
-                
-                // Exchange display configurations
+
+                /** Exchange display configurations **/
                 conn.send(JSON.stringify({ type: 'profile_sync', name: myUserName }));
 
                 startWorkerHeartbeat();
@@ -827,7 +907,7 @@
             conn.on('data', async (raw) => {
                 try {
                     const data = JSON.parse(raw);
-                    
+
                     if (data.type === '_SYS_PING') {
                         lastReceivedHeartbeat = Date.now();
                         conn.send(JSON.stringify({ type: '_SYS_PONG' }));
@@ -854,18 +934,18 @@
                     }
 
                     if (data.type === 'file_transfer') {
-                        addMessageToUI(null, false, 'file_transfer', data.file);
-                        await dbSaveMessage(conn.peer, null, false, 'file_transfer', data.file);
+                        const generatedId = await dbSaveMessage(conn.peer, null, false, 'file_transfer', data.file);
+                        addMessageToUI(null, false, 'file_transfer', data.file, generatedId);
                         return;
                     }
 
-                    // Direct Chat text processing
-                    addMessageToUI(data.text, false);
-                    await dbSaveMessage(conn.peer, data.text, false);
+                    /** Direct Chat text processing **/
+                    const generatedId = await dbSaveMessage(conn.peer, data.text, false);
+                    addMessageToUI(data.text, false, 'text', null, generatedId);
 
                 } catch (e) {
-                    addMessageToUI(raw, false);
-                    await dbSaveMessage(conn.peer, raw, false);
+                    const generatedId = await dbSaveMessage(conn.peer, raw, false);
+                    addMessageToUI(raw, false, 'text', null, generatedId);
                 }
             });
 
@@ -881,7 +961,7 @@
 
         async function connectToPeer(peerId, customName = null) {
             if (!peer || !peer.open) {
-                showToast("Cannot establish:User offline.", true);
+                showToast("Cannot establish: User offline.", true);
                 return;
             }
 
@@ -921,15 +1001,14 @@
             const logs = await dbGetChatLogs(peerId);
             if (logs && logs.length > 0) {
                 logs.forEach(msg => {
-                    addMessageToUI(msg.text, msg.isSent, msg.type, msg.fileData);
+                    addMessageToUI(msg.text, msg.isSent, msg.type, msg.fileData, msg.id);
                 });
             } else {
                 addSystemMessageToUI("Messages are direct between devices.");
             }
         }
 
-        // ==================== DISPATCHING TEXT MESSAGES ====================
-        
+        /** ==================== DISPATCHING TEXT MESSAGES ==================== **/
         async function handleSendMessage() {
             const text = messageInput.value.trim();
             if (!text) return;
@@ -942,16 +1021,18 @@
                 const payload = { type: 'chat_msg', text: text };
                 dataConn.send(JSON.stringify(payload));
                 
-                addMessageToUI(text, true);
-                await dbSaveMessage(currentConnectedPeerId, text, true);
+                /** Write to local IndexedDB store first to secure primary identifier Key **/
+                const generatedId = await dbSaveMessage(currentConnectedPeerId, text, true);
+                addMessageToUI(text, true, 'text', null, generatedId);
+                
                 messageInput.value = '';
+                messageInput.style.height = 'auto'; /** Reset custom textarea expansion **/
             } catch (err) {
                 showToast("Failed to send message.", true);
             }
         }
 
-        // ==================== DISPATCHING FILES ====================
-        
+        /** ==================== DISPATCHING FILES ==================== **/
         async function handleSendFile(file) {
             if (!dataConn || !dataConn.open) {
                 showToast("Cannot transfer files: Connection offline.", true);
@@ -973,8 +1054,8 @@
                         file: fileObj
                     }));
 
-                    addMessageToUI(null, true, 'file_transfer', fileObj);
-                    await dbSaveMessage(currentConnectedPeerId, null, true, 'file_transfer', fileObj);
+                    const generatedId = await dbSaveMessage(currentConnectedPeerId, null, true, 'file_transfer', fileObj);
+                    addMessageToUI(null, true, 'file_transfer', fileObj, generatedId);
                     showToast("File sent successfully.");
                 } catch (err) {
                     showToast("Transfer failed: Size limit exceeded.", true);
@@ -983,8 +1064,7 @@
             reader.readAsDataURL(file);
         }
 
-        // ==================== RTC VOIP & VIDEO STACKS ====================
-        
+        /** ==================== RTC VOIP & VIDEO STACKS ==================== **/
         async function startMediaCall(requestVideo) {
             if (!dataConn || !dataConn.open) {
                 showToast("Call failed: Contact is offline.", true);
@@ -1158,8 +1238,7 @@
             }
         }
 
-        // ==================== CALL CONTROLS HANDLERS ====================
-        
+        /** ==================== CALL CONTROLS HANDLERS ==================== **/
         function toggleMicrophoneMute() {
             if (!localStream) return;
             const audioTrack = localStream.getAudioTracks()[0];
@@ -1208,7 +1287,6 @@
 
             try {
                 const freshStream = await navigator.mediaDevices.getUserMedia(constraints);
-                
                 const freshVideoTrack = freshStream.getVideoTracks()[0];
                 const freshAudioTrack = freshStream.getAudioTracks()[0];
 
@@ -1254,8 +1332,7 @@
             }
         }
 
-        // ==================== SETTINGS & NAVIGATION MODALS ====================
-        
+        /** ==================== SETTINGS & NAVIGATION MODALS ==================== **/
         function openConfigModal() {
             document.getElementById('customNameInput').value = myUserName;
             document.getElementById('customIdInput').value = localStorage.getItem('p2p_my_id') || '';
@@ -1275,8 +1352,7 @@
             }
         }
 
-        // ==================== DOM EVENT BINDINGS ====================
-        
+        /** ==================== DOM EVENT BINDINGS ==================== **/
         document.getElementById('saveConfigBtn').onclick = () => {
             const rawName = document.getElementById('customNameInput').value.trim();
             const rawId = document.getElementById('customIdInput').value.trim();
@@ -1308,15 +1384,28 @@
         };
 
         document.getElementById('sendBtn').onclick = handleSendMessage;
-        
-        document.getElementById('messageInput').onkeydown = (e) => {
-            if (e.key === 'Enter') {
+
+        /** Upgraded Textarea keyboard handler with Auto-growth listener integration **/
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            if (this.scrollHeight > 120) {
+                this.style.overflowY = 'auto';
+                this.style.height = '120px';
+            } else {
+                this.style.overflowY = 'hidden';
+            }
+        });
+
+        messageInput.onkeydown = (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
                 handleSendMessage();
             }
         };
 
         document.getElementById('attachBtn').onclick = () => document.getElementById('fileInput').click();
-        
+
         document.getElementById('fileInput').onchange = (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -1325,19 +1414,19 @@
             e.target.value = '';
         };
 
-        // Call button allocations
+        /** Call button allocations **/
         document.getElementById('callBtn').onclick = () => startMediaCall(false);
         document.getElementById('videoCallBtn').onclick = () => startMediaCall(true);
         document.getElementById('endCallBtn').onclick = triggerManualHangup;
         document.getElementById('hangupCallBtn').onclick = triggerManualHangup;
 
-        // Overlay control nodes
+        /** Overlay control nodes **/
         document.getElementById('toggleMicBtn').onclick = toggleMicrophoneMute;
         document.getElementById('toggleCameraBtn').onclick = toggleCameraState;
         document.getElementById('switchCameraBtn').onclick = triggerCameraFlip;
         document.getElementById('fullscreenBtn').onclick = triggerVideoFullscreen;
 
-        // In-call actions
+        /** In-call actions **/
         document.getElementById('acceptCallBtn').onclick = () => answerIncomingCall(false);
         document.getElementById('acceptVideoBtn').onclick = () => answerIncomingCall(true);
         document.getElementById('rejectCallBtn').onclick = () => {
@@ -1350,7 +1439,7 @@
             showToast("Inbound call rejected.");
         };
 
-        // Sidebar adaptive menu toggler
+        /** Sidebar adaptive menu toggler **/
         document.getElementById('menuToggle').onclick = () => {
             const isClosed = sidebar.classList.contains('-translate-x-full');
             if (isClosed) {
@@ -1362,7 +1451,7 @@
             }
         };
 
-        // Close sidebar on clicking background mask
+        /** Close sidebar on clicking background mask **/
         document.addEventListener('click', (e) => {
             if (window.innerWidth < 768) {
                 if (!sidebar.contains(e.target) && !document.getElementById('menuToggle').contains(e.target)) {
@@ -1372,8 +1461,7 @@
             }
         });
 
-        // ==================== RUNTIME HELPER UTILITIES ====================
-        
+        /** ==================== RUNTIME HELPER UTILITIES ==================== **/
         function escapeHtml(text) {
             if (!text) return '';
             return text.toString()
@@ -1392,26 +1480,24 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
-        // ==================== ONLOAD LIFECYCLE INITIALIZER ====================
-        
+        /** ==================== ONLOAD LIFECYCLE INITIALIZER ==================== **/
         window.onload = async () => {
-            // Initiate Mobile Responsive View constraints on startup
+            /** Initiate Mobile Responsive View constraints on startup **/
             if (window.innerWidth < 768) {
                 sidebar.classList.add('-translate-x-full');
                 setMobileSidebarToggleIcon(true);
             }
 
-            // 1. Initialize DB Persistence Layer
+            /** 1. Initialize DB Persistence Layer **/
             await initDB();
             await loadContactsFromDB();
 
-            // 2. Spawn Peer Network Stack
+            /** 2. Spawn Peer Network Stack **/
             initPeer();
 
-            // 3. Gracefully recover previous active P2P conversations on accidental reload
+            /** 3. Gracefully recover previous active P2P conversations on accidental reload **/
             const recoveredPeerId = sessionStorage.getItem('active_chat_peer_id');
             const recoveredPeerName = sessionStorage.getItem('active_chat_peer_name');
-            
             if (recoveredPeerId && recoveredPeerName) {
                 document.getElementById('peerIdInput').value = recoveredPeerId;
                 showToast(`Recovering connection state...`);
