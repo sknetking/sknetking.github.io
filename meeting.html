@@ -339,7 +339,7 @@
   @media (max-width: 768px) {
     .meeting-id .label { display: none; }
     .side-panel { position: fixed; right: 0; top: 0; bottom: var(--controls-h); width: 100%; max-width: 360px; z-index: 70; }
-    .controls { padding: 0 12px; }
+    .controls { padding: 0 12px; overflow: scroll; }
     .ctrl { width: 44px; height: 44px; }
     .ctrl.leave { width: 56px; }
     .stage { padding: 8px; grid-template-columns: 1fr; }
@@ -427,10 +427,7 @@
   </div>
 
   <div class="controls">
-    <div class="group">
-      <span class="time" id="clock2"></span>
-    </div>
-    <div class="group">
+      <div class="group">
       <button class="ctrl on" id="micBtn" title="Mic (m)"><i class="fas fa-microphone"></i></button>
       <button class="ctrl on" id="camBtn" title="Camera (c)"><i class="fas fa-video"></i></button>
       <button class="ctrl" id="screenBtn" title="Share screen"><i class="fas fa-desktop"></i></button>
