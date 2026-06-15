@@ -182,6 +182,28 @@
     border-radius: 50%; display:flex; align-items:center; justify-content:center; font-size:12px;
   }
   .tile .status .pill.danger { background: var(--danger); }
+  
+  /* Tile Fullscreen option */
+  .tile .status .fullscreen-btn {
+    background: rgba(0,0,0,.6); color: white; width: 28px; height: 28px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; border: none; cursor: pointer; transition: background .15s, transform .15s;
+  }
+  .tile .status .fullscreen-btn:hover { background: var(--primary); transform: scale(1.1); }
+  
+  .tile:fullscreen {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    aspect-ratio: auto !important;
+    background: #202124 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .tile:fullscreen video {
+    object-fit: contain !important;
+  }
+
   .tile .raised {
     position: absolute; top: 12px; left: 12px;
     background: var(--warning); color: #202124; padding: 6px 10px; border-radius: 16px;
@@ -339,7 +361,7 @@
   @media (max-width: 768px) {
     .meeting-id .label { display: none; }
     .side-panel { position: fixed; right: 0; top: 0; bottom: var(--controls-h); width: 100%; max-width: 360px; z-index: 70; }
-    .controls { padding: 0 12px; overflow: scroll; }
+    .controls { padding: 0 12px; }
     .ctrl { width: 44px; height: 44px; }
     .ctrl.leave { width: 56px; }
     .stage { padding: 8px; grid-template-columns: 1fr; }
@@ -427,10 +449,10 @@
   </div>
 
   <div class="controls">
-     <div class="group" style='display:none;'>
+    <div class="group">
       <span class="time" id="clock2"></span>
-      </div>
-      <div class="group">
+    </div>
+    <div class="group">
       <button class="ctrl on" id="micBtn" title="Mic (m)"><i class="fas fa-microphone"></i></button>
       <button class="ctrl on" id="camBtn" title="Camera (c)"><i class="fas fa-video"></i></button>
       <button class="ctrl" id="screenBtn" title="Share screen"><i class="fas fa-desktop"></i></button>
@@ -491,7 +513,7 @@
     peopleOpen: false,
     currentTab: "people",
     unreadChat: 0,
-    connections: new Map(), // peerId -> { conn (data), call (media), stream, name, micOn, camOn, handRaised }
+    connections: new Map(), // peerId -> { conn (data), call (media), stream, name, micOn, camOn, handRaised, screenSharing }
     messages: [],
     devices: { mic: null, cam: null, spk: null },
     videoEls: new Map(), // id -> <video> reused across renders to preserve audio playback
@@ -522,6 +544,56 @@
     $("clock2").textContent = t + " • " + d.toLocaleDateString([], {weekday:'short', month:'short', day:'numeric'});
   };
   setInterval(updateClock, 1000); updateClock();
+
+  // Helper dummy track creators to maintain transceivers when camera/mic access fails or starts off
+  function createDummyVideoTrack() {
+    const canvas = document.createElement("canvas");
+    canvas.width = 640; canvas.height = 480;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const stream = canvas.captureStream(10);
+    const track = stream.getVideoTracks()[0];
+    track.enabled = false;
+    return track;
+  }
+
+  function createDummyAudioTrack() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = ctx.createOscillator();
+      const dst = ctx.createMediaStreamDestination();
+      oscillator.connect(dst);
+      const track = dst.stream.getAudioTracks()[0];
+      track.enabled = false;
+      return track;
+    } catch (e) {
+      console.warn("Could not create dummy audio track", e);
+      return null;
+    }
+  }
+
+  // Toggle Tile Fullscreen Helper
+  const toggleTileFullscreen = (el, btn) => {
+    if (!document.fullscreenElement) {
+      el.requestFullscreen().then(() => {
+        btn.innerHTML = '<i class="fas fa-compress"></i>';
+      }).catch(() => {
+        toast("Full screen mode is not supported by your browser");
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
+  // Reset screen buttons on change
+  document.addEventListener("fullscreenchange", () => {
+    if (!document.fullscreenElement) {
+      document.querySelectorAll(".fullscreen-btn").forEach(b => {
+        b.innerHTML = '<i class="fas fa-expand"></i>';
+      });
+    }
+  });
 
   // ---------- Lobby ----------
   const savedName = localStorage.getItem("meet_name") || "";
@@ -564,6 +636,13 @@
       console.warn("getUserMedia failed", e);
       toast("Camera/mic unavailable — joining audio-off");
       state.localStream = new MediaStream();
+      try {
+        state.localStream.addTrack(createDummyVideoTrack());
+        const dummyAudio = createDummyAudioTrack();
+        if (dummyAudio) state.localStream.addTrack(dummyAudio);
+      } catch (err) {
+        console.error("Failed to append dummy WebRTC transceivers", err);
+      }
       state.camOn = false; state.micOn = false;
       updateMediaButtons();
     }
@@ -628,7 +707,14 @@
     entry.conn = conn;
     conn.on("open", () => {
       // Send my hello + (if host) full peer list
-      conn.send({ type: "hello", name: state.myName, micOn: state.micOn, camOn: state.camOn, handRaised: state.handRaised });
+      conn.send({
+        type: "hello",
+        name: state.myName,
+        micOn: state.micOn,
+        camOn: state.camOn,
+        handRaised: state.handRaised,
+        screenSharing: state.screenSharing
+      });
       if (state.isHost) {
         const list = Array.from(state.connections.keys()).filter(id => id !== conn.peer);
         conn.send({ type: "peer-list", peers: list });
@@ -652,7 +738,7 @@
 
   function ensurePeer(id) {
     if (!state.connections.has(id)) {
-      state.connections.set(id, { name: "Guest", micOn: true, camOn: true, handRaised: false });
+      state.connections.set(id, { name: "Guest", micOn: true, camOn: true, handRaised: false, screenSharing: false });
       renderPanel();
     }
     return state.connections.get(id);
@@ -673,7 +759,10 @@
     switch (data.type) {
       case "hello":
         entry.name = data.name || "Guest";
-        entry.micOn = !!data.micOn; entry.camOn = !!data.camOn; entry.handRaised = !!data.handRaised;
+        entry.micOn = !!data.micOn;
+        entry.camOn = !!data.camOn;
+        entry.handRaised = !!data.handRaised;
+        entry.screenSharing = !!data.screenSharing;
         addSystemMsg(`${entry.name} joined the meeting`);
         renderStage(); renderPanel();
         break;
@@ -688,7 +777,10 @@
         }
         break;
       case "state":
-        entry.micOn = data.micOn; entry.camOn = data.camOn; entry.handRaised = data.handRaised;
+        entry.micOn = data.micOn;
+        entry.camOn = data.camOn;
+        entry.handRaised = data.handRaised;
+        entry.screenSharing = !!data.screenSharing;
         renderStage(); renderPanel();
         if (data.handRaised && data._announce) addSystemMsg(`${entry.name} raised their hand ✋`);
         break;
@@ -706,30 +798,59 @@
     });
   }
 
+  // ---------- Control broadcasters ----------
   function broadcastState(announce=false) {
-    broadcast({ type: "state", micOn: state.micOn, camOn: state.camOn, handRaised: state.handRaised, _announce: announce });
+    broadcast({
+      type: "state",
+      micOn: state.micOn,
+      camOn: state.camOn,
+      handRaised: state.handRaised,
+      screenSharing: state.screenSharing,
+      _announce: announce
+    });
   }
 
   // ---------- Stage rendering ----------
   function renderStage() {
     const stage = $("stage");
-    const tiles = [];
-    // Local tile
-    tiles.push(localTile());
-    // Remote tiles
-    state.connections.forEach((e, id) => tiles.push(remoteTile(id, e)));
+    const normalTiles = [];
+    const screenTiles = [];
+
     // Screen share tile (local)
     if (state.screenSharing && state.screenStream) {
-      tiles.unshift(screenTile());
+      screenTiles.push(screenTile());
     }
 
+    // Local webcam/avatar tile
+    normalTiles.push(localTile());
+
+    // Remote tiles sorted into screen share vs normal camera tiles
+    state.connections.forEach((e, id) => {
+      const tile = remoteTile(id, e);
+      if (e.screenSharing) {
+        screenTiles.push(tile);
+      } else {
+        normalTiles.push(tile);
+      }
+    });
+
+    // Presentation Layout: Screen shares always sorted first (they will occupy the large 3fr grid column)
+    const allTiles = [...screenTiles, ...normalTiles];
+
     stage.innerHTML = "";
-    tiles.forEach(t => stage.appendChild(t));
-    const n = tiles.length;
+    allTiles.forEach(t => stage.appendChild(t));
+
+    const n = allTiles.length;
+    const anyScreenSharing = screenTiles.length > 0;
+
     stage.classList.remove("count-1","count-2","count-screen");
-    if (state.screenSharing) stage.classList.add("count-screen");
-    else if (n === 1) stage.classList.add("count-1");
-    else if (n === 2) stage.classList.add("count-2");
+    if (anyScreenSharing) {
+      stage.classList.add("count-screen");
+    } else if (n === 1) {
+      stage.classList.add("count-1");
+    } else if (n === 2) {
+      stage.classList.add("count-2");
+    }
   }
 
   function tileBase(id, name, stream, opts={}) {
@@ -737,7 +858,8 @@
     div.className = "tile" + (opts.remote ? " remote" : "") + (opts.screen ? " screen" : "");
     div.dataset.id = id;
 
-    const hasVideo = !!(stream && stream.getVideoTracks().some(t => t.readyState === "live") && opts.camOn !== false);
+    // A screen share forces video mode active even if camera is off
+    const hasVideo = !!(stream && stream.getVideoTracks().some(t => t.readyState === "live") && (opts.camOn !== false || opts.screen));
 
     // Reuse a cached <video> per id so audio playback never restarts when the
     // camera is toggled or the stage re-renders.
@@ -748,7 +870,25 @@
       state.videoEls.set(id, v);
     }
     v.muted = !!opts.muted;
-    if (stream && v.srcObject !== stream) v.srcObject = stream;
+
+    // Track active video track ID to detect WebRTC track changes (webcam <-> screen share swaps)
+    const activeTrack = stream ? stream.getVideoTracks()[0] : null;
+    const activeTrackId = activeTrack ? activeTrack.id : null;
+    const currentTrackId = v.dataset.trackId;
+
+    if (stream && (v.srcObject !== stream || currentTrackId !== activeTrackId)) {
+      v.srcObject = stream;
+      if (activeTrackId) {
+        v.dataset.trackId = activeTrackId;
+      } else {
+        delete v.dataset.trackId;
+      }
+    }
+
+    if (hasVideo) {
+      v.play().catch(() => {});
+    }
+
     v.style.display = hasVideo ? "" : "none";
     div.appendChild(v);
 
@@ -770,6 +910,20 @@
       const p = document.createElement("div"); p.className = "pill danger"; p.innerHTML = '<i class="fas fa-microphone-slash"></i>';
       status.appendChild(p);
     }
+
+    // Toggle fullscreen button for remote presentations
+    if (opts.screen) {
+      const fsBtn = document.createElement("button");
+      fsBtn.className = "fullscreen-btn";
+      fsBtn.title = "Toggle Full Screen";
+      fsBtn.innerHTML = '<i class="fas fa-expand"></i>';
+      fsBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleTileFullscreen(div, fsBtn);
+      });
+      status.appendChild(fsBtn);
+    }
+
     div.appendChild(status);
 
     if (opts.handRaised) {
@@ -784,21 +938,48 @@
       muted: true, youSuffix: true, micOn: state.micOn, camOn: state.camOn, handRaised: state.handRaised
     });
   }
+
   function remoteTile(id, e) {
     return tileBase(id, e.name || "Guest", e.stream, {
-      remote: true, micOn: e.micOn, camOn: e.camOn, handRaised: e.handRaised
+      remote: true, micOn: e.micOn, camOn: e.camOn, handRaised: e.handRaised, screen: e.screenSharing
     });
   }
+
   function screenTile() {
     const div = document.createElement("div");
     div.className = "tile screen";
-    const v = document.createElement("video");
-    v.autoplay = true; v.playsInline = true; v.muted = true; v.srcObject = state.screenStream;
+
+    let v = state.videoEls.get("local-screen");
+    if (!v) {
+      v = document.createElement("video");
+      v.autoplay = true; v.playsInline = true; v.muted = true;
+      state.videoEls.set("local-screen", v);
+    }
+    if (v.srcObject !== state.screenStream) {
+      v.srcObject = state.screenStream;
+    }
+    v.play().catch(() => {});
     div.appendChild(v);
+
     const tag = document.createElement("div");
     tag.className = "name-tag";
     tag.innerHTML = `<i class="fas fa-desktop"></i> ${escapeHtml(state.myName)} is presenting`;
     div.appendChild(tag);
+
+    // Toggle fullscreen button for local presentation
+    const status = document.createElement("div");
+    status.className = "status";
+    const fsBtn = document.createElement("button");
+    fsBtn.className = "fullscreen-btn";
+    fsBtn.title = "Toggle Full Screen";
+    fsBtn.innerHTML = '<i class="fas fa-expand"></i>';
+    fsBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleTileFullscreen(div, fsBtn);
+    });
+    status.appendChild(fsBtn);
+    div.appendChild(status);
+
     return div;
   }
 
@@ -996,7 +1177,9 @@
         if (sender) sender.replaceTrack(screenTrack);
       });
       screenTrack.onended = stopScreen;
-      updateMediaButtons(); renderStage();
+      updateMediaButtons();
+      broadcastState();
+      renderStage();
       toast("You are presenting");
     } catch (e) {
       toast("Screen share canceled");
@@ -1007,12 +1190,15 @@
     state.screenStream = null; state.screenSharing = false;
     const camTrack = state.localStream?.getVideoTracks()[0];
     if (camTrack) {
+      camTrack.enabled = state.camOn;
       state.connections.forEach(e => {
         const sender = e.call?.peerConnection?.getSenders().find(s => s.track?.kind === "video");
         if (sender) sender.replaceTrack(camTrack);
       });
     }
-    updateMediaButtons(); renderStage();
+    updateMediaButtons();
+    broadcastState();
+    renderStage();
   }
 
   function spawnReaction(emoji) {
