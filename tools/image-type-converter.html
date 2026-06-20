@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Add heic2any library for HEIC/HEIF support -->
     <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+    <!-- PayPal SDK -->
+    <script src="https://www.paypal.com/sdk/js?client-id=BAAtUCdAWkq_gy80uXyiu_wjuMy_4Q826rD6ORFigdifOmw7uGScc2JULRRBYhFTzKpOgiqzl7HwY6H5RI&currency=USD"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -64,6 +66,11 @@
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
         }
+
+        .paypal-button-container {
+            max-width: 200px;
+            margin: 0 auto;
+        }
     </style>
 </head>
 <body class="gradient-bg min-h-screen py-8 px-4">
@@ -81,6 +88,22 @@
             <p class="text-white/90 text-lg max-w-2xl mx-auto">
                 Convert PNG, JPG, JPEG, HEIC, HEIF to WebP instantly — 100% free, private, and fast
             </p>
+        </div>
+
+        <!-- Pricing Banner -->
+        <div class="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-6 rounded-lg">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-info-circle text-yellow-500"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-yellow-700">
+                        <strong>Pricing:</strong> 5 images free! 
+                        <span id="pricingDisplay">$1.00 USD for additional images</span>
+                        <span class="block text-xs mt-1">🌍 Detected: <span id="countryDisplay">Loading...</span></span>
+                    </p>
+                </div>
+            </div>
         </div>
 
         <!-- Main Card -->
@@ -112,7 +135,7 @@
                 </div>
             </div>
 
-            <!-- Quality Control -->
+            <!-- Quality Control & Payment -->
             <div class="mt-6 p-4 bg-gray-50 rounded-xl">
                 <div class="flex flex-wrap items-center justify-between gap-4">
                     <div class="flex-1 min-w-[200px]">
@@ -121,7 +144,7 @@
                         </label>
                         <input type="range" id="quality" min="1" max="100" value="85" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
                     </div>
-                    <div class="flex gap-3">
+                    <div class="flex gap-3 flex-wrap">
                         <button id="clearAllBtn" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-all text-sm font-semibold">
                             <i class="fas fa-trash-alt mr-1"></i> Clear All
                         </button>
@@ -136,6 +159,35 @@
         <!-- Image List -->
         <div id="imageList" class="space-y-4 animate-slide-up">
             <!-- Images will appear here dynamically -->
+        </div>
+
+        <!-- Payment Modal -->
+        <div id="paymentModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl animate-slide-up">
+                <div class="text-center mb-6">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4">
+                        <i class="fas fa-credit-card text-indigo-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800">Payment Required</h3>
+                    <p class="text-gray-600 mt-2">
+                        You have <span id="excessImages" class="font-bold text-indigo-600">0</span> images over the free limit
+                    </p>
+                    <p class="text-gray-600">
+                        Total: <span id="paymentAmount" class="font-bold text-2xl text-indigo-600">$1.00</span>
+                    </p>
+                    <p class="text-xs text-gray-500 mt-1">
+                        <span id="paymentCurrencyLabel">USD</span> per additional image
+                    </p>
+                </div>
+                
+                <div id="paypal-button-container"></div>
+                
+                <div class="mt-4 text-center">
+                    <button id="cancelPaymentBtn" class="text-gray-500 hover:text-gray-700 text-sm">
+                        <i class="fas fa-times mr-1"></i> Cancel
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Success Toast -->
@@ -156,6 +208,16 @@
                 this.qualityValue = document.getElementById('qualityValue');
                 this.clearAllBtn = document.getElementById('clearAllBtn');
                 this.convertAllBtn = document.getElementById('convertAllBtn');
+                this.paymentModal = document.getElementById('paymentModal');
+                this.cancelPaymentBtn = document.getElementById('cancelPaymentBtn');
+                
+                // Payment state
+                this.pendingImages = [];
+                this.isProcessingPayment = false;
+                this.userCountry = 'IN'; // Default to India
+                this.currency = 'INR';
+                this.pricePerImage = 1; // in INR or USD
+                this.FREE_LIMIT = 5;
                 
                 // Supported formats
                 this.supportedFormats = ['image/png', 'image/jpeg', 'image/jpg', 'image/heic', 'image/heif'];
@@ -163,9 +225,52 @@
                 this.init();
             }
             
-            init() {
+            async init() {
                 this.setupEventListeners();
                 this.setupClipboardPaste();
+                await this.detectUserCountry();
+                this.updatePricingDisplay();
+            }
+            
+            async detectUserCountry() {
+                try {
+                    // Using free IP API to detect country
+                    const response = await fetch('https://ipapi.co/json/');
+                    const data = await response.json();
+                    this.userCountry = data.country_code || 'IN';
+                    this.updatePricingDisplay();
+                } catch (error) {
+                    console.log('Using default country: IN');
+                    this.userCountry = 'IN';
+                    this.updatePricingDisplay();
+                }
+            }
+            
+            updatePricingDisplay() {
+                const countryDisplay = document.getElementById('countryDisplay');
+                const pricingDisplay = document.getElementById('pricingDisplay');
+                
+                if (this.userCountry === 'IN') {
+                    this.currency = 'INR';
+                    this.pricePerImage = 1;
+                    countryDisplay.textContent = '🇮🇳 India (INR)';
+                    pricingDisplay.textContent = '₹1.00 INR per additional image';
+                } else {
+                    this.currency = 'USD';
+                    this.pricePerImage = 1;
+                    countryDisplay.textContent = `🌍 ${this.userCountry} (USD)`;
+                    pricingDisplay.textContent = '$1.00 USD per additional image';
+                }
+            }
+            
+            getPaymentAmount() {
+                const pendingCount = this.images.filter(img => img.status === 'pending').length;
+                const excessCount = Math.max(0, pendingCount - this.FREE_LIMIT);
+                return {
+                    count: excessCount,
+                    total: excessCount * this.pricePerImage,
+                    currency: this.currency
+                };
             }
             
             setupEventListeners() {
@@ -201,7 +306,19 @@
                 this.clearAllBtn.addEventListener('click', () => this.clearAll());
                 
                 // Convert all button
-                this.convertAllBtn.addEventListener('click', () => this.convertAll());
+                this.convertAllBtn.addEventListener('click', () => this.handleConvertAll());
+                
+                // Cancel payment
+                this.cancelPaymentBtn.addEventListener('click', () => {
+                    this.closePaymentModal();
+                });
+                
+                // Close modal on outside click
+                this.paymentModal.addEventListener('click', (e) => {
+                    if (e.target === this.paymentModal) {
+                        this.closePaymentModal();
+                    }
+                });
             }
             
             setupClipboardPaste() {
@@ -221,17 +338,27 @@
             async handleFiles(files) {
                 if (!files || files.length === 0) return;
                 
-                for (const file of files) {
+                // Check if adding these files would exceed free limit
+                const currentPending = this.images.filter(img => img.status === 'pending').length;
+                const newImages = Array.from(files);
+                const totalAfterAdd = currentPending + newImages.length;
+                
+                if (totalAfterAdd > this.FREE_LIMIT) {
+                    const excess = totalAfterAdd - this.FREE_LIMIT;
+                    const amount = excess * this.pricePerImage;
+                    const currencySymbol = this.currency === 'INR' ? '₹' : '$';
+                    this.showToast(`⚠️ ${excess} images over free limit. Payment required: ${currencySymbol}${amount}`, 'error');
+                }
+                
+                for (const file of newImages) {
                     if (file.type.startsWith('image/')) {
                         const id = Date.now() + '-' + Math.random();
                         
-                        // Check if it's HEIC/HEIF - these need special handling
                         const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || 
                                       file.name.toLowerCase().endsWith('.heic') || 
                                       file.name.toLowerCase().endsWith('.heif');
                         
                         if (isHeic) {
-                            // For HEIC files, we need to convert them to JPEG first for preview
                             try {
                                 const jpegBlob = await heic2any({
                                     blob: file,
@@ -258,7 +385,6 @@
                                 this.showToast(`Failed to load ${file.name}`, 'error');
                             }
                         } else {
-                            // Normal images (PNG, JPG, JPEG)
                             const reader = new FileReader();
                             reader.onload = (e) => {
                                 this.images.push({
@@ -276,6 +402,118 @@
                         }
                     }
                 }
+            }
+            
+            async handleConvertAll() {
+                const pendingImages = this.images.filter(img => img.status === 'pending');
+                if (pendingImages.length === 0) {
+                    this.showToast('No pending images to convert!', 'info');
+                    return;
+                }
+                
+                // Check if we need payment
+                const excessCount = Math.max(0, pendingImages.length - this.FREE_LIMIT);
+                
+                if (excessCount > 0) {
+                    // Show payment modal
+                    this.showPaymentModal(pendingImages);
+                } else {
+                    // Free conversion
+                    await this.convertAllFree();
+                }
+            }
+            
+            showPaymentModal(images) {
+                this.pendingImages = images;
+                const excessCount = images.length - this.FREE_LIMIT;
+                const totalAmount = excessCount * this.pricePerImage;
+                
+                document.getElementById('excessImages').textContent = excessCount;
+                document.getElementById('paymentAmount').textContent = 
+                    `${this.currency === 'INR' ? '₹' : '$'}${totalAmount.toFixed(2)}`;
+                document.getElementById('paymentCurrencyLabel').textContent = 
+                    this.currency === 'INR' ? '₹1.00 INR' : '$1.00 USD';
+                
+                this.paymentModal.classList.remove('hidden');
+                
+                // Render PayPal button
+                this.renderPayPalButton(totalAmount, excessCount);
+            }
+            
+            closePaymentModal() {
+                this.paymentModal.classList.add('hidden');
+                this.pendingImages = [];
+            }
+            
+            renderPayPalButton(amount, imageCount) {
+                const container = document.getElementById('paypal-button-container');
+                container.innerHTML = '';
+                
+                const isINR = this.currency === 'INR';
+                const currency = isINR ? 'INR' : 'USD';
+                
+                paypal.Buttons({
+                    style: {
+                        layout: 'vertical',
+                        color: 'blue',
+                        shape: 'rect',
+                        label: 'pay'
+                    },
+                    createOrder: (data, actions) => {
+                        return actions.order.create({
+                            purchase_units: [{
+                                description: `SK Image Converter - ${imageCount} image${imageCount > 1 ? 's' : ''} conversion`,
+                                amount: {
+                                    currency_code: currency,
+                                    value: amount.toFixed(2)
+                                }
+                            }]
+                        });
+                    },
+                    onApprove: async (data, actions) => {
+                        const order = await actions.order.capture();
+                        console.log('Payment successful:', order);
+                        
+                        // Grant access and convert
+                        this.closePaymentModal();
+                        this.showToast(`✅ Payment successful! Converting ${this.pendingImages.length} images...`, 'success');
+                        
+                        // Convert all pending images
+                        await this.convertPendingImages(this.pendingImages);
+                        
+                        // Reset pending images
+                        this.pendingImages = [];
+                    },
+                    onError: (err) => {
+                        console.error('PayPal Error:', err);
+                        this.showToast('Payment failed. Please try again.', 'error');
+                        this.closePaymentModal();
+                    },
+                    onCancel: () => {
+                        this.closePaymentModal();
+                        this.showToast('Payment cancelled', 'info');
+                    }
+                }).render(container);
+            }
+            
+            async convertPendingImages(images) {
+                this.convertAllBtn.disabled = true;
+                this.convertAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Converting...';
+                
+                for (const image of images) {
+                    if (image.status === 'pending') {
+                        await this.convertSingleImage(image);
+                    }
+                }
+                
+                this.convertAllBtn.disabled = false;
+                this.convertAllBtn.innerHTML = '<i class="fas fa-sync-alt mr-1"></i> Convert All';
+                this.showToast('All conversions completed!', 'success');
+            }
+            
+            async convertAllFree() {
+                const pendingImages = this.images.filter(img => img.status === 'pending');
+                await this.convertPendingImages(pendingImages);
             }
             
             async convertImage(image, quality) {
@@ -308,14 +546,13 @@
                 });
             }
             
-            async convertSingleImage(image, index) {
+            async convertSingleImage(image) {
                 const quality = parseInt(this.qualitySlider.value);
                 const imageCard = document.querySelector(`[data-id="${image.id}"]`);
                 const progressBar = imageCard?.querySelector('.progress-bar');
                 const convertBtn = imageCard?.querySelector('.convert-single');
                 
                 try {
-                    // Update status
                     image.status = 'converting';
                     this.render();
                     
@@ -325,7 +562,6 @@
                     
                     if (progressBar) progressBar.style.width = '100%';
                     
-                    // Update image object
                     image.convertedUrl = result.url;
                     image.convertedSize = result.size;
                     image.status = 'converted';
@@ -338,7 +574,6 @@
                     }
                     
                     this.render();
-                    this.showToast(`Converted ${image.file.name} to WebP!`, 'success');
                     
                 } catch (error) {
                     console.error('Conversion error:', error);
@@ -346,27 +581,6 @@
                     this.render();
                     this.showToast(`Failed to convert ${image.file.name}`, 'error');
                 }
-            }
-            
-            async convertAll() {
-                const pendingImages = this.images.filter(img => img.status === 'pending');
-                if (pendingImages.length === 0) {
-                    this.showToast('No pending images to convert!', 'info');
-                    return;
-                }
-                
-                this.convertAllBtn.disabled = true;
-                this.convertAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Converting...';
-                
-                for (let i = 0; i < this.images.length; i++) {
-                    if (this.images[i].status === 'pending') {
-                        await this.convertSingleImage(this.images[i], i);
-                    }
-                }
-                
-                this.convertAllBtn.disabled = false;
-                this.convertAllBtn.innerHTML = '<i class="fas fa-sync-alt mr-1"></i> Convert All';
-                this.showToast('All conversions completed!', 'success');
             }
             
             downloadImage(image) {
@@ -415,16 +629,17 @@
                 const toastMessage = document.getElementById('toastMessage');
                 toastMessage.textContent = message;
                 
-                toast.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'bg-blue-500');
+                toast.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'bg-blue-500', 'bg-yellow-500');
                 
                 if (type === 'success') toast.classList.add('bg-green-500');
                 else if (type === 'error') toast.classList.add('bg-red-500');
-                else toast.classList.add('bg-blue-500');
+                else if (type === 'info') toast.classList.add('bg-blue-500');
+                else toast.classList.add('bg-yellow-500');
                 
                 toast.classList.remove('hidden');
                 setTimeout(() => {
                     toast.classList.add('hidden');
-                }, 3000);
+                }, 4000);
             }
             
             render() {
@@ -439,7 +654,26 @@
                     return;
                 }
                 
-                this.imageList.innerHTML = this.images.map(image => `
+                const pendingCount = this.images.filter(img => img.status === 'pending').length;
+                const excessCount = Math.max(0, pendingCount - this.FREE_LIMIT);
+                const freeRemaining = Math.max(0, this.FREE_LIMIT - pendingCount);
+                
+                this.imageList.innerHTML = `
+                    <div class="bg-white/80 backdrop-blur-sm rounded-xl p-3 mb-4">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-600">
+                                <i class="fas fa-images mr-2"></i>
+                                ${this.images.length} images total
+                            </span>
+                            <span class="text-gray-600">
+                                ${freeRemaining > 0 ? 
+                                    `<span class="text-green-600">✅ ${freeRemaining} free conversions remaining</span>` : 
+                                    `<span class="text-yellow-600">⚠️ ${excessCount} images require payment (${this.currency === 'INR' ? '₹' : '$'}${excessCount * this.pricePerImage})</span>`
+                                }
+                            </span>
+                        </div>
+                    </div>
+                    ${this.images.map(image => `
                     <div data-id="${image.id}" class="bg-white rounded-xl shadow-md overflow-hidden transition-all hover:shadow-lg animate-fade-in">
                         <div class="flex flex-col md:flex-row">
                             <!-- Preview -->
@@ -490,10 +724,10 @@
                             </div>
                         </div>
                     </div>
-                `).join('');
+                `).join('')}`;
                 
                 // Attach event listeners to buttons
-                document.querySelectorAll('.convert-single').forEach((btn, idx) => {
+                document.querySelectorAll('.convert-single').forEach((btn) => {
                     btn.addEventListener('click', () => {
                         const card = btn.closest('[data-id]');
                         const id = card.getAttribute('data-id');
@@ -504,7 +738,7 @@
                     });
                 });
                 
-                document.querySelectorAll('.download-single').forEach((btn, idx) => {
+                document.querySelectorAll('.download-single').forEach((btn) => {
                     btn.addEventListener('click', () => {
                         const card = btn.closest('[data-id]');
                         const id = card.getAttribute('data-id');
@@ -513,7 +747,7 @@
                     });
                 });
                 
-                document.querySelectorAll('.remove-single').forEach((btn, idx) => {
+                document.querySelectorAll('.remove-single').forEach((btn) => {
                     btn.addEventListener('click', () => {
                         const card = btn.closest('[data-id]');
                         const id = card.getAttribute('data-id');
