@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Add heic2any library for HEIC/HEIF support -->
     <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
-    <!-- PayPal SDK - We'll load this dynamically -->
     <script>
         tailwind.config = {
             theme: {
@@ -65,12 +64,6 @@
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
         }
-
-        .paypal-button-container {
-            max-width: 200px;
-            margin: 0 auto;
-            min-height: 45px;
-        }
     </style>
 </head>
 <body class="gradient-bg min-h-screen py-8 px-4">
@@ -88,25 +81,6 @@
             <p class="text-white/90 text-lg max-w-2xl mx-auto">
                 Convert PNG, JPG, JPEG, HEIC, HEIF to WebP instantly — 100% free, private, and fast
             </p>
-        </div>
-
-        <!-- Pricing Banner -->
-        <div class="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-6 rounded-lg">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <i class="fas fa-info-circle text-yellow-500"></i>
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm text-yellow-700">
-                        <strong>Pricing:</strong> First 5 images FREE! 
-                        <span id="pricingDisplay">$1.00 USD for additional images</span>
-                    </p>
-                    <p class="text-xs text-yellow-600 mt-1">
-                        🌍 Detected: <span id="countryDisplay">Loading...</span>
-                        <span id="currencyDisplay" class="ml-2"></span>
-                    </p>
-                </div>
-            </div>
         </div>
 
         <!-- Main Card -->
@@ -138,7 +112,7 @@
                 </div>
             </div>
 
-            <!-- Quality Control & Payment -->
+            <!-- Quality Control -->
             <div class="mt-6 p-4 bg-gray-50 rounded-xl">
                 <div class="flex flex-wrap items-center justify-between gap-4">
                     <div class="flex-1 min-w-[200px]">
@@ -147,7 +121,7 @@
                         </label>
                         <input type="range" id="quality" min="1" max="100" value="85" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
                     </div>
-                    <div class="flex gap-3 flex-wrap">
+                    <div class="flex gap-3">
                         <button id="clearAllBtn" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-all text-sm font-semibold">
                             <i class="fas fa-trash-alt mr-1"></i> Clear All
                         </button>
@@ -163,40 +137,16 @@
         <div id="imageList" class="space-y-4 animate-slide-up">
             <!-- Images will appear here dynamically -->
         </div>
-
-        <!-- Payment Modal -->
-        <div id="paymentModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
-            <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl animate-slide-up">
-                <div class="text-center mb-6">
-                    <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4">
-                        <i class="fas fa-credit-card text-indigo-600 text-2xl"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-gray-800">Payment Required</h3>
-                    <p class="text-gray-600 mt-2">
-                        You have <span id="excessImages" class="font-bold text-indigo-600">0</span> images over the free limit
-                    </p>
-                    <p class="text-gray-600">
-                        Total: <span id="paymentAmount" class="font-bold text-2xl text-indigo-600">$1.00</span>
-                    </p>
-                    <p class="text-xs text-gray-500 mt-1">
-                        <span id="paymentCurrencyLabel">USD</span> per additional image
-                    </p>
-                </div>
+            <div class="wp-info-card wp-hire-card">
+                <h3>Need Expert Help?</h3>
+                <p>I have 4 years of experience in WordPress. If you are facing any problem or need custom development, I am here to help!</p>
                 
-                <div id="paypal-button-container"></div>
-                <div id="paypal-loading" class="text-center py-4">
-                    <i class="fas fa-spinner fa-spin text-indigo-600 text-2xl"></i>
-                    <p class="text-sm text-gray-500 mt-2">Loading payment options...</p>
-                </div>
-                
-                <div class="mt-4 text-center">
-                    <button id="cancelPaymentBtn" class="text-gray-500 hover:text-gray-700 text-sm">
-                        <i class="fas fa-times mr-1"></i> Cancel
-                    </button>
-                </div>
+                <a href="https://wa.me/+917398113232?text=Hi!%20I%20saw%20your%20Child%20Theme%20Generator.%20I%20have%20a%20WordPress%20project%20and%20need%20your%20expert%20help." class="wp-whatsapp-btn" target="_blank">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"></path></svg>
+                    Hire Me(Say Hi)
+                </a>
             </div>
-        </div>
-
+        
         <!-- Success Toast -->
         <div id="toast" class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden transition-all z-50">
             <i class="fas fa-check-circle mr-2"></i>
@@ -215,18 +165,6 @@
                 this.qualityValue = document.getElementById('qualityValue');
                 this.clearAllBtn = document.getElementById('clearAllBtn');
                 this.convertAllBtn = document.getElementById('convertAllBtn');
-                this.paymentModal = document.getElementById('paymentModal');
-                this.cancelPaymentBtn = document.getElementById('cancelPaymentBtn');
-                
-                // Payment state
-                this.pendingImages = [];
-                this.isProcessingPayment = false;
-                this.userCountry = 'IN'; // Default to India
-                this.currency = 'USD'; // Default to USD
-                this.pricePerImage = 1;
-                this.FREE_LIMIT = 5;
-                this.paypalLoaded = false;
-                this.paypalClientId = 'BAAtUCdAWkq_gy80uXyiu_wjuMy_4Q826rD6ORFigdifOmw7uGScc2JULRRBYhFTzKpOgiqzl7HwY6H5RI'; // Replace with your actual client ID
                 
                 // Supported formats
                 this.supportedFormats = ['image/png', 'image/jpeg', 'image/jpg', 'image/heic', 'image/heif'];
@@ -234,106 +172,19 @@
                 this.init();
             }
             
-            async init() {
+            init() {
                 this.setupEventListeners();
                 this.setupClipboardPaste();
-                await this.detectUserCountry();
-                this.updatePricingDisplay();
-            }
-            
-            async detectUserCountry() {
-                try {
-                    const response = await fetch('https://ipapi.co/json/');
-                    const data = await response.json();
-                    this.userCountry = data.country_code || 'IN';
-                    
-                    // Set currency based on country
-                    this.currency = this.userCountry === 'IN' ? 'INR' : 'USD';
-                    
-                    // Load PayPal with appropriate currency
-                    await this.loadPayPal();
-                    
-                    this.updatePricingDisplay();
-                } catch (error) {
-                    console.log('Using default country: IN');
-                    this.userCountry = 'IN';
-                    this.currency = 'INR';
-                    await this.loadPayPal();
-                    this.updatePricingDisplay();
-                }
-            }
-            
-            loadPayPal() {
-                return new Promise((resolve, reject) => {
-                    if (this.paypalLoaded) {
-                        resolve();
-                        return;
-                    }
-                    
-                    // Remove existing PayPal script if any
-                    const existingScript = document.querySelector('script[src*="paypal.com/sdk/js"]');
-                    if (existingScript) {
-                        existingScript.remove();
-                    }
-                    
-                    const script = document.createElement('script');
-                    script.src = `https://www.paypal.com/sdk/js?client-id=${this.paypalClientId}&currency=${this.currency}`;
-                    script.async = true;
-                    
-                    script.onload = () => {
-                        this.paypalLoaded = true;
-                        resolve();
-                    };
-                    
-                    script.onerror = () => {
-                        reject(new Error('Failed to load PayPal SDK'));
-                    };
-                    
-                    document.head.appendChild(script);
-                });
-            }
-            
-            updatePricingDisplay() {
-                const countryDisplay = document.getElementById('countryDisplay');
-                const pricingDisplay = document.getElementById('pricingDisplay');
-                const currencyDisplay = document.getElementById('currencyDisplay');
-                
-                const symbol = this.currency === 'INR' ? '₹' : '$';
-                const currencyName = this.currency === 'INR' ? 'INR' : 'USD';
-                
-                countryDisplay.textContent = this.userCountry === 'IN' ? '🇮🇳 India' : `🌍 ${this.userCountry}`;
-                currencyDisplay.textContent = `💱 ${currencyName}`;
-                pricingDisplay.textContent = `${symbol}1.00 ${currencyName} per additional image`;
-                
-                // Update payment modal if open
-                this.updatePaymentModalAmount();
-            }
-            
-            getPaymentAmount() {
-                const pendingCount = this.images.filter(img => img.status === 'pending').length;
-                const excessCount = Math.max(0, pendingCount - this.FREE_LIMIT);
-                return {
-                    count: excessCount,
-                    total: excessCount * this.pricePerImage,
-                    currency: this.currency
-                };
-            }
-            
-            updatePaymentModalAmount() {
-                const excessCount = this.pendingImages.length - this.FREE_LIMIT;
-                const totalAmount = excessCount * this.pricePerImage;
-                const symbol = this.currency === 'INR' ? '₹' : '$';
-                
-                document.getElementById('excessImages').textContent = excessCount;
-                document.getElementById('paymentAmount').textContent = `${symbol}${totalAmount.toFixed(2)}`;
-                document.getElementById('paymentCurrencyLabel').textContent = 
-                    this.currency === 'INR' ? '₹1.00 INR' : '$1.00 USD';
             }
             
             setupEventListeners() {
+                // Click dropzone to open file dialog
                 this.dropZone.addEventListener('click', () => this.fileInput.click());
+                
+                // File input change
                 this.fileInput.addEventListener('change', (e) => this.handleFiles(e.target.files));
                 
+                // Drag & drop events
                 this.dropZone.addEventListener('dragover', (e) => {
                     e.preventDefault();
                     this.dropZone.classList.add('drag-over');
@@ -350,19 +201,16 @@
                     this.handleFiles(files);
                 });
                 
+                // Quality slider
                 this.qualitySlider.addEventListener('input', (e) => {
                     this.qualityValue.textContent = e.target.value;
                 });
                 
+                // Clear all button
                 this.clearAllBtn.addEventListener('click', () => this.clearAll());
-                this.convertAllBtn.addEventListener('click', () => this.handleConvertAll());
-                this.cancelPaymentBtn.addEventListener('click', () => this.closePaymentModal());
                 
-                this.paymentModal.addEventListener('click', (e) => {
-                    if (e.target === this.paymentModal) {
-                        this.closePaymentModal();
-                    }
-                });
+                // Convert all button
+                this.convertAllBtn.addEventListener('click', () => this.convertAll());
             }
             
             setupClipboardPaste() {
@@ -382,26 +230,17 @@
             async handleFiles(files) {
                 if (!files || files.length === 0) return;
                 
-                const currentPending = this.images.filter(img => img.status === 'pending').length;
-                const newImages = Array.from(files);
-                const totalAfterAdd = currentPending + newImages.length;
-                
-                if (totalAfterAdd > this.FREE_LIMIT) {
-                    const excess = totalAfterAdd - this.FREE_LIMIT;
-                    const amount = excess * this.pricePerImage;
-                    const symbol = this.currency === 'INR' ? '₹' : '$';
-                    this.showToast(`⚠️ ${excess} images over free limit. Payment required: ${symbol}${amount}`, 'error');
-                }
-                
-                for (const file of newImages) {
+                for (const file of files) {
                     if (file.type.startsWith('image/')) {
                         const id = Date.now() + '-' + Math.random();
                         
+                        // Check if it's HEIC/HEIF - these need special handling
                         const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || 
                                       file.name.toLowerCase().endsWith('.heic') || 
                                       file.name.toLowerCase().endsWith('.heif');
                         
                         if (isHeic) {
+                            // For HEIC files, we need to convert them to JPEG first for preview
                             try {
                                 const jpegBlob = await heic2any({
                                     blob: file,
@@ -428,6 +267,7 @@
                                 this.showToast(`Failed to load ${file.name}`, 'error');
                             }
                         } else {
+                            // Normal images (PNG, JPG, JPEG)
                             const reader = new FileReader();
                             reader.onload = (e) => {
                                 this.images.push({
@@ -445,148 +285,6 @@
                         }
                     }
                 }
-            }
-            
-            async handleConvertAll() {
-                const pendingImages = this.images.filter(img => img.status === 'pending');
-                if (pendingImages.length === 0) {
-                    this.showToast('No pending images to convert!', 'info');
-                    return;
-                }
-                
-                const excessCount = Math.max(0, pendingImages.length - this.FREE_LIMIT);
-                
-                if (excessCount > 0) {
-                    this.showPaymentModal(pendingImages);
-                } else {
-                    await this.convertAllFree();
-                }
-            }
-            
-            showPaymentModal(images) {
-                this.pendingImages = images;
-                const excessCount = images.length - this.FREE_LIMIT;
-                const totalAmount = excessCount * this.pricePerImage;
-                const symbol = this.currency === 'INR' ? '₹' : '$';
-                
-                document.getElementById('excessImages').textContent = excessCount;
-                document.getElementById('paymentAmount').textContent = `${symbol}${totalAmount.toFixed(2)}`;
-                document.getElementById('paymentCurrencyLabel').textContent = 
-                    this.currency === 'INR' ? '₹1.00 INR' : '$1.00 USD';
-                
-                this.paymentModal.classList.remove('hidden');
-                
-                // Show loading, render PayPal after small delay to ensure DOM is ready
-                document.getElementById('paypal-loading').classList.remove('hidden');
-                document.getElementById('paypal-button-container').innerHTML = '';
-                
-                setTimeout(() => {
-                    this.renderPayPalButton(totalAmount, excessCount);
-                }, 300);
-            }
-            
-            closePaymentModal() {
-                this.paymentModal.classList.add('hidden');
-                this.pendingImages = [];
-                document.getElementById('paypal-button-container').innerHTML = '';
-            }
-            
-            renderPayPalButton(amount, imageCount) {
-                const container = document.getElementById('paypal-button-container');
-                const loading = document.getElementById('paypal-loading');
-                
-                // Check if PayPal is loaded
-                if (typeof paypal === 'undefined') {
-                    loading.innerHTML = `
-                        <div class="text-red-500">
-                            <i class="fas fa-exclamation-circle text-2xl"></i>
-                            <p class="text-sm mt-2">Failed to load payment. Please try again.</p>
-                            <button onclick="location.reload()" class="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm">
-                                Reload Page
-                            </button>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                loading.classList.add('hidden');
-                container.innerHTML = '';
-                
-                const currency = this.currency;
-                
-                try {
-                    paypal.Buttons({
-                        style: {
-                            layout: 'vertical',
-                            color: 'blue',
-                            shape: 'rect',
-                            label: 'pay'
-                        },
-                        createOrder: (data, actions) => {
-                            return actions.order.create({
-                                purchase_units: [{
-                                    description: `SK Image Converter - ${imageCount} image${imageCount > 1 ? 's' : ''} conversion`,
-                                    amount: {
-                                        currency_code: currency,
-                                        value: amount.toFixed(2)
-                                    }
-                                }]
-                            });
-                        },
-                        onApprove: async (data, actions) => {
-                            try {
-                                const order = await actions.order.capture();
-                                console.log('Payment successful:', order);
-                                
-                                this.closePaymentModal();
-                                this.showToast(`✅ Payment successful! Converting ${this.pendingImages.length} images...`, 'success');
-                                
-                                await this.convertPendingImages(this.pendingImages);
-                                this.pendingImages = [];
-                            } catch (error) {
-                                console.error('Payment capture error:', error);
-                                this.showToast('Payment failed. Please try again.', 'error');
-                            }
-                        },
-                        onError: (err) => {
-                            console.error('PayPal Error:', err);
-                            this.showToast('Payment failed. Please try again.', 'error');
-                            this.closePaymentModal();
-                        },
-                        onCancel: () => {
-                            this.closePaymentModal();
-                            this.showToast('Payment cancelled', 'info');
-                        }
-                    }).render(container);
-                } catch (error) {
-                    console.error('PayPal render error:', error);
-                    container.innerHTML = `
-                        <div class="text-red-500 text-center text-sm">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            Payment error. Please try again.
-                        </div>
-                    `;
-                }
-            }
-            
-            async convertPendingImages(images) {
-                this.convertAllBtn.disabled = true;
-                this.convertAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Converting...';
-                
-                for (const image of images) {
-                    if (image.status === 'pending') {
-                        await this.convertSingleImage(image);
-                    }
-                }
-                
-                this.convertAllBtn.disabled = false;
-                this.convertAllBtn.innerHTML = '<i class="fas fa-sync-alt mr-1"></i> Convert All';
-                this.showToast('All conversions completed!', 'success');
-            }
-            
-            async convertAllFree() {
-                const pendingImages = this.images.filter(img => img.status === 'pending');
-                await this.convertPendingImages(pendingImages);
             }
             
             async convertImage(image, quality) {
@@ -619,13 +317,14 @@
                 });
             }
             
-            async convertSingleImage(image) {
+            async convertSingleImage(image, index) {
                 const quality = parseInt(this.qualitySlider.value);
                 const imageCard = document.querySelector(`[data-id="${image.id}"]`);
                 const progressBar = imageCard?.querySelector('.progress-bar');
                 const convertBtn = imageCard?.querySelector('.convert-single');
                 
                 try {
+                    // Update status
                     image.status = 'converting';
                     this.render();
                     
@@ -635,6 +334,7 @@
                     
                     if (progressBar) progressBar.style.width = '100%';
                     
+                    // Update image object
                     image.convertedUrl = result.url;
                     image.convertedSize = result.size;
                     image.status = 'converted';
@@ -647,6 +347,7 @@
                     }
                     
                     this.render();
+                    this.showToast(`Converted ${image.file.name} to WebP!`, 'success');
                     
                 } catch (error) {
                     console.error('Conversion error:', error);
@@ -654,6 +355,27 @@
                     this.render();
                     this.showToast(`Failed to convert ${image.file.name}`, 'error');
                 }
+            }
+            
+            async convertAll() {
+                const pendingImages = this.images.filter(img => img.status === 'pending');
+                if (pendingImages.length === 0) {
+                    this.showToast('No pending images to convert!', 'info');
+                    return;
+                }
+                
+                this.convertAllBtn.disabled = true;
+                this.convertAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Converting...';
+                
+                for (let i = 0; i < this.images.length; i++) {
+                    if (this.images[i].status === 'pending') {
+                        await this.convertSingleImage(this.images[i], i);
+                    }
+                }
+                
+                this.convertAllBtn.disabled = false;
+                this.convertAllBtn.innerHTML = '<i class="fas fa-sync-alt mr-1"></i> Convert All';
+                this.showToast('All conversions completed!', 'success');
             }
             
             downloadImage(image) {
@@ -702,17 +424,16 @@
                 const toastMessage = document.getElementById('toastMessage');
                 toastMessage.textContent = message;
                 
-                toast.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'bg-blue-500', 'bg-yellow-500');
+                toast.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'bg-blue-500');
                 
                 if (type === 'success') toast.classList.add('bg-green-500');
                 else if (type === 'error') toast.classList.add('bg-red-500');
-                else if (type === 'info') toast.classList.add('bg-blue-500');
-                else toast.classList.add('bg-yellow-500');
+                else toast.classList.add('bg-blue-500');
                 
                 toast.classList.remove('hidden');
                 setTimeout(() => {
                     toast.classList.add('hidden');
-                }, 4000);
+                }, 3000);
             }
             
             render() {
@@ -727,29 +448,10 @@
                     return;
                 }
                 
-                const pendingCount = this.images.filter(img => img.status === 'pending').length;
-                const excessCount = Math.max(0, pendingCount - this.FREE_LIMIT);
-                const freeRemaining = Math.max(0, this.FREE_LIMIT - pendingCount);
-                const symbol = this.currency === 'INR' ? '₹' : '$';
-                
-                this.imageList.innerHTML = `
-                    <div class="bg-white/80 backdrop-blur-sm rounded-xl p-3 mb-4">
-                        <div class="flex justify-between items-center text-sm flex-wrap gap-2">
-                            <span class="text-gray-600">
-                                <i class="fas fa-images mr-2"></i>
-                                ${this.images.length} images total
-                            </span>
-                            <span class="text-gray-600">
-                                ${freeRemaining > 0 ? 
-                                    `<span class="text-green-600">✅ ${freeRemaining} free conversions remaining</span>` : 
-                                    `<span class="text-yellow-600">⚠️ ${excessCount} images require payment (${symbol}${(excessCount * this.pricePerImage).toFixed(2)} ${this.currency})</span>`
-                                }
-                            </span>
-                        </div>
-                    </div>
-                    ${this.images.map(image => `
+                this.imageList.innerHTML = this.images.map(image => `
                     <div data-id="${image.id}" class="bg-white rounded-xl shadow-md overflow-hidden transition-all hover:shadow-lg animate-fade-in">
                         <div class="flex flex-col md:flex-row">
+                            <!-- Preview -->
                             <div class="md:w-32 h-32 bg-gray-100 flex items-center justify-center relative overflow-hidden">
                                 <img src="${image.originalUrl}" alt="${image.file.name}" class="w-full h-full object-cover">
                                 ${image.status === 'converted' ? '<div class="absolute inset-0 bg-green-500/20 flex items-center justify-center"><i class="fas fa-check-circle text-green-500 text-2xl"></i></div>' : ''}
@@ -757,11 +459,12 @@
                                 ${image.isHeic && image.status !== 'converted' ? '<div class="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full"><i class="fab fa-apple mr-1"></i>HEIC</div>' : ''}
                             </div>
                             
+                            <!-- Info -->
                             <div class="flex-1 p-4">
                                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
                                     <div class="flex-1">
                                         <p class="font-semibold text-gray-800 truncate max-w-md">${image.file.name}</p>
-                                        <div class="flex gap-4 text-sm text-gray-500 mt-1 flex-wrap">
+                                        <div class="flex gap-4 text-sm text-gray-500 mt-1">
                                             <span><i class="far fa-file-image mr-1"></i>${image.isHeic ? 'HEIC' : (image.file.type.split('/')[1] || image.file.name.split('.').pop()).toUpperCase()}</span>
                                             <span><i class="fas fa-weight-hanging mr-1"></i>${this.formatFileSize(image.file.size)}</span>
                                             ${image.convertedSize ? `<span class="text-green-600"><i class="fas fa-compress mr-1"></i>${this.formatFileSize(image.convertedSize)}</span>` : ''}
@@ -769,6 +472,7 @@
                                         ${image.status === 'converted' ? '<div class="mt-2"><span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full"><i class="fas fa-check-circle mr-1"></i>Converted to WebP</span></div>' : ''}
                                     </div>
                                     
+                                    <!-- Actions -->
                                     <div class="flex gap-2">
                                         ${image.status !== 'converted' ? `
                                             <button class="convert-single px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all text-sm font-semibold">
@@ -795,9 +499,10 @@
                             </div>
                         </div>
                     </div>
-                `).join('')}`;
+                `).join('');
                 
-                document.querySelectorAll('.convert-single').forEach((btn) => {
+                // Attach event listeners to buttons
+                document.querySelectorAll('.convert-single').forEach((btn, idx) => {
                     btn.addEventListener('click', () => {
                         const card = btn.closest('[data-id]');
                         const id = card.getAttribute('data-id');
@@ -808,7 +513,7 @@
                     });
                 });
                 
-                document.querySelectorAll('.download-single').forEach((btn) => {
+                document.querySelectorAll('.download-single').forEach((btn, idx) => {
                     btn.addEventListener('click', () => {
                         const card = btn.closest('[data-id]');
                         const id = card.getAttribute('data-id');
@@ -817,7 +522,7 @@
                     });
                 });
                 
-                document.querySelectorAll('.remove-single').forEach((btn) => {
+                document.querySelectorAll('.remove-single').forEach((btn, idx) => {
                     btn.addEventListener('click', () => {
                         const card = btn.closest('[data-id]');
                         const id = card.getAttribute('data-id');
