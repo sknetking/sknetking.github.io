@@ -315,7 +315,7 @@
                 const screenshot = `https://s0.wp.com/mshots/v1/${encodeURIComponent(p.url)}?w=600`;
                 return `
                     <div class="group relative aspect-[4/5] rounded-3xl overflow-hidden glass-card transition-all duration-500 hover:scale-[1.02] shadow-lg" onclick="handleProjectCardTap(event, ${idx})">
-                        <img src="${screenshot}" alt="${p.name}" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" onerror="this.src='https://placehold.co/600x750/1e293b/94a3b8?text=${encodeURIComponent(p.name)}'">
+                      <a href="${p.url}" target="_blank" rel="noopener noreferrer">   <img src="${screenshot}" alt="${p.name}" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" onerror="this.src='https://placehold.co/600x750/1e293b/94a3b8?text=${encodeURIComponent(p.name)}'">
                         <div class="absolute inset-0 website-card-overlay flex flex-col justify-end p-6">
                             <!-- Mobile Friendly Header Layer -->
                             <div class="transform transition-transform duration-300 translate-y-4 md:translate-y-8 group-hover:translate-y-0 mobile-overlay-active flex flex-col">
@@ -328,7 +328,7 @@
                                 </a>
                                 <span class="md:hidden text-[10px] text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-full font-medium">Click to Launch</span>
                             </div>
-                        </div>
+                        </div>   </a>
                     </div>
                 `;
             }).join('');
@@ -359,12 +359,13 @@
                 <div class="tool-card group flex flex-col h-full bg-slate-900/40">
                     <a href="${tool.link}" target="_blank" rel="noopener noreferrer" class="block aspect-video w-full overflow-hidden relative">
                         <img src="${tool.image}" alt="${tool.title}" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-500" loading="lazy" onerror="this.src='https://placehold.co/600x337/111827/4b5563?text=${encodeURIComponent(tool.title)}'">
-                    </a>
+                    
                     <div class="p-5 flex-grow flex flex-col justify-between text-left">
                         <div>
                             <h3 class="font-bold text-base sm:text-lg mb-2 text-slate-100 group-hover:text-blue-400 transition-colors">${tool.title}</h3>
                             <p class="text-xs text-slate-400 mb-4 line-clamp-2 leading-relaxed">${tool.description}</p>
                         </div>
+                    </a>
                         <a href="${tool.link}" target="_blank" rel="noopener noreferrer" class="text-xs font-bold uppercase tracking-wider text-blue-500 hover:text-blue-300 flex items-center space-x-1 mt-auto">
                             <span>Launch Tool</span>
                             <i class="fas fa-arrow-right text-[10px] transform group-hover:translate-x-1 transition-transform"></i>
