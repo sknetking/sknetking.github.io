@@ -33,13 +33,57 @@
         .message-bubble {
             animation: fadeUp 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+        /* Drag and drop highlight */
+        .drag-over {
+            border: 2px dashed #00a884 !important;
+            background: rgba(0, 168, 132, 0.05) !important;
+        }
+        /* Drop zone overlay for file drops */
+        #dropZoneOverlay {
+            position: absolute;
+            inset: 0;
+            z-index: 50;
+            background: rgba(11, 20, 26, 0.85);
+            backdrop-filter: blur(8px);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: inherit;
+            transition: all 0.3s ease;
+        }
+        #dropZoneOverlay.show {
+            display: flex;
+        }
+        #dropZoneOverlay i {
+            font-size: 3rem;
+            color: #00a884;
+            margin-bottom: 1rem;
+        }
+        #dropZoneOverlay p {
+            color: #e9edef;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        #dropZoneOverlay span {
+            color: #8696a0;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
     </style>
 </head>
 <body class="bg-[#0b141a] text-gray-100 font-sans h-screen flex items-center justify-center p-0 md:p-4 overflow-hidden select-none">
 
     <!-- Global Layout Wrapper -->
-    <div class="w-full h-[100dvh] max-w-[1600px] md:h-[95vh] md:rounded-2xl md:shadow-2xl overflow-hidden flex bg-[#111b21] border border-gray-800/40">
+    <div class="w-full h-[100dvh] max-w-[1600px] md:h-[95vh] md:rounded-2xl md:shadow-2xl overflow-hidden flex bg-[#111b21] border border-gray-800/40 relative" id="appContainer">
         
+        <!-- Drop Zone Overlay -->
+        <div id="dropZoneOverlay">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <p>Drop your files here</p>
+            <span>Images, documents, videos, and more</span>
+        </div>
+
         <!-- SIDEBAR -->
         <div id="sidebar" class="fixed inset-y-0 left-0 z-40 w-[90%] sm:w-[360px] md:w-[400px] bg-[#111b21] border-r border-[#222e35] flex flex-col transform translate-x-0 md:transform-none md:relative md:flex transition-transform duration-300 ease-in-out">
             
@@ -95,7 +139,7 @@
         </div>
 
         <!-- MAIN CHAT INTERFACE -->
-        <div class="flex-1 flex flex-col bg-[#0b141a] relative h-full">
+        <div class="flex-1 flex flex-col bg-[#0b141a] relative h-full" id="chatContainer">
             
             <!-- Chat Header -->
             <div class="p-3 bg-[#202c33] flex items-center justify-between border-b border-[#2a3942] z-10">
@@ -254,14 +298,21 @@
     </div>
 
     <!-- Native Audios -->
+    <!-- ====== INCOMING CALL RINGTONE ====== -->
+    <!-- Replace the src URL below with your own audio file URL -->
     <audio id="ringtone" loop style="display:none;">
-        <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" type="audio/mpeg">
+        <source src="https://github.com/sknetking/sknetking.github.io/raw/main/images/ringtone.mp3" type="audio/mpeg">
     </audio>
     <audio id="remoteAudio" style="display:none;"></audio>
 
     <script>
+        /** ==================== CONFIGURATION VARIABLES ==================== **/
+        // ====== INCOMING CALL RINGTONE URL ======
+        // Replace this URL with your own audio file URL for incoming calls
+        const INCOMING_CALL_RINGTONE_URL = "https://github.com/sknetking/sknetking.github.io/raw/main/images/ringtone.mp3";
+        // ========================================
+
         /** ==================== BACKGROUND UNTHROTTLED WEB WORKER HEARTBEAT ==================== **/
-        /** Inline Web Worker prevents background tab suspends when the app is running in the background. **/
         const workerBlobCode = `
             let timer = null;
             self.onmessage = function(e) {
@@ -269,7 +320,7 @@
                     if (timer) clearInterval(timer);
                     timer = setInterval(() => {
                         self.postMessage('ping');
-                    }, 8000); /** 8-second interval checks **/
+                    }, 8000);
                 } else if (e.data === 'stop') {
                     if (timer) {
                         clearInterval(timer);
@@ -293,13 +344,17 @@
         let isCameraOff = false;
         let currentConnectedPeerId = null;
         let targetDeletePeerId = null;
+        let isCallInProgress = false;
 
         let myUserName = localStorage.getItem('p2p_chat_name') || 'User';
         let remoteUserName = 'Peer';
 
-        /** Base ID generation if missing **/
         let myIdOverride = localStorage.getItem('p2p_my_id') || `user${Math.floor(Math.random() * 9000 + 1000)}`;
         localStorage.setItem('p2p_my_id', myIdOverride);
+
+        // Setup ringtone with configurable URL
+        const ringtoneAudio = document.getElementById('ringtone');
+        ringtoneAudio.src = INCOMING_CALL_RINGTONE_URL;
 
         /** ==================== INDEXEDDB SYSTEM ==================== **/
         const DB_NAME = 'WhatsAppStyleP2P_v3';
@@ -391,7 +446,6 @@
             };
         }
 
-        /** Deletes a single message by Primary Key (id) in IndexedDB **/
         async function dbDeleteSingleMessage(msgId) {
             if (!db) return;
             const transaction = db.transaction(['chat_logs'], 'readwrite');
@@ -428,12 +482,11 @@
             }, 3500);
         }
 
-        /** Copy Message Utility with Robust Iframe Safe System Fallback **/
         function copyMessageText(text) {
             if (!text) return;
             const textarea = document.createElement('textarea');
             textarea.value = text;
-            textarea.style.position = 'fixed'; /** Avoid page scrolling **/
+            textarea.style.position = 'fixed';
             document.body.appendChild(textarea);
             textarea.select();
             try {
@@ -445,7 +498,6 @@
             document.body.removeChild(textarea);
         }
 
-        /** Delete Message Utility from DOM and DB **/
         async function deleteSingleMessage(msgId, element) {
             if (!msgId) {
                 element.remove();
@@ -529,13 +581,10 @@
                 </div>`;
             messageInput.disabled = true;
             document.getElementById('callControls').classList.add('opacity-50', 'pointer-events-none');
-            
-            /** Revert Toggle Icon to Menu on mobile **/
             setMobileSidebarToggleIcon(true);
         }
 
         async function handleContactClick(peerId, name) {
-            /** Close mobile sidebar if screen is small **/
             if (window.innerWidth < 768) {
                 sidebar.classList.add('-translate-x-full');
                 setMobileSidebarToggleIcon(false);
@@ -568,14 +617,12 @@
             targetDeletePeerId = null;
         };
 
-        /** Upgraded: Programmatic interactive event binding for custom context nodes **/
         function addMessageToUI(text, isSent, type = 'text', fileData = null, msgId = null) {
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const messageWrapper = document.createElement('div');
             messageWrapper.className = `flex w-full ${isSent ? 'justify-end' : 'justify-start'} items-center message-bubble group relative my-1`;
             messageWrapper.setAttribute('data-msgid', msgId || '');
 
-            /** Sleek hover action toolbar matching WhatsApp Web (Copy & Delete) **/
             const actionsHtml = `
                 <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-[#1f2c34] rounded-lg p-1 border border-[#2a3942] shadow-lg ${isSent ? 'order-1 mr-2' : 'order-2 ml-2'}">
                     ${type !== 'file_transfer' ? `
@@ -614,7 +661,6 @@
                     </div>
                 `;
             } else {
-                /** Preserves linebreaks & layouts using white-space pre-wrap & break-words **/
                 bubbleHtml = `
                     <div class="max-w-[80%] sm:max-w-md rounded-2xl p-3 px-4 shadow-md ${isSent ? 'bg-[#005c4b] text-white order-2' : 'bg-[#202c33] text-gray-100 order-1'}">
                         <p class="text-sm leading-relaxed whitespace-pre-wrap break-words">${escapeHtml(text)}</p>
@@ -631,7 +677,6 @@
             messagesDiv.appendChild(messageWrapper);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-            /** Wire up actions programmatically (fully robust, zero character parsing bugs) **/
             const copyBtn = messageWrapper.querySelector('.copy-msg-btn');
             if (copyBtn) {
                 copyBtn.onclick = () => copyMessageText(text);
@@ -642,7 +687,6 @@
                 deleteBtn.onclick = () => deleteSingleMessage(msgId, messageWrapper);
             }
 
-            /** Secure download bindings for file transactions **/
             const downloadBtn = messageWrapper.querySelector('.download-btn');
             if (downloadBtn) {
                 downloadBtn.onclick = () => {
@@ -682,7 +726,6 @@
             document.getElementById('userName').textContent = myUserName;
             document.getElementById('userAvatar').textContent = myUserName.charAt(0).toUpperCase();
 
-            /** WebRTC direct-connect configurations **/
             peer = new Peer(targetId, {
                 host: '0.peerjs.com',
                 port: 443,
@@ -703,7 +746,6 @@
                 sessionStorage.setItem('last_active_p2p_session', id);
                 document.getElementById('networkPulse').className = "inline-block w-2 h-2 rounded-full bg-green-500 mr-1.5 animate-pulse";
                 
-                /** Keep the signaling connection alive actively **/
                 if (peer.socket) {
                     setInterval(() => {
                         if (peer && !peer.destroyed && peer.socket && !peer.socket.disconnected) {
@@ -714,7 +756,6 @@
             });
 
             peer.on('connection', (conn) => {
-                /** Safeguard duplicates **/
                 if (dataConn && dataConn.open && dataConn.peer === conn.peer) {
                     return;
                 }
@@ -729,10 +770,8 @@
                 document.getElementById('callTypeText').textContent = isVideo ? "📹 Video Call" : "📞 Audio Call";
                 document.getElementById('callNotification').classList.remove('hidden');
                 
-                const ringtone = document.getElementById('ringtone');
-                ringtone.play().catch(() => {
-                    showToast("Incoming call received.");
-                });
+                // Play ringtone for incoming call
+                playRingtone();
             });
 
             peer.on('error', (err) => {
@@ -755,6 +794,28 @@
             });
         }
 
+        /** ==================== RINGTONE CONTROL FUNCTIONS ==================== **/
+        function playRingtone() {
+            try {
+                ringtoneAudio.currentTime = 0;
+                ringtoneAudio.play().catch(err => {
+                    console.log("Ringtone play failed, but call notification is shown:", err);
+                    showToast("Incoming call received!");
+                });
+            } catch (err) {
+                console.log("Ringtone error:", err);
+            }
+        }
+
+        function stopRingtone() {
+            try {
+                ringtoneAudio.pause();
+                ringtoneAudio.currentTime = 0;
+            } catch (err) {
+                console.log("Stop ringtone error:", err);
+            }
+        }
+
         /** ==================== DATA CHANNEL HEARTBEAT & HEALERS ==================== **/
         let lastReceivedHeartbeat = Date.now();
         let pingIntervalHandle = null;
@@ -771,7 +832,7 @@
                     return;
                 }
                 const silenceDuration = Date.now() - lastReceivedHeartbeat;
-                if (silenceDuration > 30000) { /** If silent for over 30 seconds **/
+                if (silenceDuration > 30000) {
                     console.log("No responsive background heartbeat detected. Triggering silent reconnect...");
                     handleDataChannelLost();
                 }
@@ -798,12 +859,10 @@
             }
         };
 
-        /** ==================== LIFECYCLE RECOVERY ENGINES (CHROME SWAP FIX) ==================== **/
-        /** Monitors state whenever the window gains focus or visibility (meaning user switched back to Chrome from WhatsApp) **/
+        /** ==================== LIFECYCLE RECOVERY ENGINES ==================== **/
         async function runActiveResumptionHeal() {
             console.log("Running lifecycle resume check...");
 
-            /** 1. Heal Signaling Server Connection **/
             if (peer) {
                 if (peer.destroyed) {
                     initPeer();
@@ -813,14 +872,12 @@
                 }
             }
 
-            /** 2. Proactively Check Peer Connection **/
             if (currentConnectedPeerId) {
                 let shouldRebuild = false;
 
                 if (!dataConn || !dataConn.open || dataConn.label === null) {
                     shouldRebuild = true;
                 } else {
-                    /** Send an instant test-probe. If we do not receive a response within 1.5 seconds, we know the channel is a dead zombie. **/
                     lastReceivedHeartbeat = Date.now();
                     try {
                         dataConn.send(JSON.stringify({ type: '_SYS_PING', forceProbe: true }));
@@ -846,7 +903,6 @@
             if (!currentConnectedPeerId) return;
             console.log("Initiating silent handshakes to restore session...");
             
-            /** Do not clean UI, just reconstruct data layers **/
             if (dataConn) {
                 try { dataConn.close(); } catch(e) {}
             }
@@ -871,6 +927,56 @@
         });
 
         /** ==================== DATA CHANNELS CONFIGURATION ==================== **/
+        let fileReceiveBuffer = {};
+        let fileReceiveMetadata = {};
+
+        function processIncomingFileChunk(data, senderPeerId) {
+            const { chunkIndex, totalChunks, data: chunkData } = data;
+            
+            if (!fileReceiveBuffer[senderPeerId]) {
+                fileReceiveBuffer[senderPeerId] = [];
+                fileReceiveMetadata[senderPeerId] = {
+                    totalChunks: totalChunks,
+                    receivedChunks: 0,
+                    data: []
+                };
+            }
+
+            const buffer = fileReceiveBuffer[senderPeerId];
+            const metadata = fileReceiveMetadata[senderPeerId];
+            
+            buffer[chunkIndex] = chunkData;
+            metadata.receivedChunks++;
+
+            if (metadata.receivedChunks === metadata.totalChunks) {
+                const fullData = buffer.join('');
+                const fileObj = {
+                    name: fileReceiveMetadata[senderPeerId].name || 'file',
+                    size: fileReceiveMetadata[senderPeerId].size || fullData.length,
+                    mime: fileReceiveMetadata[senderPeerId].mime || 'application/octet-stream',
+                    data: fullData
+                };
+
+                dbSaveMessage(senderPeerId, null, false, 'file_transfer', fileObj)
+                    .then(id => {
+                        addMessageToUI(null, false, 'file_transfer', fileObj, id);
+                        showToast(`File "${fileObj.name}" received successfully!`);
+                    })
+                    .catch(err => {
+                        console.error("Error saving received file:", err);
+                        showToast("Error saving received file.", true);
+                    });
+
+                delete fileReceiveBuffer[senderPeerId];
+                delete fileReceiveMetadata[senderPeerId];
+            } else {
+                if (metadata.receivedChunks % 10 === 0 || metadata.receivedChunks === metadata.totalChunks - 1) {
+                    const progress = Math.round((metadata.receivedChunks / metadata.totalChunks) * 100);
+                    showToast(`Receiving file: ${progress}%`);
+                }
+            }
+        }
+
         function setupDataConnection(conn) {
             dataConn = conn;
             currentConnectedPeerId = conn.peer;
@@ -878,11 +984,9 @@
             conn.on('open', async () => {
                 showToast(`Session established with ${remoteUserName}`);
                 
-                /** Cache to automatically heal if browser suspends **/
                 sessionStorage.setItem('active_chat_peer_id', currentConnectedPeerId);
                 sessionStorage.setItem('active_chat_peer_name', remoteUserName);
 
-                /** UI Changes **/
                 document.getElementById('connectionStatus').innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1 animate-pulse"></span> Online';
                 document.getElementById('connectionStatus').classList.remove('text-red-400');
                 document.getElementById('connectionStatus').classList.add('text-green-400');
@@ -898,7 +1002,6 @@
                 await dbSaveContact(conn.peer, remoteUserName);
                 await renderChatLogs(conn.peer);
 
-                /** Exchange display configurations **/
                 conn.send(JSON.stringify({ type: 'profile_sync', name: myUserName }));
 
                 startWorkerHeartbeat();
@@ -933,19 +1036,46 @@
                         return;
                     }
 
+                    if (data.type === 'file_transfer_start') {
+                        const { metadata } = data;
+                        const senderId = conn.peer;
+                        fileReceiveBuffer[senderId] = [];
+                        fileReceiveMetadata[senderId] = {
+                            totalChunks: metadata.totalChunks,
+                            receivedChunks: 0,
+                            name: metadata.name,
+                            size: metadata.size,
+                            mime: metadata.mime,
+                            data: []
+                        };
+                        showToast(`Receiving "${metadata.name}"...`);
+                        return;
+                    }
+
+                    if (data.type === 'file_transfer_chunk') {
+                        processIncomingFileChunk(data, conn.peer);
+                        return;
+                    }
+
+                    if (data.type === 'file_transfer_complete') {
+                        showToast(`File "${data.fileName}" received!`);
+                        return;
+                    }
+
                     if (data.type === 'file_transfer') {
                         const generatedId = await dbSaveMessage(conn.peer, null, false, 'file_transfer', data.file);
                         addMessageToUI(null, false, 'file_transfer', data.file, generatedId);
                         return;
                     }
 
-                    /** Direct Chat text processing **/
                     const generatedId = await dbSaveMessage(conn.peer, data.text, false);
                     addMessageToUI(data.text, false, 'text', null, generatedId);
 
                 } catch (e) {
-                    const generatedId = await dbSaveMessage(conn.peer, raw, false);
-                    addMessageToUI(raw, false, 'text', null, generatedId);
+                    if (raw && typeof raw === 'string' && !raw.includes('_SYS_')) {
+                        const generatedId = await dbSaveMessage(conn.peer, raw, false);
+                        addMessageToUI(raw, false, 'text', null, generatedId);
+                    }
                 }
             });
 
@@ -1021,46 +1151,96 @@
                 const payload = { type: 'chat_msg', text: text };
                 dataConn.send(JSON.stringify(payload));
                 
-                /** Write to local IndexedDB store first to secure primary identifier Key **/
                 const generatedId = await dbSaveMessage(currentConnectedPeerId, text, true);
                 addMessageToUI(text, true, 'text', null, generatedId);
                 
                 messageInput.value = '';
-                messageInput.style.height = 'auto'; /** Reset custom textarea expansion **/
+                messageInput.style.height = 'auto';
             } catch (err) {
                 showToast("Failed to send message.", true);
             }
         }
 
-        /** ==================== DISPATCHING FILES ==================== **/
+        /** ==================== DISPATCHING FILES WITH CHUNKING ==================== **/
+        const MAX_CHUNK_SIZE = 15 * 1024;
+
         async function handleSendFile(file) {
             if (!dataConn || !dataConn.open) {
                 showToast("Cannot transfer files: Connection offline.", true);
                 return;
             }
 
+            if (file.size > 50 * 1024 * 1024) {
+                showToast("File too large (max 50MB). Please compress and try again.", true);
+                return;
+            }
+
+            showToast(`Preparing ${file.name} for transfer...`);
+
             const reader = new FileReader();
             reader.onload = async (e) => {
-                const fileObj = {
+                const base64Data = e.target.result;
+                
+                const chunks = [];
+                for (let i = 0; i < base64Data.length; i += MAX_CHUNK_SIZE) {
+                    chunks.push(base64Data.slice(i, i + MAX_CHUNK_SIZE));
+                }
+
+                const fileMetadata = {
                     name: file.name,
                     size: file.size,
                     mime: file.type,
-                    data: e.target.result
+                    totalChunks: chunks.length,
+                    chunkSize: MAX_CHUNK_SIZE
                 };
 
                 try {
                     dataConn.send(JSON.stringify({
-                        type: 'file_transfer',
-                        file: fileObj
+                        type: 'file_transfer_start',
+                        metadata: fileMetadata
                     }));
 
+                    for (let i = 0; i < chunks.length; i++) {
+                        const chunkData = {
+                            type: 'file_transfer_chunk',
+                            chunkIndex: i,
+                            totalChunks: chunks.length,
+                            data: chunks[i]
+                        };
+                        
+                        dataConn.send(JSON.stringify(chunkData));
+                        
+                        if (i % 5 === 0) {
+                            await new Promise(resolve => setTimeout(resolve, 50));
+                        }
+                    }
+
+                    dataConn.send(JSON.stringify({
+                        type: 'file_transfer_complete',
+                        fileName: file.name
+                    }));
+
+                    const fileObj = {
+                        name: file.name,
+                        size: file.size,
+                        mime: file.type,
+                        data: base64Data
+                    };
+                    
                     const generatedId = await dbSaveMessage(currentConnectedPeerId, null, true, 'file_transfer', fileObj);
                     addMessageToUI(null, true, 'file_transfer', fileObj, generatedId);
-                    showToast("File sent successfully.");
+                    showToast(`File "${file.name}" sent successfully!`);
+
                 } catch (err) {
-                    showToast("Transfer failed: Size limit exceeded.", true);
+                    console.error("File transfer error:", err);
+                    showToast(`File transfer failed: ${err.message}`, true);
                 }
             };
+
+            reader.onerror = () => {
+                showToast("Failed to read file.", true);
+            };
+
             reader.readAsDataURL(file);
         }
 
@@ -1085,6 +1265,7 @@
                 isVideoActive = requestVideo;
                 isMicMuted = false;
                 isCameraOff = false;
+                isCallInProgress = true;
 
                 if (requestVideo) {
                     document.getElementById('videoContainer').classList.remove('hidden');
@@ -1118,9 +1299,10 @@
                     rAudio.play().catch(console.error);
                 }
 
-                document.getElementById('ringtone').pause();
+                stopRingtone();
                 document.getElementById('callNotification').classList.add('hidden');
                 addSystemMessageToUI("Call active.");
+                isCallInProgress = true;
             });
 
             callObj.on('close', () => {
@@ -1137,7 +1319,7 @@
         async function answerIncomingCall(forceVideo) {
             if (!incomingCallObj) return;
             
-            document.getElementById('ringtone').pause();
+            stopRingtone();
             const shouldIncludeVideo = forceVideo || incomingCallObj.metadata?.isVideo;
 
             const constraints = {
@@ -1150,6 +1332,7 @@
                 isVideoActive = shouldIncludeVideo;
                 isMicMuted = false;
                 isCameraOff = false;
+                isCallInProgress = true;
 
                 if (shouldIncludeVideo) {
                     document.getElementById('videoContainer').classList.remove('hidden');
@@ -1183,7 +1366,7 @@
         }
 
         function cleanupMediaCall() {
-            document.getElementById('ringtone').pause();
+            stopRingtone();
             document.getElementById('callNotification').classList.add('hidden');
 
             if (activeCall) {
@@ -1222,6 +1405,7 @@
             isVideoActive = false;
             isMicMuted = false;
             isCameraOff = false;
+            isCallInProgress = false;
 
             toggleCallButtonState(false);
         }
@@ -1273,55 +1457,173 @@
             }
         }
 
+        /** ==================== FIXED CAMERA FLIP FOR MOBILE ==================== **/
         async function triggerCameraFlip() {
-            if (!localStream || !isVideoActive) return;
+    if (!localStream || !isVideoActive) {
+        showToast("No active video call to flip camera.", true);
+        return;
+    }
+    
+    // Toggle camera direction
+    usingFrontCamera = !usingFrontCamera;
+    
+    // Store current states
+    const wasMicMuted = isMicMuted;
+    const wasCamOff = isCameraOff;
+    const wasCallActive = activeCall !== null;
+    
+    try {
+        // Store the peer ID and other connection info
+        const peerId = currentConnectedPeerId;
+        
+        // Completely stop all tracks in local stream
+        if (localStream) {
+            localStream.getTracks().forEach(track => {
+                track.stop();
+            });
+            localStream = null;
+        }
+        
+        // Get new stream with opposite camera - HD Quality settings
+        const newConstraints = {
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+                sampleRate: 48000,
+                channelCount: 1
+            },
+            video: { 
+                facingMode: usingFrontCamera ? "user" : "environment",
+                width: { min: 640, ideal: 1280, max: 1920 },
+                height: { min: 480, ideal: 720, max: 1080 },
+                frameRate: { min: 24, ideal: 30, max: 60 }
+            }
+        };
+        
+        const newStream = await navigator.mediaDevices.getUserMedia(newConstraints);
+        localStream = newStream;
+        
+        // Get the actual video track to check resolution
+        const videoTrack = localStream.getVideoTracks()[0];
+        const settings = videoTrack.getSettings();
+        console.log("Camera flipped to:", settings.width + "x" + settings.height + " @ " + settings.frameRate + "fps");
+        
+        // Update local video element
+        const localVideoEl = document.getElementById('localVideo');
+        localVideoEl.srcObject = localStream;
+        await localVideoEl.play().catch(() => {});
+        
+        // Re-apply tracks to the existing peer connection
+        if (activeCall && activeCall.peerConnection) {
+            const senders = activeCall.peerConnection.getSenders();
+            const newVideoTrack = localStream.getVideoTracks()[0];
+            const newAudioTrack = localStream.getAudioTracks()[0];
             
-            const wasMicMuted = isMicMuted;
-            const wasCamOff = isCameraOff;
+            // Replace video track
+            const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+            if (videoSender && newVideoTrack) {
+                await videoSender.replaceTrack(newVideoTrack);
+                console.log("Video track replaced with HD quality");
+            } else if (newVideoTrack && activeCall.peerConnection) {
+                // If no sender exists, add the track
+                activeCall.peerConnection.addTrack(newVideoTrack, localStream);
+            }
             
-            usingFrontCamera = !usingFrontCamera;
-            const constraints = {
-                audio: true,
-                video: { facingMode: usingFrontCamera ? "user" : "environment" }
-            };
-
-            try {
-                const freshStream = await navigator.mediaDevices.getUserMedia(constraints);
-                const freshVideoTrack = freshStream.getVideoTracks()[0];
-                const freshAudioTrack = freshStream.getAudioTracks()[0];
-
-                const oldVideoTrack = localStream.getVideoTracks()[0];
-                const oldAudioTrack = localStream.getAudioTracks()[0];
-
-                if (oldVideoTrack) localStream.removeTrack(oldVideoTrack);
-                localStream.addTrack(freshVideoTrack);
-
-                if (oldAudioTrack) localStream.removeTrack(oldAudioTrack);
-                localStream.addTrack(freshAudioTrack);
-
-                document.getElementById('localVideo').srcObject = localStream;
-
-                if (activeCall) {
-                    const senders = activeCall.peerConnection?.getSenders();
-                    const vSender = senders?.find(s => s.track?.kind === 'video');
-                    if (vSender) await vSender.replaceTrack(freshVideoTrack);
-
-                    const aSender = senders?.find(s => s.track?.kind === 'audio');
-                    if (aSender) await aSender.replaceTrack(freshAudioTrack);
+            // Replace audio track
+            if (newAudioTrack) {
+                const audioSender = senders.find(s => s.track && s.track.kind === 'audio');
+                if (audioSender) {
+                    await audioSender.replaceTrack(newAudioTrack);
+                    console.log("Audio track replaced with high quality");
+                } else if (activeCall.peerConnection) {
+                    activeCall.peerConnection.addTrack(newAudioTrack, localStream);
                 }
-
-                if (oldVideoTrack) oldVideoTrack.stop();
-                if (oldAudioTrack) oldAudioTrack.stop();
-
-                localStream.getAudioTracks()[0].enabled = !wasMicMuted;
-                localStream.getVideoTracks()[0].enabled = !wasCamOff;
-                
-                showToast(`Rear camera flipped.`);
-            } catch (err) {
-                showToast("Failed to flip camera hardware.", true);
-                usingFrontCamera = !usingFrontCamera;
             }
         }
+        
+        // Restore mute/camera off states
+        const newVideoTrack = localStream.getVideoTracks()[0];
+        const newAudioTrack = localStream.getAudioTracks()[0];
+        if (newVideoTrack) {
+            newVideoTrack.enabled = !wasCamOff;
+        }
+        if (newAudioTrack) {
+            newAudioTrack.enabled = !wasMicMuted;
+        }
+        
+        // Update state
+        isMicMuted = wasMicMuted;
+        isCameraOff = wasCamOff;
+        
+        // Show resolution in toast
+        const res = newVideoTrack ? newVideoTrack.getSettings() : {};
+        const resText = res.width && res.height ? `${res.width}x${res.height}` : 'HD';
+        showToast(`Switched to ${usingFrontCamera ? 'front' : 'back'} camera (${resText})`);
+        
+    } catch (err) {
+        console.error("Camera flip error:", err);
+        showToast("Failed to flip camera. Trying lower quality...", true);
+        
+        // Fallback: Try again with lower quality settings
+        try {
+            // Clean up
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            
+            // Lower quality fallback
+            const fallbackConstraints = {
+                audio: true,
+                video: { 
+                    facingMode: usingFrontCamera ? "user" : "environment",
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                }
+            };
+            
+            const fallbackStream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+            localStream = fallbackStream;
+            
+            const localVideoEl = document.getElementById('localVideo');
+            localVideoEl.srcObject = localStream;
+            await localVideoEl.play().catch(() => {});
+            
+            if (activeCall && activeCall.peerConnection) {
+                const senders = activeCall.peerConnection.getSenders();
+                const newVideoTrack = localStream.getVideoTracks()[0];
+                const newAudioTrack = localStream.getAudioTracks()[0];
+                
+                const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+                if (videoSender && newVideoTrack) {
+                    await videoSender.replaceTrack(newVideoTrack);
+                }
+                
+                if (newAudioTrack) {
+                    const audioSender = senders.find(s => s.track && s.track.kind === 'audio');
+                    if (audioSender) {
+                        await audioSender.replaceTrack(newAudioTrack);
+                    }
+                }
+            }
+            
+            if (localStream.getVideoTracks()[0]) {
+                localStream.getVideoTracks()[0].enabled = !wasCamOff;
+            }
+            if (localStream.getAudioTracks()[0]) {
+                localStream.getAudioTracks()[0].enabled = !wasMicMuted;
+            }
+            
+            showToast(`Switched to ${usingFrontCamera ? 'front' : 'back'} camera (standard quality)`);
+            
+        } catch (fallbackErr) {
+            console.error("Fallback camera flip also failed:", fallbackErr);
+            showToast("Failed to flip camera. Please check permissions.", true);
+            usingFrontCamera = !usingFrontCamera;
+        }
+    }
+}
 
         function triggerVideoFullscreen() {
             const el = document.getElementById('videoContainer');
@@ -1385,7 +1687,6 @@
 
         document.getElementById('sendBtn').onclick = handleSendMessage;
 
-        /** Upgraded Textarea keyboard handler with Auto-growth listener integration **/
         messageInput.addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';
@@ -1414,23 +1715,24 @@
             e.target.value = '';
         };
 
-        /** Call button allocations **/
         document.getElementById('callBtn').onclick = () => startMediaCall(false);
         document.getElementById('videoCallBtn').onclick = () => startMediaCall(true);
         document.getElementById('endCallBtn').onclick = triggerManualHangup;
         document.getElementById('hangupCallBtn').onclick = triggerManualHangup;
 
-        /** Overlay control nodes **/
         document.getElementById('toggleMicBtn').onclick = toggleMicrophoneMute;
         document.getElementById('toggleCameraBtn').onclick = toggleCameraState;
         document.getElementById('switchCameraBtn').onclick = triggerCameraFlip;
         document.getElementById('fullscreenBtn').onclick = triggerVideoFullscreen;
 
-        /** In-call actions **/
-        document.getElementById('acceptCallBtn').onclick = () => answerIncomingCall(false);
-        document.getElementById('acceptVideoBtn').onclick = () => answerIncomingCall(true);
+        document.getElementById('acceptCallBtn').onclick = () => {
+            answerIncomingCall(false);
+        };
+        document.getElementById('acceptVideoBtn').onclick = () => {
+            answerIncomingCall(true);
+        };
         document.getElementById('rejectCallBtn').onclick = () => {
-            document.getElementById('ringtone').pause();
+            stopRingtone();
             if (incomingCallObj) {
                 try { incomingCallObj.close(); } catch(e) {}
             }
@@ -1439,7 +1741,6 @@
             showToast("Inbound call rejected.");
         };
 
-        /** Sidebar adaptive menu toggler **/
         document.getElementById('menuToggle').onclick = () => {
             const isClosed = sidebar.classList.contains('-translate-x-full');
             if (isClosed) {
@@ -1451,12 +1752,101 @@
             }
         };
 
-        /** Close sidebar on clicking background mask **/
         document.addEventListener('click', (e) => {
             if (window.innerWidth < 768) {
                 if (!sidebar.contains(e.target) && !document.getElementById('menuToggle').contains(e.target)) {
                     sidebar.classList.add('-translate-x-full');
                     setMobileSidebarToggleIcon(true);
+                }
+            }
+        });
+
+        /** ==================== DRAG AND DROP FILE SUPPORT ==================== **/
+        const chatContainer = document.getElementById('chatContainer');
+        const dropOverlay = document.getElementById('dropZoneOverlay');
+        let dragCounter = 0;
+
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+        });
+
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+        });
+
+        chatContainer.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dragCounter++;
+            
+            if (dragCounter === 1) {
+                dropOverlay.classList.add('show');
+                chatContainer.classList.add('drag-over');
+            }
+        });
+
+        chatContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = 'copy';
+        });
+
+        chatContainer.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dragCounter--;
+            
+            if (dragCounter === 0) {
+                dropOverlay.classList.remove('show');
+                chatContainer.classList.remove('drag-over');
+            }
+        });
+
+        chatContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            dragCounter = 0;
+            dropOverlay.classList.remove('show');
+            chatContainer.classList.remove('drag-over');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    if (file.size > 50 * 1024 * 1024) {
+                        showToast(`"${file.name}" is too large (max 50MB).`, true);
+                        continue;
+                    }
+                    handleSendFile(file);
+                }
+            }
+        });
+
+        dropOverlay.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = 'copy';
+        });
+
+        dropOverlay.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            dragCounter = 0;
+            dropOverlay.classList.remove('show');
+            chatContainer.classList.remove('drag-over');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    if (file.size > 50 * 1024 * 1024) {
+                        showToast(`"${file.name}" is too large (max 50MB).`, true);
+                        continue;
+                    }
+                    handleSendFile(file);
                 }
             }
         });
@@ -1482,20 +1872,16 @@
 
         /** ==================== ONLOAD LIFECYCLE INITIALIZER ==================== **/
         window.onload = async () => {
-            /** Initiate Mobile Responsive View constraints on startup **/
             if (window.innerWidth < 768) {
                 sidebar.classList.add('-translate-x-full');
                 setMobileSidebarToggleIcon(true);
             }
 
-            /** 1. Initialize DB Persistence Layer **/
             await initDB();
             await loadContactsFromDB();
 
-            /** 2. Spawn Peer Network Stack **/
             initPeer();
 
-            /** 3. Gracefully recover previous active P2P conversations on accidental reload **/
             const recoveredPeerId = sessionStorage.getItem('active_chat_peer_id');
             const recoveredPeerName = sessionStorage.getItem('active_chat_peer_name');
             if (recoveredPeerId && recoveredPeerName) {
