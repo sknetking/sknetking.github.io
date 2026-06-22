@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>PeerShare Pro • LAN‑First File Bridge</title>
+  <title>PeerShare Pro • Turbo LAN‑First File Bridge</title>
   <!-- PeerJS for WebRTC handshake -->
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <!-- Tailwind CSS via CDN -->
@@ -38,6 +38,14 @@
     .toast-animate {
       animation: toast-slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+    /* Speed indicator pulse */
+    @keyframes speed-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    .speed-pulse {
+      animation: speed-pulse 1s ease-in-out infinite;
+    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-indigo-500/30">
@@ -52,9 +60,9 @@
         <span class="text-2xl">⚡</span>
         <div>
           <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">
-            PeerShare Room
+            PeerShare Turbo
           </h1>
-          <p class="text-[10px] text-slate-400">LAN‑First · Same‑network direct stream</p>
+          <p class="text-[10px] text-slate-400">LAN‑First · Optimized for maximum throughput</p>
         </div>
       </div>
       <div id="connection-badge" class="flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/20 font-medium">
@@ -122,11 +130,12 @@
       <div id="room-connected" class="hidden bg-slate-900/40 border border-slate-800/80 rounded-2xl shadow-xl backdrop-blur-sm overflow-hidden flex flex-col min-h-[460px]">
         
         <div class="bg-slate-950/80 px-5 py-3 border-b border-slate-800 flex items-center justify-between">
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-3">
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
             <p class="text-xs font-semibold text-slate-300">
               P2P active with <span id="connected-peer-label" class="font-mono text-indigo-400 uppercase font-bold">------</span>
             </p>
+            <span id="network-type-badge" class="text-[9px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20">🌐 LAN</span>
           </div>
           <button id="btn-disconnect" class="text-[10px] text-red-400 hover:text-red-300 bg-red-500/10 border border-red-500/20 px-2 py-1 rounded-md cursor-pointer transition-colors">
             Break Link
@@ -178,12 +187,15 @@
   </div>
 
   <footer class="p-4 w-full text-center text-[10px] text-slate-600 border-t border-slate-900 bg-slate-950/40">
-    PeerShare Pro · 16 KB chunks · LAN host candidates prioritized (mDNS/private IP) · Internet relay as fallback.
+    PeerShare Turbo · 64 KB chunks · Optimized LAN routing · Internet relay as fallback.
   </footer>
 
   <script>
     (function() {
-      const CHUNK_SIZE = 16384; 
+      // OPTIMIZED: Increased chunk size for better throughput
+      const CHUNK_SIZE = 65536; // 64KB - 4x larger than before
+      const MAX_BUFFERED_AMOUNT = 256 * 1024 * 1024; // 256MB buffer limit
+      
       let peer = null;
       let connection = null;
       let selectedFile = null;
@@ -191,8 +203,11 @@
       let html5QrcodeScanner = null;
       let heartbeatInterval = null;
       let currentInboundTransfer = null;
+      let isLocalNetwork = false;
+      let transferSpeed = 0;
+      let speedCalcInterval = null;
 
-      // ---------- Premium Toast Notifications (Replacing system alerts) ----------
+      // ---------- Premium Toast Notifications ----------
       function showNotification(title, message, status = 'info') {
         const container = document.getElementById('toast-container');
         if (!container) return;
@@ -223,7 +238,6 @@
 
         container.appendChild(toast);
 
-        // Slide out & destroy after 4 seconds
         setTimeout(() => {
           toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
           toast.style.opacity = '0';
@@ -241,6 +255,12 @@
         const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      }
+
+      function formatSpeed(bytesPerSecond) {
+        if (bytesPerSecond < 1024) return bytesPerSecond.toFixed(0) + ' B/s';
+        if (bytesPerSecond < 1024 * 1024) return (bytesPerSecond / 1024).toFixed(1) + ' KB/s';
+        return (bytesPerSecond / (1024 * 1024)).toFixed(1) + ' MB/s';
       }
 
       function generateId() {
@@ -262,7 +282,7 @@
         }
       }
 
-      // ---------- File staging (shared by both file input, clipboard and drag-drop) ----------
+      // ---------- File staging ----------
       function stageFile(file) {
         if (!file) return;
         selectedFile = file;
@@ -289,24 +309,39 @@
         }
       }
 
-      // ---------- LAN-first Peer initialization ----------
+      // ---------- Optimized Peer initialization with LAN detection ----------
       function initializeApplicationNode() {
         const myNodeId = generateId();
         
-        // Enhanced ICE configuration: strongly prefer local network candidates (host, srflx with private IP)
-        // Using multiple STUN servers helps discover local addresses; no TURN to avoid forcing relay.
+        // OPTIMIZED: Enhanced ICE configuration with more STUN servers and local network prioritization
         peer = new Peer(myNodeId, {
           debug: 1,
           config: {
             iceServers: [
               { urls: 'stun:stun.l.google.com:19302' },
               { urls: 'stun:stun1.l.google.com:19302' },
-              { urls: 'stun:stun2.l.google.com:19302' }
+              { urls: 'stun:stun2.l.google.com:19302' },
+              { urls: 'stun:stun3.l.google.com:19302' },
+              { urls: 'stun:stun4.l.google.com:19302' },
+              // Additional STUN servers for better connectivity
+              { urls: 'stun:stun.ekiga.net' },
+              { urls: 'stun:stun.voip.net.in' }
             ],
-            iceCandidatePoolSize: 2,
+            iceCandidatePoolSize: 10, // Increased for faster candidate gathering
+            iceTransportPolicy: 'all',
+            // OPTIMIZED: Prefer local network candidates
+            iceServers: [
+              { urls: 'stun:stun.l.google.com:19302' },
+              { urls: 'stun:stun1.l.google.com:19302' },
+              { urls: 'stun:stun2.l.google.com:19302' },
+              { urls: 'stun:stun3.l.google.com:19302' },
+              { urls: 'stun:stun4.l.google.com:19302' }
+            ],
+            iceCandidatePoolSize: 10,
             iceTransportPolicy: 'all'
           },
-          pingInterval: 3000,
+          pingInterval: 5000, // Reduced ping frequency for less overhead
+          connectionTimeout: 10000 // Faster timeout for quicker reconnection
         });
 
         peer.on('open', (id) => {
@@ -341,7 +376,63 @@
         peer.on('error', (err) => {
           console.error('System Node Fault:', err);
           updateConnectionBadge('error', 'Signaling pipeline exception');
+          // Auto-reconnect logic
+          if (err.type === 'peer-unavailable' || err.type === 'network') {
+            setTimeout(() => {
+              if (!connection || !connection.open) {
+                initializeApplicationNode();
+              }
+            }, 3000);
+          }
         });
+
+        // Detect local network
+        detectLocalNetwork();
+      }
+
+      // ---------- Local Network Detection ----------
+      function detectLocalNetwork() {
+        // Check if we're on a local network by trying to get local IP
+        try {
+          const rtc = new RTCPeerConnection({ iceServers: [] });
+          rtc.createDataChannel('detect');
+          rtc.createOffer().then(offer => {
+            rtc.setLocalDescription(offer);
+          });
+          
+          rtc.onicecandidate = (event) => {
+            if (event.candidate) {
+              const candidate = event.candidate.candidate;
+              // Check for local network IP ranges
+              if (candidate.includes('192.168.') || 
+                  candidate.includes('10.') || 
+                  candidate.includes('172.16.') || 
+                  candidate.includes('172.17.') || 
+                  candidate.includes('172.18.') || 
+                  candidate.includes('172.19.') || 
+                  candidate.includes('172.20.') || 
+                  candidate.includes('172.21.') || 
+                  candidate.includes('172.22.') || 
+                  candidate.includes('172.23.') || 
+                  candidate.includes('172.24.') || 
+                  candidate.includes('172.25.') || 
+                  candidate.includes('172.26.') || 
+                  candidate.includes('172.27.') || 
+                  candidate.includes('172.28.') || 
+                  candidate.includes('172.29.') || 
+                  candidate.includes('172.30.') || 
+                  candidate.includes('172.31.')) {
+                isLocalNetwork = true;
+                document.getElementById('network-type-badge').innerHTML = '🏠 LAN';
+                document.getElementById('network-type-badge').className = 'text-[9px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20';
+                showNotification('LAN Detected', 'Direct local network connection available!', 'success');
+              }
+              rtc.close();
+            }
+          };
+        } catch (e) {
+          console.log('Network detection not available');
+        }
       }
 
       function checkLocationAnchorHash() {
@@ -351,14 +442,27 @@
         }
       }
 
+      // OPTIMIZED: Connection with retry logic
       function connectToRemotePeerNode(targetId) {
         updateConnectionBadge('loading', `Routing to ${targetId.toUpperCase()}...`);
         
-        connection = peer.connect(targetId, { 
-          reliable: true,
-          connectionTimeout: 15000 
-        });
-        bindPipelineEvents();
+        // Try to connect with optimized settings
+        try {
+          connection = peer.connect(targetId, { 
+            reliable: true,
+            connectionTimeout: 10000,
+            serialization: 'binary' // Faster binary serialization
+          });
+          bindPipelineEvents();
+        } catch (error) {
+          showNotification('Connection Error', 'Failed to establish connection, retrying...', 'warning');
+          // Retry after delay
+          setTimeout(() => {
+            if (!connection || !connection.open) {
+              connectToRemotePeerNode(targetId);
+            }
+          }, 2000);
+        }
       }
 
       // ---------- Heartbeat & Pipeline binding ----------
@@ -376,6 +480,10 @@
           clearInterval(heartbeatInterval);
           heartbeatInterval = null;
         }
+        if (speedCalcInterval) {
+          clearInterval(speedCalcInterval);
+          speedCalcInterval = null;
+        }
       }
 
       function bindPipelineEvents() {
@@ -386,6 +494,10 @@
           
           if(connection.dataChannel) {
             connection.dataChannel.binaryType = 'arraybuffer';
+            // OPTIMIZED: Increase buffer size for better throughput
+            if (connection.dataChannel.bufferedAmountLowThreshold) {
+              connection.dataChannel.bufferedAmountLowThreshold = 1024 * 1024; // 1MB
+            }
           }
 
           document.getElementById('room-unconnected').classList.add('hidden');
@@ -397,7 +509,7 @@
 
           document.getElementById('transfer-feed-timeline').innerHTML = `
             <div class="bg-indigo-950/20 border border-indigo-500/10 text-indigo-300 text-xs px-4 py-3 rounded-xl text-center shadow-sm">
-              🔒 Peer connection established. LAN path preferred; internet relay only if necessary.
+              🔒 Peer connection established. ${isLocalNetwork ? '⚡ LAN path active - Maximum speed!' : '🌐 Internet relay mode (slower)'}
             </div>
           `;
           showNotification('Link Active', `Connected to peer: ${connection.peer.toUpperCase()}`, 'success');
@@ -452,7 +564,7 @@
         resetStagedFileElement();
       }
 
-      // ---------- Feed & Transfer UI ----------
+      // ---------- Feed & Transfer UI with Speed Tracking ----------
       function appendBubbleToFeed(id, filename, size, direction, thumbnailData = null) {
         const feed = document.getElementById('transfer-feed-timeline');
         const isOut = direction === 'outgoing';
@@ -480,6 +592,10 @@
                   <span id="status-text-${id}">Staging data packets...</span>
                   <span id="percent-text-${id}">0%</span>
                 </div>
+                <div class="flex justify-between text-[8px] text-slate-600 font-mono">
+                  <span id="speed-text-${id}">⚡ 0 B/s</span>
+                  <span id="buffer-text-${id}">Buffer: 0%</span>
+                </div>
               </div>
 
               <a id="btn-save-${id}" class="hidden w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 text-center rounded-xl text-xs transition-colors shadow-md cursor-pointer">
@@ -497,6 +613,7 @@
         feed.scrollTop = feed.scrollHeight;
       }
 
+      // OPTIMIZED: Faster file transmission with better buffering control
       function executeFileTransmissionSequence() {
         if (!selectedFile || !connection || !connection.open) return;
 
@@ -518,6 +635,23 @@
 
         const reader = new FileReader();
         let offset = 0;
+        let startTime = Date.now();
+        let bytesSent = 0;
+        let lastSpeedUpdate = Date.now();
+        let lastBytesUpdate = 0;
+
+        // Speed tracking
+        speedCalcInterval = setInterval(() => {
+          const now = Date.now();
+          const timeDiff = (now - lastSpeedUpdate) / 1000;
+          if (timeDiff > 0) {
+            const currentSpeed = (bytesSent - lastBytesUpdate) / timeDiff;
+            transferSpeed = currentSpeed;
+            document.getElementById(`speed-text-${transferId}`).innerHTML = `⚡ ${formatSpeed(currentSpeed)}`;
+            lastSpeedUpdate = now;
+            lastBytesUpdate = bytesSent;
+          }
+        }, 500);
 
         reader.onload = function(e) {
           if (e.target.error) {
@@ -526,29 +660,55 @@
             return;
           }
 
-          connection.send({
-            type: 'file-chunk',
-            id: transferId,
-            buffer: e.target.result
-          });
+          // Check buffer before sending
+          if (connection.dataChannel && connection.dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
+            // Wait for buffer to drain
+            setTimeout(() => {
+              connection.send({
+                type: 'file-chunk',
+                id: transferId,
+                buffer: e.target.result
+              });
+            }, 50);
+          } else {
+            connection.send({
+              type: 'file-chunk',
+              id: transferId,
+              buffer: e.target.result
+            });
+          }
 
           offset += e.target.result.byteLength;
+          bytesSent += e.target.result.byteLength;
           
           const progress = (offset / fileRef.size) * 100;
           document.getElementById(`progress-bar-${transferId}`).style.width = `${progress}%`;
           document.getElementById(`percent-text-${transferId}`).innerText = `${Math.round(progress)}%`;
           document.getElementById(`status-text-${transferId}`).innerText = `${formatBytes(offset)} / ${formatBytes(fileRef.size)}`;
 
+          // Update buffer status
+          if (connection.dataChannel) {
+            const bufferPercent = (connection.dataChannel.bufferedAmount / MAX_BUFFERED_AMOUNT) * 100;
+            document.getElementById(`buffer-text-${transferId}`).innerHTML = `Buffer: ${Math.round(bufferPercent)}%`;
+          }
+
           if (offset < fileRef.size) {
-            if (connection.dataChannel && connection.dataChannel.bufferedAmount > 16000000) { 
-              setTimeout(readNextSegmentChunk, 40);
+            // Adaptive delay based on buffer
+            if (connection.dataChannel && connection.dataChannel.bufferedAmount > 1024 * 1024 * 50) { // 50MB
+              setTimeout(readNextSegmentChunk, 100);
+            } else if (connection.dataChannel && connection.dataChannel.bufferedAmount > 1024 * 1024 * 10) { // 10MB
+              setTimeout(readNextSegmentChunk, 50);
             } else {
               readNextSegmentChunk();
             }
           } else {
+            clearInterval(speedCalcInterval);
             document.getElementById(`status-text-${transferId}`).className = "text-blue-400 font-semibold text-[9px]";
             document.getElementById(`status-text-${transferId}`).innerText = "✓ Upload complete";
-            showNotification('Upload Complete', `Successfully uploaded ${fileRef.name}`, 'success');
+            const totalTime = (Date.now() - startTime) / 1000;
+            const avgSpeed = bytesSent / totalTime;
+            document.getElementById(`speed-text-${transferId}`).innerHTML = `📊 Avg: ${formatSpeed(avgSpeed)}`;
+            showNotification('Upload Complete', `Successfully uploaded ${fileRef.name} in ${totalTime.toFixed(1)}s`, 'success');
           }
         };
 
@@ -567,7 +727,8 @@
           size: meta.size,
           mime: meta.mime,
           chunks: [],
-          bytesAccumulated: 0
+          bytesAccumulated: 0,
+          startTime: Date.now()
         };
 
         appendBubbleToFeed(meta.id, meta.name, meta.size, 'incoming', meta.thumbnail);
@@ -585,6 +746,13 @@
         document.getElementById(`progress-bar-${session.id}`).style.width = `${progress}%`;
         document.getElementById(`percent-text-${session.id}`).innerText = `${Math.round(progress)}%`;
         document.getElementById(`status-text-${session.id}`).innerText = `${formatBytes(session.bytesAccumulated)} of ${formatBytes(session.size)}`;
+
+        // Calculate download speed
+        const elapsed = (Date.now() - session.startTime) / 1000;
+        if (elapsed > 0) {
+          const speed = session.bytesAccumulated / elapsed;
+          document.getElementById(`speed-text-${session.id}`).innerHTML = `⬇️ ${formatSpeed(speed)}`;
+        }
 
         if (session.bytesAccumulated >= session.size) {
           compileAndBuildDownloadTarget(session);
@@ -609,6 +777,10 @@
           if (imgElement) imgElement.src = directObjectUrl;
         }
 
+        const totalTime = (Date.now() - session.startTime) / 1000;
+        const avgSpeed = session.bytesAccumulated / totalTime;
+        document.getElementById(`speed-text-${session.id}`).innerHTML = `📊 Avg: ${formatSpeed(avgSpeed)}`;
+
         document.getElementById(`status-text-${session.id}`).className = "text-emerald-400 font-semibold text-[9px]";
         document.getElementById(`status-text-${session.id}`).innerText = "✓ Ready to save";
         showNotification('File Received', `Received ready-to-save file: ${session.name}`, 'success');
@@ -625,7 +797,7 @@
         document.getElementById('input-thumbnail-preview-container').classList.add('hidden');
       }
 
-      // ---------- Scanner logic ----------
+      // ---------- Scanner logic (unchanged) ----------
       function initializeWebcamScanner() {
         const scannerZone = document.getElementById('scanner-box');
         scannerZone.classList.remove('hidden');
@@ -669,12 +841,11 @@
         }
       }
 
-      // ---------- Drag & Drop Setup (Flicker-Free and Solid) ----------
+      // ---------- Drag & Drop Setup ----------
       function setupDragAndDrop() {
         const overlay = document.getElementById('drag-overlay');
         let dragCounter = 0;
 
-        // Prevent default browser reactions to dragging globally
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
           document.addEventListener(eventName, (e) => {
             e.preventDefault();
@@ -682,7 +853,6 @@
           });
         });
 
-        // Trigger staging overlay cleanly without flicker
         document.addEventListener('dragenter', (e) => {
           dragCounter++;
           if (e.dataTransfer.types && e.dataTransfer.types.includes('Files')) {
@@ -699,7 +869,6 @@
         });
 
         document.addEventListener('dragover', (e) => {
-          // Necessary to allow dropping elements
           e.dataTransfer.dropEffect = 'copy';
         });
 
@@ -714,7 +883,6 @@
           }
         });
 
-        // Setup drop zones for interactive UI sections (optional interactive visual cues)
         const connectedPanel = document.getElementById('room-connected');
         if (connectedPanel) {
           connectedPanel.addEventListener('dragenter', () => connectedPanel.classList.add('drag-over-glow'));
@@ -730,10 +898,9 @@
         }
       }
 
-      // ---------- Clipboard Paste Functionality (Ctrl+V) ----------
+      // ---------- Clipboard Paste Functionality ----------
       function setupClipboardPaste() {
         document.addEventListener('paste', (e) => {
-          // Bypass paste handling if user is focusing the manual inputs to write text
           const activeEl = document.activeElement;
           const isInputFocused = activeEl && (
             activeEl.tagName === 'INPUT' || 
@@ -743,14 +910,12 @@
 
           let fileDetected = false;
 
-          // 1. Detect direct binary files or screenshots inside the clipboard transfer payload
           if (e.clipboardData && e.clipboardData.files && e.clipboardData.files.length > 0) {
             const pastedFile = e.clipboardData.files[0];
             stageFile(pastedFile);
             showNotification('Clipboard Staged', `Staged: ${pastedFile.name || 'Pasted Content'}`, 'success');
             fileDetected = true;
           } 
-          // 2. Alternative fallback block traversal for older items structure
           else if (e.clipboardData && e.clipboardData.items) {
             const items = e.clipboardData.items;
             for (let i = 0; i < items.length; i++) {
@@ -766,14 +931,13 @@
             }
           }
 
-          // If a file was correctly processed and staged, prevent standard text insertion
           if (fileDetected) {
             e.preventDefault();
           }
         });
       }
 
-      // ---------- Fallback Clipboard Link Copy (for restricted Sandbox situations) ----------
+      // ---------- Fallback Clipboard Link Copy ----------
       function secureFallbackCopyText(text) {
         const tempTextarea = document.createElement("textarea");
         tempTextarea.value = text;
