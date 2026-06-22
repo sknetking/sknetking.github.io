@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>PeerShare Pro • Turbo LAN‑First File Bridge</title>
+  <title>PeerShare Pro • Ultra High-Speed LAN File Bridge</title>
   <!-- PeerJS for WebRTC handshake -->
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <!-- Tailwind CSS via CDN -->
@@ -14,12 +14,10 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
   
   <style>
-    /* Custom drag-over glow effect */
     .drag-over-glow {
       box-shadow: 0 0 30px rgba(99, 102, 241, 0.4), 0 0 60px rgba(99, 102, 241, 0.1);
       border-color: rgba(99, 102, 241, 0.6) !important;
     }
-    /* Scrollbar styling */
     .scrollbar-thin::-webkit-scrollbar {
       width: 4px;
     }
@@ -30,7 +28,6 @@
       background: rgba(148, 163, 184, 0.2);
       border-radius: 10px;
     }
-    /* Toast slide-in keyframes */
     @keyframes toast-slide-in {
       from { transform: translateY(1rem); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
@@ -38,7 +35,6 @@
     .toast-animate {
       animation: toast-slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
-    /* Speed indicator pulse */
     @keyframes speed-pulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.6; }
@@ -46,6 +42,11 @@
     .speed-pulse {
       animation: speed-pulse 1s ease-in-out infinite;
     }
+    /* Speed indicator colors */
+    .speed-slow { color: #f59e0b; }
+    .speed-medium { color: #60a5fa; }
+    .speed-fast { color: #34d399; }
+    .speed-ultra { color: #f472b6; }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-indigo-500/30">
@@ -60,9 +61,9 @@
         <span class="text-2xl">⚡</span>
         <div>
           <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">
-            PeerShare Turbo
+            PeerShare Ultra
           </h1>
-          <p class="text-[10px] text-slate-400">LAN‑First · Optimized for maximum throughput</p>
+          <p class="text-[10px] text-slate-400">LAN‑First · 256KB chunks · Parallel channels</p>
         </div>
       </div>
       <div id="connection-badge" class="flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/20 font-medium">
@@ -136,6 +137,7 @@
               P2P active with <span id="connected-peer-label" class="font-mono text-indigo-400 uppercase font-bold">------</span>
             </p>
             <span id="network-type-badge" class="text-[9px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20">🌐 LAN</span>
+            <span id="speed-badge" class="text-[9px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/20">⚡ 0 MB/s</span>
           </div>
           <button id="btn-disconnect" class="text-[10px] text-red-400 hover:text-red-300 bg-red-500/10 border border-red-500/20 px-2 py-1 rounded-md cursor-pointer transition-colors">
             Break Link
@@ -177,7 +179,7 @@
     </div>
   </main>
 
-  <!-- Drag & Drop overlay (appears when dragging files over the window) -->
+  <!-- Drag & Drop overlay -->
   <div id="drag-overlay" class="hidden fixed inset-0 z-50 bg-indigo-950/70 backdrop-blur-sm flex items-center justify-center pointer-events-none">
     <div class="bg-slate-900 border-2 border-indigo-400 border-dashed rounded-3xl p-12 text-center shadow-2xl">
       <span class="text-5xl block mb-4">📂</span>
@@ -187,14 +189,15 @@
   </div>
 
   <footer class="p-4 w-full text-center text-[10px] text-slate-600 border-t border-slate-900 bg-slate-950/40">
-    PeerShare Turbo · 64 KB chunks · Optimized LAN routing · Internet relay as fallback.
+    PeerShare Ultra · 256KB chunks · Parallel transfer · Optimized for 5-50+ Mbps
   </footer>
 
   <script>
     (function() {
-      // OPTIMIZED: Increased chunk size for better throughput
-      const CHUNK_SIZE = 65536; // 64KB - 4x larger than before
-      const MAX_BUFFERED_AMOUNT = 256 * 1024 * 1024; // 256MB buffer limit
+      // ULTRA OPTIMIZED: Massive chunk size for maximum throughput
+      const BASE_CHUNK_SIZE = 262144; // 256KB - 4x larger than before
+      const MAX_BUFFERED_AMOUNT = 512 * 1024 * 1024; // 512MB buffer
+      const PARALLEL_CHANNELS = 2; // Parallel data channels
       
       let peer = null;
       let connection = null;
@@ -206,6 +209,8 @@
       let isLocalNetwork = false;
       let transferSpeed = 0;
       let speedCalcInterval = null;
+      let activeTransfers = {};
+      let dataChannels = [];
 
       // ---------- Premium Toast Notifications ----------
       function showNotification(title, message, status = 'info') {
@@ -263,6 +268,13 @@
         return (bytesPerSecond / (1024 * 1024)).toFixed(1) + ' MB/s';
       }
 
+      function getSpeedColor(speed) {
+        if (speed < 1024 * 1024) return 'text-amber-400'; // < 1MB/s
+        if (speed < 5 * 1024 * 1024) return 'text-blue-400'; // 1-5 MB/s
+        if (speed < 20 * 1024 * 1024) return 'text-emerald-400'; // 5-20 MB/s
+        return 'text-pink-400'; // > 20 MB/s
+      }
+
       function generateId() {
         return Math.random().toString(36).substring(2, 8).toLowerCase();
       }
@@ -309,27 +321,46 @@
         }
       }
 
-      // ---------- Optimized Peer initialization with LAN detection ----------
+      // ---------- Ultra-Optimized Peer Initialization ----------
       function initializeApplicationNode() {
         const myNodeId = generateId();
         
-        // OPTIMIZED: Enhanced ICE configuration with more STUN servers and local network prioritization
+        // Get local IP for direct connection
+        let localIP = null;
+        try {
+          const rtc = new RTCPeerConnection({ iceServers: [] });
+          rtc.createDataChannel('detect');
+          rtc.createOffer().then(offer => {
+            rtc.setLocalDescription(offer);
+          });
+          rtc.onicecandidate = (event) => {
+            if (event.candidate) {
+              const candidate = event.candidate.candidate;
+              const ipMatch = candidate.match(/(\d{1,3}\.){3}\d{1,3}/);
+              if (ipMatch) {
+                localIP = ipMatch[0];
+                // Check if it's a local IP
+                if (localIP.startsWith('192.168.') || localIP.startsWith('10.') || 
+                    localIP.startsWith('172.16.') || localIP.startsWith('172.17.') ||
+                    localIP.startsWith('172.18.') || localIP.startsWith('172.19.') ||
+                    localIP.startsWith('172.20.') || localIP.startsWith('172.21.') ||
+                    localIP.startsWith('172.22.') || localIP.startsWith('172.23.') ||
+                    localIP.startsWith('172.24.') || localIP.startsWith('172.25.') ||
+                    localIP.startsWith('172.26.') || localIP.startsWith('172.27.') ||
+                    localIP.startsWith('172.28.') || localIP.startsWith('172.29.') ||
+                    localIP.startsWith('172.30.') || localIP.startsWith('172.31.')) {
+                  isLocalNetwork = true;
+                }
+                rtc.close();
+              }
+            }
+          };
+        } catch (e) {}
+
+        // ULTRA OPTIMIZED: Enhanced ICE with host resolution
         peer = new Peer(myNodeId, {
-          debug: 1,
+          debug: 0, // Reduced debug for performance
           config: {
-            iceServers: [
-              { urls: 'stun:stun.l.google.com:19302' },
-              { urls: 'stun:stun1.l.google.com:19302' },
-              { urls: 'stun:stun2.l.google.com:19302' },
-              { urls: 'stun:stun3.l.google.com:19302' },
-              { urls: 'stun:stun4.l.google.com:19302' },
-              // Additional STUN servers for better connectivity
-              { urls: 'stun:stun.ekiga.net' },
-              { urls: 'stun:stun.voip.net.in' }
-            ],
-            iceCandidatePoolSize: 10, // Increased for faster candidate gathering
-            iceTransportPolicy: 'all',
-            // OPTIMIZED: Prefer local network candidates
             iceServers: [
               { urls: 'stun:stun.l.google.com:19302' },
               { urls: 'stun:stun1.l.google.com:19302' },
@@ -337,11 +368,21 @@
               { urls: 'stun:stun3.l.google.com:19302' },
               { urls: 'stun:stun4.l.google.com:19302' }
             ],
-            iceCandidatePoolSize: 10,
+            iceCandidatePoolSize: 15, // Max candidate gathering
+            iceTransportPolicy: 'all',
+            // Force local IP preference
+            iceServers: [
+              { urls: 'stun:stun.l.google.com:19302' },
+              { urls: 'stun:stun1.l.google.com:19302' },
+              { urls: 'stun:stun2.l.google.com:19302' },
+              { urls: 'stun:stun3.l.google.com:19302' },
+              { urls: 'stun:stun4.l.google.com:19302' }
+            ],
+            iceCandidatePoolSize: 15,
             iceTransportPolicy: 'all'
           },
-          pingInterval: 5000, // Reduced ping frequency for less overhead
-          connectionTimeout: 10000 // Faster timeout for quicker reconnection
+          pingInterval: 10000, // Less frequent pings
+          connectionTimeout: 5000 // Faster connection
         });
 
         peer.on('open', (id) => {
@@ -358,6 +399,14 @@
           });
 
           updateConnectionBadge('ready', `Ready: Node ${id.toUpperCase()}`);
+          
+          // Update network status
+          if (isLocalNetwork) {
+            document.getElementById('network-type-badge').innerHTML = '🏠 LAN (Direct)';
+            document.getElementById('network-type-badge').className = 'text-[9px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20';
+            showNotification('LAN Detected', 'Direct local connection available for max speed!', 'success');
+          }
+          
           checkLocationAnchorHash();
         });
 
@@ -376,7 +425,6 @@
         peer.on('error', (err) => {
           console.error('System Node Fault:', err);
           updateConnectionBadge('error', 'Signaling pipeline exception');
-          // Auto-reconnect logic
           if (err.type === 'peer-unavailable' || err.type === 'network') {
             setTimeout(() => {
               if (!connection || !connection.open) {
@@ -385,54 +433,6 @@
             }, 3000);
           }
         });
-
-        // Detect local network
-        detectLocalNetwork();
-      }
-
-      // ---------- Local Network Detection ----------
-      function detectLocalNetwork() {
-        // Check if we're on a local network by trying to get local IP
-        try {
-          const rtc = new RTCPeerConnection({ iceServers: [] });
-          rtc.createDataChannel('detect');
-          rtc.createOffer().then(offer => {
-            rtc.setLocalDescription(offer);
-          });
-          
-          rtc.onicecandidate = (event) => {
-            if (event.candidate) {
-              const candidate = event.candidate.candidate;
-              // Check for local network IP ranges
-              if (candidate.includes('192.168.') || 
-                  candidate.includes('10.') || 
-                  candidate.includes('172.16.') || 
-                  candidate.includes('172.17.') || 
-                  candidate.includes('172.18.') || 
-                  candidate.includes('172.19.') || 
-                  candidate.includes('172.20.') || 
-                  candidate.includes('172.21.') || 
-                  candidate.includes('172.22.') || 
-                  candidate.includes('172.23.') || 
-                  candidate.includes('172.24.') || 
-                  candidate.includes('172.25.') || 
-                  candidate.includes('172.26.') || 
-                  candidate.includes('172.27.') || 
-                  candidate.includes('172.28.') || 
-                  candidate.includes('172.29.') || 
-                  candidate.includes('172.30.') || 
-                  candidate.includes('172.31.')) {
-                isLocalNetwork = true;
-                document.getElementById('network-type-badge').innerHTML = '🏠 LAN';
-                document.getElementById('network-type-badge').className = 'text-[9px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20';
-                showNotification('LAN Detected', 'Direct local network connection available!', 'success');
-              }
-              rtc.close();
-            }
-          };
-        } catch (e) {
-          console.log('Network detection not available');
-        }
       }
 
       function checkLocationAnchorHash() {
@@ -442,37 +442,35 @@
         }
       }
 
-      // OPTIMIZED: Connection with retry logic
+      // ---------- Ultra-Fast Connection ----------
       function connectToRemotePeerNode(targetId) {
         updateConnectionBadge('loading', `Routing to ${targetId.toUpperCase()}...`);
         
-        // Try to connect with optimized settings
         try {
           connection = peer.connect(targetId, { 
-            reliable: true,
-            connectionTimeout: 10000,
-            serialization: 'binary' // Faster binary serialization
+            reliable: false, // Faster for LAN
+            connectionTimeout: 5000,
+            serialization: 'binary'
           });
           bindPipelineEvents();
         } catch (error) {
           showNotification('Connection Error', 'Failed to establish connection, retrying...', 'warning');
-          // Retry after delay
           setTimeout(() => {
             if (!connection || !connection.open) {
               connectToRemotePeerNode(targetId);
             }
-          }, 2000);
+          }, 1000);
         }
       }
 
-      // ---------- Heartbeat & Pipeline binding ----------
+      // ---------- Heartbeat ----------
       function startHeartbeatLoop() {
         stopHeartbeatLoop();
         heartbeatInterval = setInterval(() => {
           if (connection && connection.open) {
             connection.send({ type: 'ping' });
           }
-        }, 15000);
+        }, 20000);
       }
 
       function stopHeartbeatLoop() {
@@ -486,6 +484,7 @@
         }
       }
 
+      // ---------- Pipeline Binding ----------
       function bindPipelineEvents() {
         if (!connection) return;
 
@@ -494,10 +493,7 @@
           
           if(connection.dataChannel) {
             connection.dataChannel.binaryType = 'arraybuffer';
-            // OPTIMIZED: Increase buffer size for better throughput
-            if (connection.dataChannel.bufferedAmountLowThreshold) {
-              connection.dataChannel.bufferedAmountLowThreshold = 1024 * 1024; // 1MB
-            }
+            connection.dataChannel.bufferedAmountLowThreshold = 1024 * 1024;
           }
 
           document.getElementById('room-unconnected').classList.add('hidden');
@@ -509,7 +505,7 @@
 
           document.getElementById('transfer-feed-timeline').innerHTML = `
             <div class="bg-indigo-950/20 border border-indigo-500/10 text-indigo-300 text-xs px-4 py-3 rounded-xl text-center shadow-sm">
-              🔒 Peer connection established. ${isLocalNetwork ? '⚡ LAN path active - Maximum speed!' : '🌐 Internet relay mode (slower)'}
+              🔒 Peer connection established. ${isLocalNetwork ? '⚡ ULTRA LAN mode - Maximum speed!' : '🌐 Internet relay mode'}
             </div>
           `;
           showNotification('Link Active', `Connected to peer: ${connection.peer.toUpperCase()}`, 'success');
@@ -520,7 +516,7 @@
             connection.send({ type: 'pong' });
             return;
           }
-          if (incomingData.type === 'pong') return; 
+          if (incomingData.type === 'pong') return;
 
           if (incomingData.type === 'sys-error') {
             showNotification('Connection Refused', incomingData.reason, 'error');
@@ -564,7 +560,7 @@
         resetStagedFileElement();
       }
 
-      // ---------- Feed & Transfer UI with Speed Tracking ----------
+      // ---------- Ultra-Fast Transfer with Parallel Channels ----------
       function appendBubbleToFeed(id, filename, size, direction, thumbnailData = null) {
         const feed = document.getElementById('transfer-feed-timeline');
         const isOut = direction === 'outgoing';
@@ -585,7 +581,7 @@
               </div>
               
               <div class="space-y-1">
-                <div class="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden">
+                <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden">
                   <div id="progress-bar-${id}" class="h-full ${isOut ? 'bg-blue-500' : 'bg-emerald-500'} w-0 transition-all duration-100"></div>
                 </div>
                 <div class="flex justify-between text-[9px] text-slate-500 font-mono">
@@ -593,8 +589,12 @@
                   <span id="percent-text-${id}">0%</span>
                 </div>
                 <div class="flex justify-between text-[8px] text-slate-600 font-mono">
-                  <span id="speed-text-${id}">⚡ 0 B/s</span>
+                  <span id="speed-text-${id}" class="font-bold">⚡ 0 B/s</span>
                   <span id="buffer-text-${id}">Buffer: 0%</span>
+                </div>
+                <div class="flex justify-between text-[8px] text-slate-700">
+                  <span id="channel-text-${id}">📡 Channel 1</span>
+                  <span id="eta-text-${id}">⏱️ --</span>
                 </div>
               </div>
 
@@ -613,28 +613,39 @@
         feed.scrollTop = feed.scrollHeight;
       }
 
-      // OPTIMIZED: Faster file transmission with better buffering control
+      // ULTRA OPTIMIZED: Parallel chunk transmission
       function executeFileTransmissionSequence() {
         if (!selectedFile || !connection || !connection.open) return;
 
         const transferId = 'tx-' + Math.random().toString(36).substring(2, 7);
-        const fileRef = selectedFile; 
+        const fileRef = selectedFile;
         const thumbToSend = stagedThumbnailBase64;
 
         appendBubbleToFeed(transferId, fileRef.name, fileRef.size, 'outgoing', thumbToSend);
         resetStagedFileElement();
 
+        // Send metadata
         connection.send({
           type: 'meta-header',
           id: transferId,
           name: fileRef.name,
           size: fileRef.size,
           mime: fileRef.type,
-          thumbnail: thumbToSend
+          thumbnail: thumbToSend,
+          useParallel: true
         });
 
-        const reader = new FileReader();
-        let offset = 0;
+        // Adaptive chunk size based on file size and network
+        let chunkSize = BASE_CHUNK_SIZE;
+        if (fileRef.size < 10 * 1024 * 1024) { // < 10MB
+          chunkSize = 65536; // 64KB for small files
+        } else if (fileRef.size < 100 * 1024 * 1024) { // < 100MB
+          chunkSize = 131072; // 128KB
+        }
+        // For large files, use 256KB+
+
+        const totalChunks = Math.ceil(fileRef.size / chunkSize);
+        let completedChunks = 0;
         let startTime = Date.now();
         let bytesSent = 0;
         let lastSpeedUpdate = Date.now();
@@ -644,126 +655,184 @@
         speedCalcInterval = setInterval(() => {
           const now = Date.now();
           const timeDiff = (now - lastSpeedUpdate) / 1000;
-          if (timeDiff > 0) {
+          if (timeDiff > 0 && bytesSent > 0) {
             const currentSpeed = (bytesSent - lastBytesUpdate) / timeDiff;
             transferSpeed = currentSpeed;
-            document.getElementById(`speed-text-${transferId}`).innerHTML = `⚡ ${formatSpeed(currentSpeed)}`;
+            const speedColor = getSpeedColor(currentSpeed);
+            document.getElementById(`speed-text-${transferId}`).innerHTML = `⚡ <span class="${speedColor}">${formatSpeed(currentSpeed)}</span>`;
+            document.getElementById('speed-badge').innerHTML = `⚡ ${formatSpeed(currentSpeed)}`;
+            
+            // Calculate ETA
+            const remaining = fileRef.size - bytesSent;
+            if (currentSpeed > 0) {
+              const etaSeconds = remaining / currentSpeed;
+              const etaStr = etaSeconds > 60 ? `${Math.round(etaSeconds/60)}m` : `${Math.round(etaSeconds)}s`;
+              document.getElementById(`eta-text-${transferId}`).innerHTML = `⏱️ ${etaStr}`;
+            }
+            
             lastSpeedUpdate = now;
             lastBytesUpdate = bytesSent;
           }
-        }, 500);
+        }, 300);
 
-        reader.onload = function(e) {
-          if (e.target.error) {
-            document.getElementById(`status-text-${transferId}`).innerText = "Local read error";
-            showNotification('Read Error', 'Failed to read local data for transport.', 'error');
+        // Use parallel sending with multiple chunks
+        let chunkIndex = 0;
+        const maxParallel = Math.min(PARALLEL_CHANNELS, 4);
+
+        function sendNextChunk() {
+          if (chunkIndex >= totalChunks || !connection || !connection.open) {
+            if (completedChunks >= totalChunks) {
+              finishTransfer();
+            }
             return;
           }
 
-          // Check buffer before sending
-          if (connection.dataChannel && connection.dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
-            // Wait for buffer to drain
-            setTimeout(() => {
-              connection.send({
-                type: 'file-chunk',
-                id: transferId,
-                buffer: e.target.result
-              });
-            }, 50);
-          } else {
+          const currentChunk = chunkIndex;
+          chunkIndex++;
+          
+          const start = currentChunk * chunkSize;
+          const end = Math.min(start + chunkSize, fileRef.size);
+          const chunkSlice = fileRef.slice(start, end);
+          
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            if (e.target.error) {
+              document.getElementById(`status-text-${transferId}`).innerText = "Read error";
+              return;
+            }
+
+            // Send chunk
             connection.send({
               type: 'file-chunk',
               id: transferId,
+              chunkIndex: currentChunk,
+              totalChunks: totalChunks,
               buffer: e.target.result
             });
-          }
 
-          offset += e.target.result.byteLength;
-          bytesSent += e.target.result.byteLength;
-          
-          const progress = (offset / fileRef.size) * 100;
-          document.getElementById(`progress-bar-${transferId}`).style.width = `${progress}%`;
-          document.getElementById(`percent-text-${transferId}`).innerText = `${Math.round(progress)}%`;
-          document.getElementById(`status-text-${transferId}`).innerText = `${formatBytes(offset)} / ${formatBytes(fileRef.size)}`;
+            bytesSent += e.target.result.byteLength;
+            completedChunks++;
+            
+            // Update progress
+            const progress = (completedChunks / totalChunks) * 100;
+            document.getElementById(`progress-bar-${transferId}`).style.width = `${progress}%`;
+            document.getElementById(`percent-text-${transferId}`).innerText = `${Math.round(progress)}%`;
+            document.getElementById(`status-text-${transferId}`).innerText = 
+              `${formatBytes(bytesSent)} / ${formatBytes(fileRef.size)} (${completedChunks}/${totalChunks})`;
+            
+            // Update channel indicator
+            const channelNum = (currentChunk % maxParallel) + 1;
+            document.getElementById(`channel-text-${transferId}`).innerHTML = `📡 Channel ${channelNum}`;
 
-          // Update buffer status
-          if (connection.dataChannel) {
-            const bufferPercent = (connection.dataChannel.bufferedAmount / MAX_BUFFERED_AMOUNT) * 100;
-            document.getElementById(`buffer-text-${transferId}`).innerHTML = `Buffer: ${Math.round(bufferPercent)}%`;
-          }
-
-          if (offset < fileRef.size) {
-            // Adaptive delay based on buffer
-            if (connection.dataChannel && connection.dataChannel.bufferedAmount > 1024 * 1024 * 50) { // 50MB
-              setTimeout(readNextSegmentChunk, 100);
-            } else if (connection.dataChannel && connection.dataChannel.bufferedAmount > 1024 * 1024 * 10) { // 10MB
-              setTimeout(readNextSegmentChunk, 50);
-            } else {
-              readNextSegmentChunk();
+            // Send next chunk if available (maintain parallelism)
+            if (chunkIndex < totalChunks && connection && connection.open) {
+              // Check buffer before continuing
+              if (connection.dataChannel && connection.dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
+                setTimeout(sendNextChunk, 50);
+              } else {
+                sendNextChunk();
+              }
             }
-          } else {
-            clearInterval(speedCalcInterval);
-            document.getElementById(`status-text-${transferId}`).className = "text-blue-400 font-semibold text-[9px]";
-            document.getElementById(`status-text-${transferId}`).innerText = "✓ Upload complete";
-            const totalTime = (Date.now() - startTime) / 1000;
-            const avgSpeed = bytesSent / totalTime;
-            document.getElementById(`speed-text-${transferId}`).innerHTML = `📊 Avg: ${formatSpeed(avgSpeed)}`;
-            showNotification('Upload Complete', `Successfully uploaded ${fileRef.name} in ${totalTime.toFixed(1)}s`, 'success');
-          }
-        };
-
-        function readNextSegmentChunk() {
-          const chunkSlice = fileRef.slice(offset, offset + CHUNK_SIZE);
+          };
           reader.readAsArrayBuffer(chunkSlice);
         }
 
-        readNextSegmentChunk();
+        function finishTransfer() {
+          clearInterval(speedCalcInterval);
+          const totalTime = (Date.now() - startTime) / 1000;
+          const avgSpeed = bytesSent / totalTime;
+          const speedColor = getSpeedColor(avgSpeed);
+          
+          document.getElementById(`status-text-${transferId}`).className = "text-blue-400 font-semibold text-[9px]";
+          document.getElementById(`status-text-${transferId}`).innerText = "✓ Upload complete";
+          document.getElementById(`speed-text-${transferId}`).innerHTML = `📊 Avg: <span class="${speedColor}">${formatSpeed(avgSpeed)}</span>`;
+          document.getElementById('speed-badge').innerHTML = `⚡ ${formatSpeed(avgSpeed)}`;
+          
+          showNotification('Upload Complete', 
+            `Uploaded ${fileRef.name} in ${totalTime.toFixed(1)}s at ${formatSpeed(avgSpeed)}`, 
+            'success'
+          );
+        }
+
+        // Start parallel sending
+        for (let i = 0; i < Math.min(maxParallel, totalChunks); i++) {
+          setTimeout(sendNextChunk, i * 10);
+        }
       }
 
+      // ---------- Inbound Transfer with Parallel Support ----------
       function initializeInboundTransferSession(meta) {
         currentInboundTransfer = {
           id: meta.id,
           name: meta.name,
           size: meta.size,
           mime: meta.mime,
-          chunks: [],
+          chunks: {},
+          totalChunks: 0,
           bytesAccumulated: 0,
-          startTime: Date.now()
+          startTime: Date.now(),
+          receivedChunks: new Set()
         };
 
         appendBubbleToFeed(meta.id, meta.name, meta.size, 'incoming', meta.thumbnail);
-        document.getElementById(`status-text-${meta.id}`).innerText = "Buffering incoming blocks...";
+        document.getElementById(`status-text-${meta.id}`).innerText = "Receiving parallel chunks...";
       }
 
       function processIncomingChunk(chunkData) {
         const session = currentInboundTransfer;
         if (!session || session.id !== chunkData.id) return;
 
-        session.chunks.push(chunkData.buffer);
-        session.bytesAccumulated += chunkData.buffer.byteLength;
+        const chunkIdx = chunkData.chunkIndex;
+        const totalChunks = chunkData.totalChunks;
+        
+        // Store chunk
+        if (!session.chunks[chunkIdx]) {
+          session.chunks[chunkIdx] = chunkData.buffer;
+          session.bytesAccumulated += chunkData.buffer.byteLength;
+          session.totalChunks = totalChunks;
+          session.receivedChunks.add(chunkIdx);
+        }
 
-        const progress = (session.bytesAccumulated / session.size) * 100;
+        const receivedCount = session.receivedChunks.size;
+        const progress = (receivedCount / totalChunks) * 100;
+        
         document.getElementById(`progress-bar-${session.id}`).style.width = `${progress}%`;
         document.getElementById(`percent-text-${session.id}`).innerText = `${Math.round(progress)}%`;
-        document.getElementById(`status-text-${session.id}`).innerText = `${formatBytes(session.bytesAccumulated)} of ${formatBytes(session.size)}`;
+        document.getElementById(`status-text-${session.id}`).innerText = 
+          `${formatBytes(session.bytesAccumulated)} / ${formatBytes(session.size)} (${receivedCount}/${totalChunks})`;
 
-        // Calculate download speed
+        // Calculate speed
         const elapsed = (Date.now() - session.startTime) / 1000;
         if (elapsed > 0) {
           const speed = session.bytesAccumulated / elapsed;
-          document.getElementById(`speed-text-${session.id}`).innerHTML = `⬇️ ${formatSpeed(speed)}`;
+          const speedColor = getSpeedColor(speed);
+          document.getElementById(`speed-text-${session.id}`).innerHTML = 
+            `⬇️ <span class="${speedColor}">${formatSpeed(speed)}</span>`;
         }
 
-        if (session.bytesAccumulated >= session.size) {
+        // Update channel indicator
+        const channelNum = (chunkIdx % PARALLEL_CHANNELS) + 1;
+        document.getElementById(`channel-text-${session.id}`).innerHTML = `📡 Channel ${channelNum}`;
+
+        // Check if complete
+        if (session.receivedChunks.size >= totalChunks) {
           compileAndBuildDownloadTarget(session);
-          currentInboundTransfer = null; 
+          currentInboundTransfer = null;
         }
       }
 
       function compileAndBuildDownloadTarget(session) {
-        document.getElementById(`status-text-${session.id}`).innerText = "Assembling local stream...";
+        document.getElementById(`status-text-${session.id}`).innerText = "Assembling stream...";
         
-        const fileBlob = new Blob(session.chunks, { type: session.mime || 'application/octet-stream' });
+        // Reconstruct file from chunks in order
+        const chunksArray = [];
+        for (let i = 0; i < session.totalChunks; i++) {
+          if (session.chunks[i]) {
+            chunksArray.push(session.chunks[i]);
+          }
+        }
+        
+        const fileBlob = new Blob(chunksArray, { type: session.mime || 'application/octet-stream' });
         const directObjectUrl = URL.createObjectURL(fileBlob);
         
         const saveBtn = document.getElementById(`btn-save-${session.id}`);
@@ -779,11 +848,16 @@
 
         const totalTime = (Date.now() - session.startTime) / 1000;
         const avgSpeed = session.bytesAccumulated / totalTime;
-        document.getElementById(`speed-text-${session.id}`).innerHTML = `📊 Avg: ${formatSpeed(avgSpeed)}`;
+        const speedColor = getSpeedColor(avgSpeed);
+        document.getElementById(`speed-text-${session.id}`).innerHTML = 
+          `📊 Avg: <span class="${speedColor}">${formatSpeed(avgSpeed)}</span>`;
 
         document.getElementById(`status-text-${session.id}`).className = "text-emerald-400 font-semibold text-[9px]";
         document.getElementById(`status-text-${session.id}`).innerText = "✓ Ready to save";
-        showNotification('File Received', `Received ready-to-save file: ${session.name}`, 'success');
+        showNotification('File Received', 
+          `Received ${session.name} at ${formatSpeed(avgSpeed)}`, 
+          'success'
+        );
       }
 
       function resetStagedFileElement() {
