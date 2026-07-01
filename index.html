@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
     <meta charset="utf-8">
@@ -354,26 +353,37 @@
 
         // RENDER TOOLS
         function renderTools() {
-            const grid = document.getElementById('toolsGrid');
-            grid.innerHTML = toolsCatalog.map(tool => `
-                <div class="tool-card group flex flex-col max-h-[500px] bg-slate-900/40">
-                    <a href="${tool.link}" target="_blank" rel="noopener noreferrer">
-                        <img src="${tool.image}" alt="${tool.title}" class="w-full h-[300px] object-cover group-hover:scale-105 transition-all duration-500" loading="lazy" onerror="this.src='https://placehold.co/600x337/111827/4b5563?text=${encodeURIComponent(tool.title)}'">
-                    
-                    <div class="p-5 flex-grow flex flex-col justify-between text-left">
-                        <div>
-                            <h3 class="font-bold text-base sm:text-lg mb-2 text-slate-100 group-hover:text-blue-400 transition-colors">${tool.title}</h3>
-                            <p class="text-xs text-slate-400 mb-4 line-clamp-2 leading-relaxed">${tool.description}</p>
-                        </div>
-                    </a>
-                        <a href="${tool.link}" target="_blank" rel="noopener noreferrer" class="text-xs font-bold uppercase tracking-wider text-blue-500 hover:text-blue-300 flex items-center space-x-1 mt-0">
-                            <span>Launch Tool</span>
-                            <i class="fas fa-arrow-right text-[10px] transform group-hover:translate-x-1 transition-transform"></i>
-                        </a>
-                    </div>
+    const grid = document.getElementById('toolsGrid');
+    grid.innerHTML = toolsCatalog.map(tool => `
+        <div class="tool-card group flex flex-col h-full bg-slate-900/40 rounded-xl overflow-hidden border border-slate-800">
+            <div class="w-full h-[200px] overflow-hidden">
+                <img 
+                    src="${tool.image}" 
+                    alt="${tool.title}" 
+                    class="w-full h-full object-cover group-hover:scale-105 transition-all duration-500" 
+                    loading="lazy" 
+                    onerror="this.src='https://placehold.co/600x337/111827/4b5563?text=${encodeURIComponent(tool.title)}'"
+                >
+            </div>
+            
+            <div class="p-5 flex flex-col flex-grow text-left">
+                <div class="mb-4">
+                    <h3 class="font-bold text-base sm:text-lg mb-2 text-slate-100 group-hover:text-blue-400 transition-colors line-clamp-1">
+                        ${tool.title}
+                    </h3>
+                    <p class="text-xs text-slate-400 line-clamp-3 leading-relaxed">
+                        ${tool.description}
+                    </p>
                 </div>
-            `).join('');
-        }
+                
+                <a href="${tool.link}" target="_blank" rel="noopener noreferrer" class="text-xs font-bold uppercase tracking-wider text-blue-500 hover:text-blue-300 flex items-center space-x-1 self-start">
+                    <span>Launch Tool</span>
+                    <i class="fas fa-arrow-right text-[10px] transform group-hover:translate-x-1 transition-transform"></i>
+                </a>
+            </div>
+        </div>
+    `).join('');
+}
 
         // DYNAMIC CUSTOM TOAST ALERTS (Beautiful visual alternative to alert)
         function showToast(message, type = 'success') {
